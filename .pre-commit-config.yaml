@@ -1,0 +1,36 @@
+# See https://pre-commit.com for more information.
+# Install the hook with `uvx pre-commit install`.
+repos:
+  - repo: local
+    hooks:
+      - id: check-changelog-headers
+        name: Changelog header overwrite guard
+        entry: .pre-commit-scripts/check_changelog_headers.sh
+        language: script
+        pass_filenames: false
+        files: '(^|/)changelog\.md$|(^|/)changelog/.*\.md$'
+  - repo: local
+    hooks:
+      - id: check-version-changelog
+        name: Version bump needs a changelog entry
+        entry: .pre-commit-scripts/check_version_changelog.sh
+        language: script
+        pass_filenames: false
+        always_run: true
+  - repo: local
+    hooks:
+      - id: check-no-nul-bytes
+        name: Reject NUL bytes in text files
+        entry: .pre-commit-scripts/check_no_nul_bytes.sh
+        language: script
+        # Only files pre-commit classifies as text — real binaries (images,
+        # fonts) legitimately contain NUL and must not be flagged.
+        types: [text]
+  - repo: local
+    hooks:
+      - id: warn-unstaged-claude
+        name: Unstaged .claude/ changes
+        entry: python .pre-commit-scripts/check_unstaged_claude.py
+        language: system
+        pass_filenames: false
+        always_run: true
