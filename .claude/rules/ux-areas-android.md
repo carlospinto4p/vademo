@@ -2,36 +2,67 @@
 
 Project-specific UX areas to watch for when running
 `/review-ux-android` or noticing issues during normal work.
+vademo has no charts, no workout flows, and no REST calls — its
+screens are `HomeScreen` (knowledge-base list), `BrowseScreen`
+(folders/notes), `NoteScreen` (rendered markdown), `EditScreen`
+(plain-text editor) and `ConflictScreen` (merge resolution), plus
+`SettingsScreen`. Review against these, not a generic checklist.
 
 ## What to Look For
 
-- **Compose animations**: missing `animateContentSize`,
-  `AnimatedVisibility`, `Crossfade`, or `animate*AsState`
-  on values that change visibly
-- **List behavior**: missing `animateItemPlacement` on
-  `LazyColumn`/`LazyRow` items that can reorder, appear,
-  or disappear
-- **Navigation**: abrupt screen swaps without enter/exit
-  transitions; missing back-gesture handling
-- **Charts (Vico)**: missing entry animations, abrupt
-  data updates, missing loading state while data loads
-- **Filter chips / toggles**: non-animated state changes,
-  missing selection feedback
-- **Bottom navigation / tabs**: missing indicator
-  animations, abrupt content swaps between tabs
-- **Forms & inputs**: missing keyboard IME actions,
-  missing input validation feedback, missing
-  `bringIntoViewRequester` for focused fields
-- **Dialogs vs bottom sheets**: use bottom sheets for
-  mobile-friendly interactions where appropriate
-- **Empty/loading/error states**: every screen that
-  fetches data should have all three; prefer skeletons
-  over spinners for content-heavy screens
-- **Re-entry loading flash**: screens that call `refresh()` (or equivalent) on `ON_RESUME` / `onStart` must NOT show a full-screen loading spinner when data is already present. The spinner should only appear on the very first load (no data yet). Subsequent resume refreshes should be silent — update state in the background without setting `isLoading = true`. Look for `LifecycleEventObserver` blocks that call a load function unconditionally on `ON_RESUME`, and check whether the loading helper (`launchWithLoading` or similar) has a `showLoading = false` / silent path for that call site.
-- **Haptics**: key actions (complete set, save workout,
-  delete) should provide haptic feedback
-- **Accessibility**: `contentDescription` on every
-  `Icon` / `Image`; min 48dp touch targets; semantic
-  grouping with `Modifier.semantics`
-- **Heatmaps & custom charts**: cell tap feedback,
-  tooltips on long-press, smooth color interpolation
+- **Sync status changes with no transition**: `HomeScreen`'s
+  `KbRow` supporting text swaps abruptly between "Not downloaded
+  yet", "Synced", "N edits not synced", and the conflict prompt —
+  no `Crossfade`/`animateContentSize` softens the change. Same for
+  the "Add your GitLab token…" card, which appears/disappears
+  instantly when `settingsComplete` flips.
+- **No in-progress indicator during sync**: the app-bar sync
+  `IconButton` only disables (`enabled = state.canSync`) while
+  syncing — nothing shows *that* a sync is running except each
+  row's "Syncing…" text. A small spinner on the icon itself would
+  make a slow sync visible before the first row updates.
+- **List reordering with no animation**: `LazyColumn`s in
+  `HomeScreen` and `BrowseScreen` have no `animateItemPlacement` —
+  a note appearing after a pull, or a knowledge base moving as its
+  status changes, swaps in place instead of animating.
+- **Screen-to-screen navigation has no transition**: Home → Browse
+  → Note → Edit are plain pushes with the default abrupt swap; no
+  shared-element or slide transition marks the drill-down/back
+  relationship between a folder and its contents.
+- **Decorative chips that look tappable**: `NoteScreen`'s
+  frontmatter `AssistChip`s (type, status, tags) have an empty
+  `onClick = {}` — they render with a ripple but do nothing. Either
+  give them a real action (e.g. filter notes by tag) or render them
+  as plain, non-interactive labels so they stop implying a tap does
+  something.
+- **Broken-link feedback is text-only**: tapping a `[[wiki-link]]`
+  to a missing note shows a Snackbar ("No note named X") with no
+  haptic — easy to miss on a fast tap-and-move-on. A missing-note
+  screen itself (`state.missing`) is a bare sentence with no retry
+  or "back to folder" affordance beyond the app bar.
+- **No empty state for an empty folder**: `BrowseScreen` renders
+  nothing when a folder has no notes and no subfolders — no "This
+  folder is empty" message, so it looks like a loading failure
+  rather than a genuinely empty folder.
+- **Edit has no save confirmation**: `EditScreen`'s check-mark
+  save pops back to the previous screen with no snackbar or
+  transient confirmation that the write succeeded — worth adding
+  given a failed write (disk, permissions) would look identical to
+  a successful one from the user's side. The discard-changes
+  `AlertDialog` on back is a good pattern already in place; saving
+  deserves the same closure.
+- **Conflict screen's long diffs have no scroll affordance**: each
+  side of a conflicting file is a monospace block capped at
+  `heightIn(max = 240.dp)` inside `verticalScroll` — a long file
+  gives no visual cue (fade, scrollbar) that there's more below the
+  fold.
+- **Settings gives no save feedback**: `SettingsScreen`'s Save
+  button returns to Home unconditionally; an invalid token or
+  malformed repo URL is only discovered later, at the next sync
+  attempt, with no immediate validation or error state on the form
+  itself.
+- **Accessibility**: `contentDescription` is already present on the
+  navigation and action icons (Sync, Settings, Back, Edit) — keep
+  that going for any new icon-only control. Touch targets via
+  `IconButton`/`ListItem` are already at the default 48dp; watch
+  for that if a denser row layout is ever introduced.
