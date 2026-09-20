@@ -43,20 +43,25 @@ jobs:
           packages: ''
 
       # compileSdk is 37 and the runner image does not ship that platform.
-      # It is not on the stable channel either, so try each channel in turn
-      # (0 stable, 1 beta, 2 dev, 3 canary) and, if none has it, print the
-      # platforms that do exist rather than failing further down the build.
+      # Platforms are published per minor version now (36.1, 37.0, 37.1…),
+      # so `platforms;android-37` does not exist: `compileSdk = 37` with no
+      # `compileSdkMinor` means 37.0. Both names are tried, across every
+      # channel (0 stable, 1 beta, 2 dev, 3 canary), and if none resolves
+      # the platforms that do exist are printed instead of failing later
+      # inside Gradle with a vaguer message.
       - name: Install the compileSdk platform
         run: |
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           sdkmanager 'platform-tools'
-          for channel in 0 1 2 3; do
-            yes | sdkmanager --licenses --channel=$channel >/dev/null 2>&1 || true
-            if sdkmanager --channel=$channel 'platforms;android-37'; then
-              exit 0
-            fi
+          for package in 'platforms;android-37.0' 'platforms;android-37'; do
+            for channel in 0 1 2 3; do
+              yes | sdkmanager --licenses --channel=$channel >/dev/null 2>&1 || true
+              if sdkmanager --channel=$channel "$package"; then
+                exit 0
+              fi
+            done
           done
-          echo "::error::platforms;android-37 is not published on any SDK channel"
+          echo "::error::no SDK platform for compileSdk 37 on any channel"
           sdkmanager --list --channel=3 | grep -E 'platforms;android-' | sort -u
           exit 1
 

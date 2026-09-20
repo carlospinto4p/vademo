@@ -7,9 +7,10 @@
   every push to `main` or a `claude/**` branch, and on demand from the
   Actions tab:
   - Runs `testDebugUnitTest`, then `assembleDebug` on Temurin 17.
-    `compileSdk` is 37, which the runner image does not ship and the
-    stable SDK channel does not publish, so the platform is installed
-    by trying each `sdkmanager` channel in turn.
+    `compileSdk` is 37, which the runner image does not ship; platforms
+    are published per minor version now, so the step installs
+    `platforms;android-37.0` and prints what the SDK does publish if
+    that ever stops resolving.
   - Uploads `vademo-<version>-debug.apk` as a workflow artifact.
   - Replaces the `debug-latest` prerelease on `main` and manual runs,
     so the phone can download a plain `.apk` from Releases instead of
