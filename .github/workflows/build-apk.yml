@@ -35,11 +35,24 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # compileSdk is 37; the runner image does not ship that platform.
       - name: Set up the Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: 'platforms;android-37'
+
+      # compileSdk is 37 and the runner image does not ship that platform.
+      # It is not on the stable channel either, so try each channel in turn
+      # (0 stable, 1 beta, 2 dev, 3 canary) and, if none has it, print the
+      # platforms that do exist rather than failing further down the build.
+      - name: Install the compileSdk platform
+        run: |
+          for channel in 0 1 2 3; do
+            yes | sdkmanager --licenses --channel=$channel >/dev/null 2>&1 || true
+            if sdkmanager --channel=$channel 'platforms;android-37'; then
+              exit 0
+            fi
+          done
+          echo "::error::platforms;android-37 is not published on any SDK channel"
+          sdkmanager --list --channel=3 | grep -E 'platforms;android-' | sort -u
+          exit 1
 
       - name: Unit tests
         run: ./gradlew --no-daemon testDebugUnitTest

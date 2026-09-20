@@ -6,9 +6,10 @@
 - Added `.github/workflows/build-apk.yml`: builds the debug APK on
   every push to `main` or a `claude/**` branch, and on demand from the
   Actions tab:
-  - Runs `testDebugUnitTest`, then `assembleDebug` on Temurin 17 with
-    `platforms;android-37` installed (`compileSdk` is 37 and the runner
-    image does not ship it).
+  - Runs `testDebugUnitTest`, then `assembleDebug` on Temurin 17.
+    `compileSdk` is 37, which the runner image does not ship and the
+    stable SDK channel does not publish, so the platform is installed
+    by trying each `sdkmanager` channel in turn.
   - Uploads `vademo-<version>-debug.apk` as a workflow artifact.
   - Replaces the `debug-latest` prerelease on `main` and manual runs,
     so the phone can download a plain `.apk` from Releases instead of
