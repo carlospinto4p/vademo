@@ -15,8 +15,10 @@ rationale lives in the docs or ADRs it cites.
    computer through GitHub.**
 2. **Fix what daily use turns up**, starting with table readability
    (backlog 2026.09.16).
-3. **Search, new notes from templates, health counts** — in the order use
-   asks for them (backlog 2026.09.16).
+3. **Search, views and health counts** — designed in
+   `docs/kb-views-and-queries.md`, itemised in backlog 2026.09.20. The
+   index comes first; everything else reads from it. New notes from
+   templates (backlog 2026.09.16) is independent of that order.
 
 ## Standing invariants (apply to every session)
 

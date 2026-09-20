@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.2.1 - 20th September 2026
+
+- Added `docs/kb-views-and-queries.md`: the design for seeing and asking
+  things of a knowledge base beyond reading it note by note — an
+  in-memory `NoteIndex`, the Folders/Recent/Types/Tags/Health views, one
+  search field with frontmatter filters and saved queries, backlinks on
+  a note, and what is deliberately left out (a graph view, a query
+  language, a disk cache). Measured against `kb-business`: 86 notes,
+  516 KB, 437 links, 47 of them sources.
+- Updated `roadmap.md` and `backlog.md`: step 3 now cites that design,
+  and the 2026.09.20 section itemises it in dependency order.
+
+
 ### v0.2.0 - 20th September 2026
 
 - Pinch a note to change how large its text is drawn:
