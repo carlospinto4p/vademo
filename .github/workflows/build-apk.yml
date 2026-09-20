@@ -35,8 +35,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # packages: '' because the action's default list still asks for the
+      # obsolete `tools` package, which the SDK repository no longer serves.
       - name: Set up the Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: ''
 
       # compileSdk is 37 and the runner image does not ship that platform.
       # It is not on the stable channel either, so try each channel in turn
@@ -44,6 +48,8 @@ jobs:
       # platforms that do exist rather than failing further down the build.
       - name: Install the compileSdk platform
         run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager 'platform-tools'
           for channel in 0 1 2 3; do
             yes | sdkmanager --licenses --channel=$channel >/dev/null 2>&1 || true
             if sdkmanager --channel=$channel 'platforms;android-37'; then
