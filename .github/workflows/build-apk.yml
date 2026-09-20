@@ -81,9 +81,13 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
       # The phone installs one build over another only while this stays the
-      # same, so it goes in the log of every build.
+      # same, so it goes in the log of every build. It takes apksigner and
+      # not `keytool -printcert -jarfile`: with minSdk 26 the APK carries
+      # only the v2/v3 signature, which keytool cannot read.
       - name: Show which key signed it
-        run: keytool -printcert -jarfile '${{ steps.apk.outputs.name }}' | grep -A 1 'SHA256'
+        run: |
+          apksigner=$(ls -d "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs '${{ steps.apk.outputs.name }}' | grep -i 'SHA-256 digest'
 
       - name: Upload the APK as an artifact
         uses: actions/upload-artifact@v4

@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.2.3 - 20th September 2026
+
+- Fixed the signing-fingerprint step added in v0.2.2 failing the build:
+  `.github/workflows/build-apk.yml` now reads the certificate with
+  `apksigner`. With `minSdk` 26 the APK carries only the v2/v3
+  signature, which `keytool -printcert -jarfile` cannot read, so the
+  step exited 1 after a successful build and no APK was published.
+
+
 ### v0.2.2 - 20th September 2026
 
 - Fixed every build being signed by a different key, which made the
