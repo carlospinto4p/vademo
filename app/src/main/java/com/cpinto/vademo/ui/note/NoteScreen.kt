@@ -167,7 +167,7 @@ fun NoteScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (state.missing) {
-                Text("This note no longer exists. It may have been renamed or deleted on GitLab.")
+                Text("This note no longer exists. It may have been renamed or deleted on GitHub.")
                 return@Column
             }
             state.frontmatter?.let { front ->

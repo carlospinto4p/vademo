@@ -112,8 +112,8 @@ fun SettingsScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             OutlinedTextField(
                 value = form.token,
                 onValueChange = { v -> viewModel.update { it.copy(token = v) } },
-                label = { Text("GitLab access token") },
-                supportingText = { Text("Needs the write_repository scope.") },
+                label = { Text("GitHub access token") },
+                supportingText = { Text("Needs the repo scope (classic) or Contents: Read and write (fine-grained).") },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,

@@ -65,7 +65,7 @@ fun HomeScreen(
                 item {
                     Card(Modifier.fillMaxWidth().padding(16.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Add your GitLab token, name and email to sync.")
+                            Text("Add your GitHub token, name and email to sync.")
                             Button(onClick = onSettings) { Text("Open settings") }
                         }
                     }
@@ -111,7 +111,7 @@ private fun KbRow(kb: KbInfo, sync: SyncState, onClick: () -> Unit) {
 private fun statusLine(kb: KbInfo): String = when {
     kb.problem != null -> "The copy on this phone is damaged: ${kb.problem}"
     !kb.cloned -> "Not downloaded yet: tap Sync"
-    kb.needsChoice -> "Changed here and on GitLab: tap to choose"
+    kb.needsChoice -> "Changed here and on GitHub: tap to choose"
     kb.unsyncedEdits == 1 -> "1 edit not synced"
     kb.unsyncedEdits > 1 -> "${kb.unsyncedEdits} edits not synced"
     else -> "Synced"

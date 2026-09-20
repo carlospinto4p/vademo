@@ -5,8 +5,8 @@
 vademo is an Android app for reading and editing the `kb-*` knowledge
 bases on a phone. It keeps a git clone of each one, shows folders and
 notes with their `[[links]]` tappable, lets a note be edited as plain
-text, and syncs with the private GitLab repositories (commit, pull,
-push). When the same lines changed on the phone and on GitLab, sync
+text, and syncs with the private GitHub repositories (commit, pull,
+push). When the same lines changed on the phone and on GitHub, sync
 stops and the user chooses what to keep; nothing is overwritten.
 
 The knowledge bases and their conventions live in

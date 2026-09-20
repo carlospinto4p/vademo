@@ -22,12 +22,12 @@ data class Settings(
         get() = token.isNotBlank() && authorName.isNotBlank() && authorEmail.isNotBlank() && repoUrls.isNotEmpty()
 
     companion object {
-        /** The knowledge bases as of 2026-09-16, all private projects on GitLab. Editable in Settings. */
+        /** The knowledge bases as of 2026-09-20, all private projects on GitHub. Editable in Settings. */
         val DEFAULT_REPOS = listOf(
-            "https://gitlab.com/Dyrsz/kb-business.git",
-            "https://gitlab.com/Dyrsz/kb-youtube-channel.git",
-            "https://gitlab.com/Dyrsz/kb-investments.git",
-            "https://gitlab.com/Dyrsz/kb-videogames-market.git",
+            "https://github.com/carlospinto4p/kb-business.git",
+            "https://github.com/carlospinto4p/kb-youtube-channel.git",
+            "https://github.com/carlospinto4p/kb-investments.git",
+            "https://github.com/carlospinto4p/kb-videogames-market.git",
         )
     }
 }
@@ -62,7 +62,7 @@ class SettingsRepository @Inject constructor(
     )
 
     private companion object {
-        val TOKEN = stringPreferencesKey("gitlab_token")
+        val TOKEN = stringPreferencesKey("github_token")
         val AUTHOR_NAME = stringPreferencesKey("author_name")
         val AUTHOR_EMAIL = stringPreferencesKey("author_email")
         val REPOS = stringPreferencesKey("repo_urls")

@@ -121,7 +121,7 @@ fun EditScreen(onDone: () -> Unit, viewModel: EditViewModel = hiltViewModel()) {
     ) { padding ->
         if (state.blocked) {
             Text(
-                "This knowledge base has a note changed both here and on GitLab. " +
+                "This knowledge base has a note changed both here and on GitHub. " +
                     "Choose which version to keep from the home screen before editing.",
                 Modifier.padding(padding).padding(16.dp),
             )

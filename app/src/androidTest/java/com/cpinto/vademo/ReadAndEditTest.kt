@@ -22,7 +22,7 @@ import java.io.File
 /**
  * The reading and editing workflow on a real device, from the home screen:
  * open a knowledge base, a folder and a note, follow a `[[link]]`, then edit
- * and save. Syncing with GitLab is covered by [GitOnDeviceTest], since this
+ * and save. Syncing with GitHub is covered by [GitOnDeviceTest], since this
  * test has no network remote.
  */
 @RunWith(AndroidJUnit4::class)

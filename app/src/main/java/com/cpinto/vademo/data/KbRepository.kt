@@ -34,7 +34,7 @@ sealed interface SyncState {
     data class Done(val outcome: SyncOutcome) : SyncState
 }
 
-/** The local clones of every configured knowledge base, and syncing them with GitLab. */
+/** The local clones of every configured knowledge base, and syncing them with GitHub. */
 @Singleton
 class KbRepository @Inject constructor(
     @ApplicationContext context: Context,
@@ -91,14 +91,15 @@ class KbRepository @Inject constructor(
     private fun setState(name: String, state: SyncState) =
         _syncStates.update { it + (name to state) }
 
-    /** `https://gitlab.com/Dyrsz/kb-business.git` → `files/kb/kb-business`. */
+    /** `https://github.com/carlospinto4p/kb-business.git` → `files/kb/kb-business`. */
     private fun dirFor(url: String): File =
         File(root, url.trimEnd('/').substringAfterLast('/').removeSuffix(".git"))
 
     private fun gitSync(current: Settings) = GitSync(
         // The token goes in as the HTTPS password. Unverified, written from
-        // recall: that GitLab ignores the user name ("oauth2") for a personal
-        // access token. Check against gitlab.com before relying on it.
+        // recall: that GitHub accepts any non-empty user name ("oauth2") for
+        // a personal access token. Check against github.com before relying
+        // on it.
         credentials = current.token.takeIf { it.isNotBlank() }
             ?.let { UsernamePasswordCredentialsProvider("oauth2", it) },
         author = Author(current.authorName, current.authorEmail),

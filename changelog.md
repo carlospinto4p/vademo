@@ -1,6 +1,27 @@
 ## Changelog - vademo
 
 
+### v0.1.2 - 20th September 2026
+
+- Repointed vademo at GitHub, following the `kb-*`/`sapiary` family's
+  migration off GitLab to private GitHub repos (`carlospinto4p`):
+  - `data/SettingsRepository.kt`: `DEFAULT_REPOS` now lists the four
+    `kb-*` repos' `github.com` clone URLs; the stored-token preference
+    key renamed `gitlab_token` -> `github_token`.
+  - `data/TokenCipher.kt`: keystore alias renamed
+    `vademo-gitlab-token` -> `vademo-github-token`.
+  - `ui/conflict/ConflictScreen.kt`: `Keep.GITLAB` renamed
+    `Keep.GITHUB`; conflict-resolution copy updated.
+  - `ui/settings/SettingsScreen.kt`, `ui/home/HomeScreen.kt`,
+    `ui/edit/EditScreen.kt`, `ui/note/NoteScreen.kt`: UI text and the
+    PAT-scope hint updated from GitLab to GitHub.
+  - `README.md`, `CLAUDE.md`, `.claude/rules/ux-areas-android.md`,
+    `roadmap.md`, `backlog.md`: docs/rules updated to match.
+  - Comments and test fixtures in `git/GitSync.kt`, `data/KbRepository.kt`,
+    `GitSyncTest.kt`, `WikiLinksTest.kt`, `ReadAndEditTest.kt` updated
+    for consistency; no functional change (JGit sync is host-agnostic).
+
+
 ### v0.1.1 - 17th September 2026
 
 - Rewrote `.claude/rules/ux-areas-android.md`: it was a byte-for-byte

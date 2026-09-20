@@ -10,7 +10,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /**
- * Encrypts the GitLab token with a key held in the Android Keystore, so the
+ * Encrypts the GitHub token with a key held in the Android Keystore, so the
  * value written to app storage is useless without this device's hardware key.
  */
 class TokenCipher {
@@ -45,7 +45,7 @@ class TokenCipher {
 
     private companion object {
         const val KEYSTORE = "AndroidKeyStore"
-        const val ALIAS = "vademo-gitlab-token"
+        const val ALIAS = "vademo-github-token"
         const val TRANSFORMATION = "AES/GCM/NoPadding"
         const val IV_BYTES = 12
     }

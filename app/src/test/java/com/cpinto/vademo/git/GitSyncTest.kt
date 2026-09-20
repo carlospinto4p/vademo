@@ -12,7 +12,7 @@ import java.io.File
 
 /**
  * Runs [GitSync] against real repositories: a bare repository stands in for
- * GitLab, a second clone for the computer, and [phone] for the app's copy.
+ * GitHub, a second clone for the computer, and [phone] for the app's copy.
  */
 class GitSyncTest {
 
@@ -26,13 +26,13 @@ class GitSyncTest {
 
     @BeforeEach
     fun setUp() {
-        val bare = File(tmp, "gitlab.git")
+        val bare = File(tmp, "github.git")
         Git.init().setBare(true).setInitialBranch("main").setDirectory(bare).call().close()
         remoteUrl = bare.toURI().toString()
 
         computer = File(tmp, "computer")
         // Cloning an empty repository would name the branch master; the bare
-        // repository's HEAD points at main, as GitLab's does.
+        // repository's HEAD points at main, as GitHub's does.
         Git.init().setInitialBranch("main").setDirectory(computer).call().use { git ->
             git.remoteAdd().setName("origin").setUri(org.eclipse.jgit.transport.URIish(remoteUrl)).call()
             File(computer, "ideas").mkdirs()
@@ -138,7 +138,7 @@ class GitSyncTest {
         assertEquals("line one\nPHONE\nline three\n", conflict.mine)
         assertEquals("line one\nCOMPUTER\nline three\n", conflict.theirs)
 
-        // GitLab still has the computer's version: nothing was pushed or overwritten.
+        // GitHub still has the computer's version: nothing was pushed or overwritten.
         assertEquals("line one\nCOMPUTER\nline three\n", computerPulls("ideas/tyfold.md"))
     }
 

@@ -10,9 +10,9 @@ rationale lives in the docs or ADRs it cites.
 
 ## Current phase: first version in daily use
 
-1. **Use it on the real phone against GitLab** (backlog 2026.09.16).
+1. **Use it on the real phone against GitHub** (backlog 2026.09.16).
    **Gate: no new features before a phone edit has round-tripped to the
-   computer through GitLab.**
+   computer through GitHub.**
 2. **Fix what daily use turns up**, starting with table readability
    (backlog 2026.09.16).
 3. **Search, new notes from templates, health counts** — in the order use

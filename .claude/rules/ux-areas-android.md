@@ -14,7 +14,7 @@ screens are `HomeScreen` (knowledge-base list), `BrowseScreen`
   `KbRow` supporting text swaps abruptly between "Not downloaded
   yet", "Synced", "N edits not synced", and the conflict prompt —
   no `Crossfade`/`animateContentSize` softens the change. Same for
-  the "Add your GitLab token…" card, which appears/disappears
+  the "Add your GitHub token…" card, which appears/disappears
   instantly when `settingsComplete` flips.
 - **No in-progress indicator during sync**: the app-bar sync
   `IconButton` only disables (`enabled = state.canSync`) while

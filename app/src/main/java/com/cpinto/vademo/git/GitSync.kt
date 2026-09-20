@@ -36,7 +36,7 @@ sealed interface LocalState {
     data class Broken(val message: String) : LocalState
 }
 
-/** One conflicting file: its content on this device and on GitLab. `null` means deleted on that side. */
+/** One conflicting file: its content on this device and on GitHub. `null` means deleted on that side. */
 data class ConflictFile(val path: String, val mine: String?, val theirs: String?)
 
 data class Author(val name: String, val email: String)
@@ -115,7 +115,7 @@ class GitSync(
                 }
                 val ident = ident()
                 git.commit().setAuthor(ident).setCommitter(ident)
-                    .setMessage("note: merge phone and GitLab edits to ${names(chosen.keys)}")
+                    .setMessage("note: merge phone and GitHub edits to ${names(chosen.keys)}")
                     .call()
             }
             sync(remoteUrl, dir)
@@ -166,20 +166,20 @@ class GitSync(
             val repo = git.repository
             val branch = repo.branch
             val remote = repo.resolve("refs/remotes/origin/$branch")
-                ?: return SyncOutcome.Failed("GitLab has no branch named $branch")
+                ?: return SyncOutcome.Failed("GitHub has no branch named $branch")
 
             pulled += countCommits(repo, include = remote, exclude = repo.resolve(Constants.HEAD))
             val merge = git.merge()
                 .include(remote)
                 .setFastForward(MergeCommand.FastForwardMode.FF)
-                .setMessage("note: merge GitLab changes into phone edits")
+                .setMessage("note: merge GitHub changes into phone edits")
                 .call()
             when (merge.mergeStatus) {
                 MergeResult.MergeStatus.CONFLICTING ->
                     return SyncOutcome.Conflict(conflictingPaths(git))
                 MergeResult.MergeStatus.FAILED, MergeResult.MergeStatus.ABORTED,
                 MergeResult.MergeStatus.CHECKOUT_CONFLICT, MergeResult.MergeStatus.NOT_SUPPORTED ->
-                    return SyncOutcome.Failed("Could not merge GitLab changes: ${merge.mergeStatus}")
+                    return SyncOutcome.Failed("Could not merge GitHub changes: ${merge.mergeStatus}")
                 else -> Unit
             }
 
@@ -198,10 +198,10 @@ class GitSync(
             // Someone pushed between our fetch and our push: fetch and merge again.
             if (rejected.any { it.status != RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD &&
                     it.status != RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED }) {
-                return SyncOutcome.Failed("GitLab refused the push: ${rejected.joinToString { "${it.status} ${it.message.orEmpty()}" }}")
+                return SyncOutcome.Failed("GitHub refused the push: ${rejected.joinToString { "${it.status} ${it.message.orEmpty()}" }}")
             }
         }
-        return SyncOutcome.Failed("GitLab kept changing during sync; try again")
+        return SyncOutcome.Failed("GitHub kept changing during sync; try again")
     }
 
     private fun conflictingPaths(git: Git): List<String> = git.status().call().conflicting.sorted()

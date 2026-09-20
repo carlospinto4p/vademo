@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-enum class Keep { PHONE, GITLAB, BY_HAND }
+enum class Keep { PHONE, GITHUB, BY_HAND }
 
 data class Choice(val keep: Keep? = null, val handText: String = "")
 
@@ -91,7 +91,7 @@ class ConflictViewModel @Inject constructor(
             val choice = current.choices.getValue(file.path)
             file.path to when (choice.keep) {
                 Keep.PHONE -> file.mine
-                Keep.GITLAB -> file.theirs
+                Keep.GITHUB -> file.theirs
                 Keep.BY_HAND, null -> choice.handText
             }
         }
@@ -128,7 +128,7 @@ fun ConflictScreen(onDone: () -> Unit, viewModel: ConflictViewModel = hiltViewMo
             Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("These notes were changed on this phone and on GitLab since the last sync.")
+            Text("These notes were changed on this phone and on GitHub since the last sync.")
             state.files.forEach { file ->
                 FileChoice(
                     file = file,
@@ -158,9 +158,9 @@ private fun FileChoice(
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(file.path, style = MaterialTheme.typography.titleMedium)
             Version("On this phone", file.mine)
-            Version("On GitLab", file.theirs)
+            Version("On GitHub", file.theirs)
             Option("Keep this phone's version", choice.keep == Keep.PHONE) { onChoose(Keep.PHONE) }
-            Option("Keep GitLab's version", choice.keep == Keep.GITLAB) { onChoose(Keep.GITLAB) }
+            Option("Keep GitHub's version", choice.keep == Keep.GITHUB) { onChoose(Keep.GITHUB) }
             Option("Combine them by hand", choice.keep == Keep.BY_HAND) { onChoose(Keep.BY_HAND) }
             if (choice.keep == Keep.BY_HAND) {
                 OutlinedTextField(

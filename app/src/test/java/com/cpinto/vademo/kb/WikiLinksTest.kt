@@ -54,6 +54,6 @@ class WikiLinksTest {
 
     @Test
     fun `targetOf ignores ordinary urls`() {
-        assertNull(WikiLinks.targetOf("https://gitlab.com"))
+        assertNull(WikiLinks.targetOf("https://github.com"))
     }
 }
