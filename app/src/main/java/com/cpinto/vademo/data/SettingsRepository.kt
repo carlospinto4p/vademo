@@ -3,6 +3,7 @@ package com.cpinto.vademo.data
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -44,6 +45,17 @@ class SettingsRepository @Inject constructor(
 
     suspend fun current(): Settings = settings.first()
 
+    /**
+     * How large note text is drawn, set by pinching a note. Kept apart from
+     * [Settings] so that saving the settings form never resets a reading
+     * preference the form does not show.
+     */
+    suspend fun textScale(): Float = context.dataStore.data.first()[TEXT_SCALE] ?: TextZoom.DEFAULT
+
+    suspend fun saveTextScale(scale: Float) {
+        context.dataStore.edit { prefs -> prefs[TEXT_SCALE] = TextZoom.clamp(scale) }
+    }
+
     suspend fun save(settings: Settings) {
         context.dataStore.edit { prefs ->
             prefs[TOKEN] = if (settings.token.isBlank()) "" else cipher.encrypt(settings.token.trim())
@@ -66,5 +78,6 @@ class SettingsRepository @Inject constructor(
         val AUTHOR_NAME = stringPreferencesKey("author_name")
         val AUTHOR_EMAIL = stringPreferencesKey("author_email")
         val REPOS = stringPreferencesKey("repo_urls")
+        val TEXT_SCALE = floatPreferencesKey("note_text_scale")
     }
 }

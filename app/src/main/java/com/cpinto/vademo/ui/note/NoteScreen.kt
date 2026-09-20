@@ -28,8 +28,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
@@ -37,6 +39,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
+import com.cpinto.vademo.data.SettingsRepository
+import com.cpinto.vademo.data.TextZoom
 import com.cpinto.vademo.kb.Frontmatter
 import com.cpinto.vademo.kb.FrontmatterParser
 import com.cpinto.vademo.kb.WikiLinks
@@ -67,6 +71,7 @@ data class NoteState(
 class NoteViewModel @Inject constructor(
     savedState: SavedStateHandle,
     repository: KbRepository,
+    private val settings: SettingsRepository,
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
@@ -76,8 +81,22 @@ class NoteViewModel @Inject constructor(
     private val _state = MutableStateFlow(NoteState())
     val state: StateFlow<NoteState> = _state
 
+    /** Kept here rather than in the DataStore so a pinch redraws at once. */
+    private val _textScale = MutableStateFlow(TextZoom.DEFAULT)
+    val textScale: StateFlow<Float> = _textScale
+
+    fun zoomBy(factor: Float) {
+        _textScale.value = TextZoom.zoomed(_textScale.value, factor)
+    }
+
+    /** Called when the fingers lift, so a pinch is one write and not sixty. */
+    fun saveTextScale() {
+        viewModelScope.launch { settings.saveTextScale(_textScale.value) }
+    }
+
     fun load() {
         viewModelScope.launch(Dispatchers.IO) {
+            _textScale.value = TextZoom.clamp(settings.textScale())
             val file = kb.fileAt(path)
             if (!file.isFile) {
                 _state.value = NoteState(title = path, missing = true)
@@ -124,6 +143,7 @@ fun NoteScreen(
     viewModel: NoteViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val textScale by viewModel.textScale.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
 
     val snackbar = remember { SnackbarHostState() }
@@ -162,44 +182,58 @@ fun NoteScreen(
             )
         },
     ) { padding ->
-        Column(
-            Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            if (state.missing) {
-                Text("This note no longer exists. It may have been renamed or deleted on GitHub.")
-                return@Column
-            }
-            state.frontmatter?.let { front ->
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOfNotNull(front.type, front.status).plus(front.tags).forEach {
-                        AssistChip(onClick = {}, label = { Text(it) })
+        // Scaling the font scale and not the density reflows the text to the
+        // screen's width, so zooming in never means panning sideways to read
+        // a line. It covers the chips and the date as well as the body.
+        val density = LocalDensity.current
+        val zoomed = remember(density, textScale) {
+            Density(density.density, density.fontScale * textScale)
+        }
+        CompositionLocalProvider(LocalDensity provides zoomed) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .pinchTextZoom(onZoom = viewModel::zoomBy, onZoomEnd = viewModel::saveTextScale)
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (state.missing) {
+                    Text("This note no longer exists. It may have been renamed or deleted on GitHub.")
+                    return@Column
+                }
+                state.frontmatter?.let { front ->
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOfNotNull(front.type, front.status).plus(front.tags).forEach {
+                            AssistChip(onClick = {}, label = { Text(it) })
+                        }
+                    }
+                    front.updated?.let {
+                        Text("Updated $it", style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                front.updated?.let {
-                    Text("Updated $it", style = MaterialTheme.typography.bodySmall)
+                CompositionLocalProvider(LocalUriHandler provides linkHandler) {
+                    // The renderer's default headings use Material's display sizes,
+                    // which put a note title across most of a phone screen.
+                    val type = MaterialTheme.typography
+                    Markdown(
+                        content = state.markdown,
+                        typography = markdownTypography(
+                            h1 = type.headlineSmall,
+                            h2 = type.titleLarge,
+                            h3 = type.titleMedium,
+                            h4 = type.titleSmall,
+                            h5 = type.titleSmall,
+                            h6 = type.titleSmall,
+                        ),
+                        components = markdownComponents(
+                            checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
+                            table = { WrappingTable(it) },
+                        ),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
-            }
-            CompositionLocalProvider(LocalUriHandler provides linkHandler) {
-                // The renderer's default headings use Material's display sizes,
-                // which put a note title across most of a phone screen.
-                val type = MaterialTheme.typography
-                Markdown(
-                    content = state.markdown,
-                    typography = markdownTypography(
-                        h1 = type.headlineSmall,
-                        h2 = type.titleLarge,
-                        h3 = type.titleMedium,
-                        h4 = type.titleSmall,
-                        h5 = type.titleSmall,
-                        h6 = type.titleSmall,
-                    ),
-                    components = markdownComponents(
-                        checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
-                        table = { WrappingTable(it) },
-                    ),
-                    modifier = Modifier.fillMaxWidth(),
-                )
             }
         }
     }

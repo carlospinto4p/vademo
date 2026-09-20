@@ -35,6 +35,13 @@ switching between the two.
    (one HTTPS clone address per line).
 4. Back on the home screen, tap **Sync** to download them.
 
+## Reading a note
+
+Pinch with two fingers to make the text bigger or smaller. The text
+reflows to the width of the screen, so a larger size never means
+scrolling sideways, and the size is kept for every note until it is
+changed again.
+
 ## Syncing
 
 Tap **Sync** to send notes edited on the phone and get changes made

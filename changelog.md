@@ -1,6 +1,27 @@
 ## Changelog - vademo
 
 
+### v0.2.0 - 20th September 2026
+
+- Pinch a note to change how large its text is drawn:
+  - Added `data/TextZoom.kt`: the scale's default and its 0.7–2.5
+    limits, and `zoomed()`/`clamp()` to apply a pinch inside them.
+  - Added `ui/note/PinchTextZoom.kt`: a `Modifier` that reports
+    two-finger pinches and leaves one-finger scrolling alone, rather
+    than `detectTransformGestures`, which would claim the drag that
+    scrolls the note.
+  - `ui/note/NoteScreen.kt`: scales the font scale, not the density,
+    so text reflows to the screen's width instead of running off it;
+    the chips and the `Updated` date scale with the body.
+  - `data/SettingsRepository.kt`: stores the scale under
+    `note_text_scale`, written once per pinch rather than per frame,
+    and kept out of `Settings` so saving the settings form cannot
+    reset it.
+- Added `app/src/test/java/com/cpinto/vademo/data/TextZoomTest.kt`:
+  4 tests for the limits and for nonsense pinch factors.
+- Updated `README.md`: "Reading a note" describes the gesture.
+
+
 ### v0.1.3 - 20th September 2026
 
 - Added `.github/workflows/build-apk.yml`: builds the debug APK on
