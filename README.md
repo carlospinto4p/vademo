@@ -10,6 +10,21 @@ their private GitHub repositories.
 ./gradlew installDebug     # phone connected with USB debugging on
 ```
 
+## Install without a computer
+
+Every push builds the debug APK (`.github/workflows/build-apk.yml`).
+Pushes to `main`, and runs started by hand from the Actions tab, also
+replace the `debug-latest` prerelease, whose asset is a plain `.apk`.
+
+On the phone: open the repository's **Releases**, tap the APK under
+`debug-latest`, and allow the browser to install unknown apps once.
+Any other branch's build is under its run in the **Actions** tab, as a
+zipped artifact.
+
+It is signed with the standard debug key, so it never upgrades a
+release-signed install (and vice versa) — uninstall first when
+switching between the two.
+
 ## First run
 
 1. Open **Settings** (gear icon).

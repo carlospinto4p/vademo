@@ -1,6 +1,23 @@
 ## Changelog - vademo
 
 
+### v0.1.3 - 20th September 2026
+
+- Added `.github/workflows/build-apk.yml`: builds the debug APK on
+  every push to `main` or a `claude/**` branch, and on demand from the
+  Actions tab:
+  - Runs `testDebugUnitTest`, then `assembleDebug` on Temurin 17 with
+    `platforms;android-37` installed (`compileSdk` is 37 and the runner
+    image does not ship it).
+  - Uploads `vademo-<version>-debug.apk` as a workflow artifact.
+  - Replaces the `debug-latest` prerelease on `main` and manual runs,
+    so the phone can download a plain `.apk` from Releases instead of
+    a zipped artifact.
+- Updated `README.md`: "Install without a computer" section — where the
+  APK comes from, and that the debug key never upgrades a
+  release-signed install.
+
+
 ### v0.1.2 - 20th September 2026
 
 - Repointed vademo at GitHub, following the `kb-*`/`sapiary` family's

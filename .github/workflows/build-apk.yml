@@ -1,0 +1,79 @@
+name: Build APK
+
+# Builds the debug APK so it can be installed on a phone without a
+# computer: every run uploads it as a workflow artifact, and runs on
+# main (or started by hand) also replace the `debug-latest` prerelease,
+# whose asset is a plain .apk the phone's browser can download directly.
+
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # compileSdk is 37; the runner image does not ship that platform.
+      - name: Set up the Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-37'
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon testDebugUnitTest
+
+      - name: Build the debug APK
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Name the APK after the version
+        id: apk
+        run: |
+          version=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          name="vademo-${version}-debug.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the APK as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: ${{ steps.apk.outputs.name }}
+          if-no-files-found: error
+
+      # One moving prerelease rather than one per commit: the phone
+      # always downloads the same link and gets the newest build.
+      - name: Publish it as the debug-latest prerelease
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete debug-latest --yes --cleanup-tag || true
+          gh release create debug-latest \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Debug build ${{ steps.apk.outputs.version }}" \
+            --notes "Debug APK built from ${GITHUB_SHA:0:7} on $(date -u +%Y-%m-%d). Signed with the standard debug key: it installs alongside nothing else and will not upgrade a release-signed install." \
+            "${{ steps.apk.outputs.name }}"
