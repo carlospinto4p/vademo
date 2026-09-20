@@ -21,9 +21,12 @@ On the phone: open the repository's **Releases**, tap the APK under
 Any other branch's build is under its run in the **Actions** tab, as a
 zipped artifact.
 
-It is signed with the standard debug key, so it never upgrades a
-release-signed install (and vice versa) — uninstall first when
-switching between the two.
+It is signed with the debug key in `app/debug.keystore`, which is
+committed so that every build — from CI or from this computer — carries
+the same signature and installs over the last one. It still never
+upgrades a release-signed install (or the other way round), and a build
+made before v0.2.2 was signed with a throwaway key, so upgrading from
+one of those needs the app uninstalled once first.
 
 ## First run
 

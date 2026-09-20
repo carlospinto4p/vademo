@@ -80,6 +80,11 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
+      # The phone installs one build over another only while this stays the
+      # same, so it goes in the log of every build.
+      - name: Show which key signed it
+        run: keytool -printcert -jarfile '${{ steps.apk.outputs.name }}' | grep -A 1 'SHA256'
+
       - name: Upload the APK as an artifact
         uses: actions/upload-artifact@v4
         with:

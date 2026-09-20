@@ -32,6 +32,10 @@ obj/
 # Keystore files
 *.jks
 *.keystore
+# …except the debug key, which is committed on purpose: every build has to
+# be signed with the same one or the phone refuses to install one build
+# over another. It signs nothing but debug builds and is not a secret.
+!app/debug.keystore
 
 # Log files
 *.log

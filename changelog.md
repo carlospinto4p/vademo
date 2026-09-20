@@ -1,6 +1,23 @@
 ## Changelog - vademo
 
 
+### v0.2.2 - 20th September 2026
+
+- Fixed every build being signed by a different key, which made the
+  phone refuse to install one over the last one:
+  - Added `app/debug.keystore` and pointed `signingConfigs` in
+    `app/build.gradle.kts` at it. AGP was falling back to
+    `~/.android/debug.keystore`, which a CI runner has to generate
+    fresh on each run.
+  - `.gitignore`: keeps ignoring `*.keystore`, with an exception for
+    that one file.
+  - `.github/workflows/build-apk.yml`: prints the signing certificate's
+    SHA-256 after each build, so a change of key shows up in the log
+    rather than on the phone.
+- Updated `README.md` and `CLAUDE.md`: the committed key, and the one
+  uninstall needed to move off a build made before this version.
+
+
 ### v0.2.1 - 20th September 2026
 
 - Added `docs/kb-views-and-queries.md`: the design for seeing and asking

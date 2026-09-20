@@ -54,3 +54,9 @@ Start the emulator headless so it never takes window focus:
   blocked for that knowledge base until the user chooses.
 - **First download goes to `<name>.downloading` and is renamed when
   complete**, so an interrupted clone never looks like a finished one.
+- **`app/debug.keystore` is committed and `signingConfigs` points at
+  it.** AGP otherwise signs with `~/.android/debug.keystore`, which a CI
+  runner generates fresh every time, so each build came out with a
+  different signature and the phone refused to install it over the
+  previous one. Deleting the file, or the signing config, brings that
+  back. `.gitignore` excludes `*.keystore` with an exception for it.
