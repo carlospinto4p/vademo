@@ -1,7 +1,7 @@
 ---
 name: committing
-description: Git commit conventions, pull-first step, and post-change workflow for this Gradle project
-version: 1.5
+description: Git commit conventions, pull-first step, lock-file handling, and post-change workflow
+version: 1.6
 ---
 
 # Committing Guidelines
@@ -18,6 +18,10 @@ before reading code, planning, or editing — not just before pushing.
 - If the pull brings in commits, re-read anything you had already
   looked at before continuing — your view of the code is stale.
 
+Pulling at the end (just before `git push`) is too late: work built on
+a stale base has to be redone or rebased, and the conflict surfaces
+after the effort is spent rather than before.
+
 ## Concurrent Sessions — Verify Before Every Commit
 
 A second live Claude Code session working the same repo can commit
@@ -31,36 +35,90 @@ there can sweep up this session's uncommitted edits.
 - If your edits were already committed elsewhere, diff to confirm the
   content is identical and do not re-commit or double-bump.
 
+## Concurrent Sessions — Verify Before Every Commit, Not Just After a Broad Add
+
+A second live Claude Code session working the same repo can commit
+independently while this session is mid-task, sweeping up this
+session's uncommitted edits into an unrelated commit if its own
+`git add` is broad (`-A`/`.`) — the content survives, but the fix
+lands under the wrong commit.
+
+- **Run `git status --porcelain` immediately before every `git
+  commit`** — not only right after a broad add. If files you expected
+  to still be uncommitted are missing, check `git log` for a commit
+  you didn't make before proceeding.
+- **Stage by name, never `-A`/`.`** — a session that only stages the
+  files its own task touched cannot accidentally sweep up another
+  session's in-flight edits.
+- If your edits turn out to already be committed elsewhere, diff the
+  committed version against your working tree to confirm it matches,
+  then drop your now-redundant version bump instead of double-shipping.
+
 ## Post-Change Workflow
 
-After completing any task that involves code changes:
+**IMPORTANT**: After completing any task that involves code changes, ALWAYS follow this workflow:
 
-1. **Run the JVM tests**: `./gradlew testDebugUnitTest`. They cover
-   note parsing, links, and git sync against real local repositories.
-2. **Run the device tests when the change touches the app on a device**
-   (screens, navigation, storage, anything JGit does at runtime):
-   `./gradlew connectedDebugAndroidTest` with an emulator or phone
-   connected. Start the emulator headless
-   (`emulator -avd Pixel_8_API_36 -no-window`) so it takes no focus.
-3. **Build**: `./gradlew assembleDebug` must pass.
-4. **Update version and changelog**: follow `versioning.md`. Changes
-   under `.claude/` and `CLAUDE.md` count too.
-5. **Update README.md / CLAUDE.md** when user-facing behaviour or rules
-   change.
-6. **Commit**, then **push**.
+1. **Run tests**: Execute `uv run pytest tests/unit -v` and ensure all tests pass
+2. **Update tests if needed**: If the changes require test updates, fix them before committing
+3. **Update version and changelog**: Follow `versioning.md` rules — config/tooling changes count too (see below).
+4. **Update README.md if needed**: When changes affect user-facing functionality:
+   - New methods or classes: add usage examples
+   - Changed method signatures or behavior: update existing examples
+   - New configuration options: document them
+5. **Update CLAUDE.md if needed**: When rules change or new important patterns emerge
+6. **Sync lock file and reinstall**: Run `uv sync --all-extras` to update `uv.lock`. Only needed when the bump is **code-related** — actual source or dependency changes. For **non-code patch bumps** (`.claude/` config, docs, changelog-only, cross-project rule syncs) skip `uv lock`: the lock file's self-referential `version` drifting by a patch is expected and harmless, and chasing it across many repos is wasted churn. **If `uv.lock` has changed by any route, still commit it** (step 7) — never leave it dirty on disk. Development dependencies are PEP 735 groups, not extras, so there is no `dev` extra to reinstall via `-e ".[dev]"` — a bare `uv sync` restores everything, editable install included.
+7. **Commit changes**: Create a commit with a descriptive message following the format below
+   - **Always include uv.lock** in commits when it has changed
+8. **Push to remote**: Push the changes with `git push`
 
-**Config/tooling changes** (`.claude/`, `CLAUDE.md`): patch bump and
-changelog entry; skip tests if no code changed.
+This workflow is MANDATORY after every prompt that results in code changes.
 
-**Pure tracking changes** (`backlog.md` checkboxes only): commit and
-push, no tests and no version bump.
+**Config/tooling changes** (anything under `.claude/` — rules,
+skills, commands, hooks, `settings.json`, `settings.local.json` —
+and `CLAUDE.md`): still require a patch version bump and changelog
+entry, even when no application code changed. Follow the full
+workflow above (skip tests only if no code changed). This applies
+per project: if a cross-project migration touches N repos'
+`.claude/` files, each repo gets its own patch bump and changelog
+entry.
+
+**Pure tracking changes** (`backlog.md` checkboxes only): commit and push,
+but skip tests and version bump.
+
+**Lock-file-only changes** (`uv.lock` is the entire diff): commit and
+push, but **no version bump and no changelog entry**. Almost always this
+is the lock's self-referential `version` catching up to an already-
+released `pyproject.toml` — bumping would push `pyproject.toml` ahead
+again and recreate the very drift being cleared, so the bump can never
+converge. Commit it as a `chore:` on its own.
+
+The exception is a lock that was **broken or substantively changed** — a
+dependency added, removed, or upgraded, or a bad/missing resolution
+repaired. That is a dependency change, so it takes a patch bump and a
+changelog entry like any other code-related change. The test is whether
+the diff touches anything beyond the `[[package]] name = "<this project>"`
+version line.
 
 ## When to Skip Tests
 
-Skip tests when the staged diff consists only of Markdown
-(`*.md`, `changelog.md`, `README.md`, `CLAUDE.md`), `.claude/` files,
-or a version bump in `app/build.gradle.kts`. If any `.kt`, `.kts`,
-`.xml` or `libs.versions.toml` file is in the diff, run them.
+The default is to run tests (step 1). **Skip tests when the
+staged diff consists exclusively of one or more of**:
+
+- Markdown / docs (`*.md`, `changelog.md`, `README.md`)
+- Version bump in `pyproject.toml`
+- Lock file (`uv.lock`)
+- `.claude/` config files (rules, skills, commands, hooks,
+  `settings.json`, `settings.local.json`)
+- `CLAUDE.md`
+
+If **any** `.py` file is in the diff (including under
+`tests/`), run tests. If the diff mixes a skippable file with
+anything outside the list above, run tests. When in doubt, run
+them — but do not launch a long suite for a one-line markdown
+edit.
+
+The signal is the diff itself, not your intent. Check
+`git status --porcelain` before deciding.
 
 ## Commit Message Format
 
@@ -88,8 +146,43 @@ Use conventional commit style:
 - **Default to subject-only.** Skip the body unless it adds
   something a reader wouldn't get from the subject, the diff,
   and the changelog entry.
+- Reference issues when applicable
 - **One command per Bash call** — never chain git commands with `&&`,
-  `;`, heredocs, or subshells.
-- **Never put a git command in a parallel tool batch.** A hook that
-  rejects one call cancels every other call in the same batch.
-- **Use repeated `-m` flags for commit bodies**, not heredocs.
+  `;`, heredocs, or subshells. Each `git add`, `git commit`,
+  `git push`, etc. must be its own separate Bash call.
+- **Never put a git command in a parallel tool batch.** Send each
+  git operation as the *only* tool call in its message and wait for
+  the result before the next. A `PreToolUse` hook that rejects one
+  call (`exit 2`) cancels every other call queued in the same
+  batch — so a single blocked `git commit` silently discards all
+  the reads/edits bundled with it, and stale results from the
+  cancelled batch get misread as current state. Serial git calls
+  avoid the cascade entirely.
+- **Use repeated `-m` flags for commit bodies**, not heredocs or
+  `$(cat <<EOF …)`. The newline in a heredoc trips the
+  chained-command hook even though the body is legitimate; two
+  `-m` flags (subject, then body) pass cleanly.
+
+## When to Add a Body
+
+A body is warranted only when the *why* is non-obvious and not
+already captured elsewhere — a workaround for a specific bug or
+upstream issue (link it), a hidden constraint that explains an
+unusual choice, or an incident the diff alone won't surface.
+
+Don't write a body that restates the diff, recaps the version, or
+describes a new file/skill/function in prose (the changelog does
+that) — that belongs in a PR description, not here.
+
+If you do add a body, separate it from the subject with a blank line
+and keep it tight — one short paragraph is almost always enough.
+
+## Examples
+
+```
+feat: Add project registry with version tracking
+```
+
+```
+fix: Handle missing changelog in cross-project sync
+```

@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.2.4 - 27th September 2026
+
+- `.claude/rules/committing.md`/`versioning.md`: pulled programme's
+  canonical trim (2026-09-27 context-budget pass) — shorter
+  Concurrent-Sessions wording, one fewer commit-message example, and
+  the stale PEP-735 `uv pip install -e ".[dev]"` wording fixed. No
+  behavior change.
+
+
 ### v0.2.3 - 20th September 2026
 
 - Fixed the signing-fingerprint step added in v0.2.2 failing the build:
