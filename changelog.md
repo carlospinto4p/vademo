@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.2.5 - 28th September 2026
+
+- Added an app icon (the app showed Android's default one): a note page
+  with a small graph of linked notes, cream and amber on navy.
+  - `res/mipmap-anydpi/ic_launcher.xml` and `ic_launcher_round.xml`:
+    adaptive icon, including a `monochrome` layer so the icon follows
+    Android 13+ themed icons.
+  - `res/drawable/ic_launcher_foreground.xml` and
+    `ic_launcher_monochrome.xml`: the vector layers.
+  - `res/values/ic_launcher_background.xml`: the navy background.
+  - `AndroidManifest.xml`: `android:icon` and `android:roundIcon`.
+
+
 ### v0.2.4 - 27th September 2026
 
 - `.claude/rules/committing.md`/`versioning.md`: pulled programme's

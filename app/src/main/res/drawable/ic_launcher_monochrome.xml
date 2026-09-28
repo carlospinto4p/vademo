@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed-icon layer (Android 13+): the foreground as outlines, one colour. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M38,29.5H61.5L72.5,40.5V76Q72.5,78.5 70,78.5H38Q35.5,78.5 35.5,76V32Q35.5,29.5 38,29.5Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineJoin="round"
+        android:strokeWidth="3" />
+    <path
+        android:pathData="M45,50L63,57L50,70Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineJoin="round"
+        android:strokeWidth="2.5" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40.5,50a4.5,4.5 0 1,0 9,0a4.5,4.5 0 1,0 -9,0M45.5,70a4.5,4.5 0 1,0 9,0a4.5,4.5 0 1,0 -9,0M57.5,57a5.5,5.5 0 1,0 11,0a5.5,5.5 0 1,0 -11,0" />
+</vector>
