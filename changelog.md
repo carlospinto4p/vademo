@@ -1,6 +1,14 @@
 ## Changelog - vademo
 
 
+### v0.2.6 - 12th October 2026
+
+- Removed `Read(**/*.conf)` from the deny list in
+  `.claude/settings.json`. It blocked every `.conf` file. The three
+  narrow `.conf` entries in the user-level `~/.claude/settings.json`
+  still apply here.
+
+
 ### v0.2.5 - 28th September 2026
 
 - Added an app icon (the app showed Android's default one): a note page
