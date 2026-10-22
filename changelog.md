@@ -1,6 +1,13 @@
 ## Changelog - vademo
 
 
+### v0.2.7 - 22nd October 2026
+
+- `.claude/rules/committing.md`: synced the trimmed canonical
+  from programme (7.9k to 5.5k characters, same headings and
+  instructions) to cut the instruction text loaded per session.
+
+
 ### v0.2.6 - 12th October 2026
 
 - Removed `Read(**/*.conf)` from the deny list in
