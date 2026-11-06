@@ -1,6 +1,20 @@
 ## Changelog - vademo
 
 
+### v0.3.0 - 6th November 2026
+
+- Changed the default knowledge base to the public example
+  `kb-distributed-systems`, replacing the four private ones:
+  - `data/SettingsRepository.kt`: `DEFAULT_REPOS` holds one address. A
+    phone that has already saved its settings keeps its own list.
+  - `data/KbRepository.kt`: `dirFor` comment uses the new example.
+  - `GitSyncTest.kt`, `ReadAndEditTest.kt`: the temporary folder and the
+    home-screen row are named after the new default.
+- `README.md`, `CLAUDE.md`: describe the app as reading any knowledge base
+  that follows the example's layout, and point at the example's own rules
+  instead of a path on the author's computer.
+
+
 ### v0.2.7 - 22nd October 2026
 
 - `.claude/rules/committing.md`: synced the trimmed canonical

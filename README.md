@@ -1,7 +1,10 @@
 # vademo
 
-Read and edit the `kb-*` knowledge bases on an Android phone, synced with
-their private GitHub repositories.
+Read and edit markdown knowledge bases on an Android phone, synced with
+their GitHub repositories. A knowledge base is a git repository of linked
+notes that follows the layout in
+[kb-distributed-systems](https://github.com/carlospinto4p/kb-distributed-systems),
+which is also the example the app opens by default.
 
 ## Build and install
 
@@ -34,8 +37,9 @@ one of those needs the app uninstalled once first.
 2. Paste a GitHub personal access token with the `repo` scope (classic)
    or `Contents: Read and write` (fine-grained), and the name and email
    to put on commits.
-3. The four knowledge bases are listed already; edit the list if needed
-   (one HTTPS clone address per line).
+3. The example knowledge base, `kb-distributed-systems`, is listed
+   already. Edit the list to use your own (one HTTPS clone address per
+   line).
 4. Back on the home screen, tap **Sync** to download them.
 
 ## Reading a note

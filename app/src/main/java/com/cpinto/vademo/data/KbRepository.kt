@@ -91,7 +91,7 @@ class KbRepository @Inject constructor(
     private fun setState(name: String, state: SyncState) =
         _syncStates.update { it + (name to state) }
 
-    /** `https://github.com/carlospinto4p/kb-business.git` → `files/kb/kb-business`. */
+    /** `https://github.com/carlospinto4p/kb-distributed-systems.git` → `files/kb/kb-distributed-systems`. */
     private fun dirFor(url: String): File =
         File(root, url.trimEnd('/').substringAfterLast('/').removeSuffix(".git"))
 

@@ -2,16 +2,17 @@
 
 ## Project Overview
 
-vademo is an Android app for reading and editing the `kb-*` knowledge
+vademo is an Android app for reading and editing markdown knowledge
 bases on a phone. It keeps a git clone of each one, shows folders and
 notes with their `[[links]]` tappable, lets a note be edited as plain
-text, and syncs with the private GitHub repositories (commit, pull,
-push). When the same lines changed on the phone and on GitHub, sync
-stops and the user chooses what to keep; nothing is overwritten.
+text, and syncs with their GitHub repositories (commit, pull, push).
+When the same lines changed on the phone and on GitHub, sync stops and
+the user chooses what to keep; nothing is overwritten.
 
-The knowledge bases and their conventions live in
-`~/development/knowledge-base/` — read `kb-business/.claude/rules/knowledge-base.md`
-before changing how notes are parsed or linked.
+The example knowledge base is
+`https://github.com/carlospinto4p/kb-distributed-systems`. Its
+conventions are in `.claude/rules/knowledge-base.md` in that repository;
+read them before changing how notes are parsed or linked.
 
 Package: `com.cpinto.vademo`
 

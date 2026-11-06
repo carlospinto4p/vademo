@@ -23,12 +23,9 @@ data class Settings(
         get() = token.isNotBlank() && authorName.isNotBlank() && authorEmail.isNotBlank() && repoUrls.isNotEmpty()
 
     companion object {
-        /** The knowledge bases as of 2026-09-20, all private projects on GitHub. Editable in Settings. */
+        /** The public example knowledge base. Replace or extend it in Settings. */
         val DEFAULT_REPOS = listOf(
-            "https://github.com/carlospinto4p/kb-business.git",
-            "https://github.com/carlospinto4p/kb-youtube-channel.git",
-            "https://github.com/carlospinto4p/kb-investments.git",
-            "https://github.com/carlospinto4p/kb-videogames-market.git",
+            "https://github.com/carlospinto4p/kb-distributed-systems.git",
         )
     }
 }

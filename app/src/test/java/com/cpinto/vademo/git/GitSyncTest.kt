@@ -45,7 +45,7 @@ class GitSyncTest {
             config.setString("branch", "main", "merge", "refs/heads/main")
             config.save()
         }
-        phone = File(tmp, "phone/kb-business")
+        phone = File(tmp, "phone/kb-distributed-systems")
     }
 
     private fun computerEdits(path: String, content: String) {
