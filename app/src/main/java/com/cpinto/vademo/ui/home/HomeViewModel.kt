@@ -18,10 +18,11 @@ import javax.inject.Inject
 data class HomeState(
     val kbs: List<KbInfo> = emptyList(),
     val syncStates: Map<String, SyncState> = emptyMap(),
-    val settingsComplete: Boolean = true,
+    val hasRepos: Boolean = true,
+    val canWrite: Boolean = true,
 ) {
     val canSync: Boolean
-        get() = settingsComplete && syncStates.values.none { it == SyncState.Running }
+        get() = hasRepos && syncStates.values.none { it == SyncState.Running }
 }
 
 @HiltViewModel
@@ -34,7 +35,7 @@ class HomeViewModel @Inject constructor(
 
     val state: StateFlow<HomeState> =
         combine(kbs, repository.syncStates, settings.settings) { kbs, syncStates, current ->
-            HomeState(kbs, syncStates, current.isComplete)
+            HomeState(kbs, syncStates, current.canSync, current.canWrite)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
 
     fun refresh() {

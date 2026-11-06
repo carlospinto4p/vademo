@@ -33,14 +33,15 @@ one of those needs the app uninstalled once first.
 
 ## First run
 
-1. Open **Settings** (gear icon).
-2. Paste a GitHub personal access token with the `repo` scope (classic)
+1. Tap **Sync** on the home screen. The example knowledge base,
+   `kb-distributed-systems`, is public, so it downloads with no setup.
+2. To use your own, open **Settings** (gear icon) and edit the list (one
+   HTTPS clone address per line).
+3. For a private repository, or to send your edits back to GitHub, also
+   paste a GitHub personal access token with the `repo` scope (classic)
    or `Contents: Read and write` (fine-grained), and the name and email
-   to put on commits.
-3. The example knowledge base, `kb-distributed-systems`, is listed
-   already. Edit the list to use your own (one HTTPS clone address per
-   line).
-4. Back on the home screen, tap **Sync** to download them.
+   to put on commits. Without a name and email, an edit stays on the
+   phone and sync tells you what is missing.
 
 ## Reading a note
 

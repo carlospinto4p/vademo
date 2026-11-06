@@ -61,11 +61,14 @@ fun HomeScreen(
         },
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
-            if (!state.settingsComplete) {
+            if (!state.canWrite) {
                 item {
                     Card(Modifier.fillMaxWidth().padding(16.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Add your GitHub token, name and email to sync.")
+                            Text(
+                                "Public knowledge bases sync without setup. To sync a private one, " +
+                                    "or to send your edits to GitHub, add a GitHub token, name and email.",
+                            )
                             Button(onClick = onSettings) { Text("Open settings") }
                         }
                     }

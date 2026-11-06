@@ -19,8 +19,13 @@ data class Settings(
     val authorEmail: String,
     val repoUrls: List<String>,
 ) {
-    val isComplete: Boolean
-        get() = token.isNotBlank() && authorName.isNotBlank() && authorEmail.isNotBlank() && repoUrls.isNotEmpty()
+    /** Downloading a public knowledge base needs only an address to clone. */
+    val canSync: Boolean
+        get() = repoUrls.isNotEmpty()
+
+    /** Private repositories, and sending edits back, also need a token and who to commit as. */
+    val canWrite: Boolean
+        get() = token.isNotBlank() && authorName.isNotBlank() && authorEmail.isNotBlank()
 
     companion object {
         /** The public example knowledge base. Replace or extend it in Settings. */

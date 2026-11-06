@@ -1,6 +1,28 @@
 ## Changelog - vademo
 
 
+### v0.4.0 - 7th November 2026
+
+- A public knowledge base now syncs with no token, name or email. Only
+  private repositories, and sending edits back, still need them:
+  - `data/SettingsRepository.kt`: `Settings.isComplete` split into
+    `canSync` (an address to clone) and `canWrite` (token, name and email).
+  - `git/GitSync.kt`: an edit made with a blank name or email is refused
+    with "Add your name and email in Settings to send your edits", before
+    anything is staged, instead of being committed under an empty identity.
+  - `ui/home/HomeViewModel.kt`, `ui/home/HomeScreen.kt`: the Sync button
+    needs only a repository address; the banner became a hint about when
+    setup is needed.
+  - `ui/settings/SettingsScreen.kt`: the token, name and email fields say
+    when they are needed.
+- Added tests:
+  - `data/SettingsTest.kt`: 3 tests for `canSync` and `canWrite`.
+  - `git/GitSyncTest.kt`: a reader with no credentials downloads and
+    pulls; an edit without a name and email is refused and stays
+    uncommitted.
+- `README.md`: first run starts with Sync and lists the setup as optional.
+
+
 ### v0.3.1 - 6th November 2026
 
 - Added `LICENSE` (MIT) and a Licence section in `README.md`.

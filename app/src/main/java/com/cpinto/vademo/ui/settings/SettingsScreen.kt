@@ -113,7 +113,12 @@ fun SettingsScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 value = form.token,
                 onValueChange = { v -> viewModel.update { it.copy(token = v) } },
                 label = { Text("GitHub access token") },
-                supportingText = { Text("Needs the repo scope (classic) or Contents: Read and write (fine-grained).") },
+                supportingText = {
+                    Text(
+                        "Only for private repositories and for sending edits. Needs the repo scope " +
+                            "(classic) or Contents: Read and write (fine-grained).",
+                    )
+                },
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 singleLine = true,
@@ -123,6 +128,7 @@ fun SettingsScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 value = form.authorName,
                 onValueChange = { v -> viewModel.update { it.copy(authorName = v) } },
                 label = { Text("Name on commits") },
+                supportingText = { Text("Needed to send edits.") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )

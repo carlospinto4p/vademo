@@ -82,6 +82,31 @@ class GitSyncTest {
     }
 
     @Test
+    fun `a reader with no name, email or token still downloads and pulls`() {
+        val reader = GitSync(credentials = null, author = Author("", ""))
+        assertEquals(SyncOutcome.Synced(cloned = true), reader.sync(remoteUrl, phone))
+
+        computerEdits("ideas/tyfold.md", "changed on computer\n")
+        val outcome = reader.sync(remoteUrl, phone) as SyncOutcome.Synced
+        assertEquals(1, outcome.pulled)
+        assertEquals("changed on computer\n", File(phone, "ideas/tyfold.md").readText())
+    }
+
+    @Test
+    fun `an edit without a name and email is refused, not committed under a made-up identity`() {
+        val reader = GitSync(credentials = null, author = Author("", ""))
+        reader.sync(remoteUrl, phone)
+        File(phone, "ideas/tyfold.md").writeText("edited on phone\n")
+
+        val outcome = reader.sync(remoteUrl, phone)
+
+        assertInstanceOf(SyncOutcome.Failed::class.java, outcome)
+        assertTrue((outcome as SyncOutcome.Failed).message.contains("name and email"), outcome.message)
+        assertEquals(listOf("ideas/tyfold.md"), reader.localChanges(phone))
+        assertEquals("line one\nline two\nline three\n", computerPulls("ideas/tyfold.md"))
+    }
+
+    @Test
     fun `sync commits a phone edit and pushes it`() {
         sync.sync(remoteUrl, phone)
         File(phone, "ideas/tyfold.md").writeText("edited on phone\n")
