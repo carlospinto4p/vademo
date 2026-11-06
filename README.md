@@ -62,3 +62,7 @@ phone's version, GitHub's, or combine them by hand.
 ./gradlew testDebugUnitTest          # on this computer
 ./gradlew connectedDebugAndroidTest  # on an emulator or phone
 ```
+
+## Licence
+
+MIT, see [`LICENSE`](LICENSE).

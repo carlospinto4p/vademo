@@ -44,7 +44,7 @@ flat with the path inline.
 ```markdown
 ### vX.Y.Z - DDth Month YYYY
 
-- Added `src/programme/release.py`:
+- Added `src/app/release.py`:
   - `BumpResult`: dataclass.
   - `Bumper`: base class.
   - `PythonBumper`, `KotlinBumper`, `NoneBumper`: language handlers.

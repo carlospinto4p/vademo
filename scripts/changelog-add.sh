@@ -90,8 +90,8 @@ fi
 # explicitly, the default './changelog.md' is CWD-relative, so invoking the
 # script by its own absolute path from a different repo's shell silently
 # targets that other repo's changelog (see .claude/rules/changelog-entries.md
-# — this bit programme itself on 2026-07-23, writing a reignhood entry into
-# programme's own changelog.md). Cross-check: the changelog's directory must
+# — this has happened: one project's entry was written into another
+# project's changelog.md). Cross-check: the changelog's directory must
 # hold a manifest whose version already equals <version> — the normal
 # workflow bumps the manifest before adding the changelog entry, so this
 # holds whenever the script targets the intended repo.
@@ -156,7 +156,7 @@ fi
 hdr_line="$(grep -nE '^### ' "$file" | head -1 | cut -d: -f1 || true)"
 
 # The gap under the new entry copies the one the file already leaves above its
-# second entry header: two blank lines in most projects, one in tyfold's. A
+# second entry header: two blank lines in most projects, one in some. A
 # fixed count broke one side or the other (v4.152.3 hard-coded one). With no
 # second entry to measure, use two, as versioning.md asks.
 gap=2

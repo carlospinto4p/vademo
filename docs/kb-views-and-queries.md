@@ -4,7 +4,7 @@ vademo shows a knowledge base the way the file system holds it: folders,
 then notes, then one note's text. That is one projection of the notes, and
 the least informative one on a phone. The notes already carry more
 structure than the folder tree shows — `type`, `status`, `tags`, `updated`
-and 437 `[[links]]` in `kb-business` alone — and none of it is reachable
+and 437 `[[links]]` in the largest one alone — and none of it is reachable
 today except by reading.
 
 This is the design for the rest: what a knowledge base looks like when it
@@ -12,11 +12,16 @@ is not being read note by note, and what can be asked of it.
 
 ## What the corpus actually is
 
-Measured on `kb-business`, 2026-09-20: 86 notes, 516 KB of markdown, 437
-wiki links. Of the notes, 47 are `type: source`, 12 `question`, 7 `hub`, 7
-`concept`, 6 `case-study`, 1 `idea`; 80 are `status: draft`; 8 carry an
-`(unverified)` marker. The four knowledge bases together are a couple of
-megabytes.
+Measured on the largest knowledge base, 2026-09-20: 86 notes, 516 KB of
+markdown, 437 wiki links. Of the notes, 47 are `type: source`, 12
+`question`, 7 `hub`, 7 `concept`, 6 `case-study`, 1 `idea`; 80 are
+`status: draft`; 8 carry an `(unverified)` marker. All the knowledge bases
+together are a couple of megabytes.
+
+The public example, `kb-distributed-systems`, measured on 2026-11-06: 28
+notes, 38 KB, 186 wiki links; 9 `concept`, 8 `source`, 5 `hub`, 2
+`algorithm`, 2 `system`, 2 `question`; all `status: draft`; 1 carries an
+`(unverified)` marker.
 
 Two consequences, and they decide most of the design:
 
@@ -25,7 +30,8 @@ Two consequences, and they decide most of the design:
   on a phone. An index is built in memory when a knowledge base is opened
   and thrown away when it is not needed, which keeps the roadmap's
   invariant that the app holds no second copy of the notes.
-- **Sources dominate.** More than half of `kb-business` is `sources/`.
+- **Sources dominate.** More than half of the largest knowledge base is
+  `sources/`.
   Any view that mixes them with the thinking notes is mostly a list of
   other people's articles, so type is not a nice-to-have facet — it is
   what makes the list readable at all.
@@ -55,23 +61,24 @@ index rather than a single folder list:
   answers "what changed", which is the question after every sync, and it
   is the one most worth opening on a phone.
 - **Types** — grouped by `type`, sources collapsed into one row. Turns
-  86 notes into 6 groups, of which 5 are the ones you think with.
+  the largest knowledge base's 86 notes into 6 groups, of which 5 are the
+  ones you think with.
 - **Tags** — every tag with its count; tapping one lists its notes.
-- **Health** — the numbers the `sapiary` dashboard shows, per knowledge
-  base: orphans, links that resolve to nothing, `(unverified)` figures,
+- **Health** — the numbers a knowledge-base dashboard would show, per
+  knowledge base: orphans, links that resolve to nothing, `(unverified)` figures,
   open questions, items waiting in `inbox/`. Each is a row that opens the
   list behind it, so a number is never a dead end.
 
 ## Queries
 
 One search field, reachable from anywhere, searching one knowledge base or
-all four. Free text matches title, headings and body, ranked in that
+all of them. Free text matches title, headings and body, ranked in that
 order. Filters are the frontmatter, not an invented vocabulary:
 
 ```
-type:question status:draft tag:monetization
-updated:>2026-09-01 kb:business
-links:cpm-by-niche      # notes linking to that note
+type:question status:draft tag:consistency
+updated:>2026-09-01 kb:distributed-systems
+links:quorum            # notes linking to that note
 is:orphan               # nothing links to it
 is:unverified           # has an (unverified) marker
 ```

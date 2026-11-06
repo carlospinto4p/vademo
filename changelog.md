@@ -1,6 +1,20 @@
 ## Changelog - vademo
 
 
+### v0.3.1 - 6th November 2026
+
+- Added `LICENSE` (MIT) and a Licence section in `README.md`.
+- Removed the names of private projects and knowledge bases, ahead of
+  making the repository public:
+  - `docs/kb-views-and-queries.md`: the measurements of the largest
+    knowledge base stay as numbers without its name, and the measurements
+    of the public example `kb-distributed-systems` are added beside them
+    (28 notes, 38 KB, 186 links). The filter examples use that example.
+  - `backlog.md`, `changelog.md`, `scripts/changelog-add.sh`,
+    `.claude/rules/versioning.md`: private project names replaced by
+    plain descriptions.
+
+
 ### v0.3.0 - 6th November 2026
 
 - Changed the default knowledge base to the public example
@@ -18,7 +32,7 @@
 ### v0.2.7 - 22nd October 2026
 
 - `.claude/rules/committing.md`: synced the trimmed canonical
-  from programme (7.9k to 5.5k characters, same headings and
+  from the shared source (7.9k to 5.5k characters, same headings and
   instructions) to cut the instruction text loaded per session.
 
 
@@ -45,7 +59,7 @@
 
 ### v0.2.4 - 27th September 2026
 
-- `.claude/rules/committing.md`/`versioning.md`: pulled programme's
+- `.claude/rules/committing.md`/`versioning.md`: pulled the shared
   canonical trim (2026-09-27 context-budget pass) — shorter
   Concurrent-Sessions wording, one fewer commit-message example, and
   the stale PEP-735 `uv pip install -e ".[dev]"` wording fixed. No
@@ -85,7 +99,7 @@
   in-memory `NoteIndex`, the Folders/Recent/Types/Tags/Health views, one
   search field with frontmatter filters and saved queries, backlinks on
   a note, and what is deliberately left out (a graph view, a query
-  language, a disk cache). Measured against `kb-business`: 86 notes,
+  language, a disk cache). Measured against the largest knowledge base: 86 notes,
   516 KB, 437 links, 47 of them sources.
 - Updated `roadmap.md` and `backlog.md`: step 3 now cites that design,
   and the 2026.09.20 section itemises it in dependency order.
@@ -133,7 +147,7 @@
 
 ### v0.1.2 - 20th September 2026
 
-- Repointed vademo at GitHub, following the `kb-*`/`sapiary` family's
+- Repointed vademo at GitHub, following the knowledge bases'
   migration off GitLab to private GitHub repos (`carlospinto4p`):
   - `data/SettingsRepository.kt`: `DEFAULT_REPOS` now lists the four
     `kb-*` repos' `github.com` clone URLs; the stored-token preference
