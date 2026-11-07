@@ -25,8 +25,23 @@ Package: `com.cpinto.vademo`
 ./gradlew installDebug               # install on a connected device
 ```
 
-Start the emulator headless so it never takes window focus:
-`~/Android/Sdk/emulator/emulator -avd Pixel_8_API_36 -no-window -no-audio`.
+Start the emulator headless so it never takes window focus, drawing on
+the real graphics card:
+`~/Android/Sdk/emulator/emulator -avd Pixel_8_API_36 -no-window -no-audio -gpu host`.
+
+Without `-gpu host` it crashes with a segmentation fault (exit 139) once
+Android draws its first frames (found 2026-11-07, Fedora 44). Headless,
+it falls back to the software renderer (SwiftShader), which runs the code
+it generates from heap memory, and SELinux forbids that by default
+(`selinuxuser_execheap` is off). `-gpu swiftshader_indirect` and
+`-gpu guest` crash the same way.
+
+For README screenshots, Android's demo mode gives a clean status bar:
+`adb shell settings put global sysui_demo_allowed 1`, then
+`adb shell am broadcast -a com.android.systemui.demo -e command enter`
+(plus `clock -e hhmm 1000`, `notifications -e visible false`,
+`battery -e level 100 -e plugged false`,
+`network -e wifi show -e level 4 -e fully true`).
 
 ## Build Configuration
 

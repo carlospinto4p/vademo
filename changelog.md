@@ -1,6 +1,14 @@
 ## Changelog - vademo
 
 
+### v0.4.2 - 7th November 2026
+
+- `CLAUDE.md`: the headless emulator command adds `-gpu host`. Without
+  it the emulator crashes as soon as Android draws, because its software
+  renderer runs code from heap memory and SELinux blocks that. Also notes
+  how to turn on Android's demo mode for screenshots.
+
+
 ### v0.4.1 - 7th November 2026
 
 - `README.md`: three screenshots under the introduction (the example
