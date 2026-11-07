@@ -1,6 +1,13 @@
 ## Changelog - vademo
 
 
+### v0.4.1 - 7th November 2026
+
+- `README.md`: three screenshots under the introduction (the example
+  knowledge base after Sync, a note, and the editor), taken on the
+  `Pixel_8_API_36` emulator and kept in `docs/screenshots/`.
+
+
 ### v0.4.0 - 7th November 2026
 
 - A public knowledge base now syncs with no token, name or email. Only

@@ -6,6 +6,15 @@ notes that follows the layout in
 [kb-distributed-systems](https://github.com/carlospinto4p/kb-distributed-systems),
 which is also the example the app opens by default.
 
+<p>
+  <img src="docs/screenshots/knowledge-base.png" width="260"
+       alt="The example knowledge base after Sync: its hub note and its folders, with the number of notes in each">
+  <img src="docs/screenshots/note.png" width="260"
+       alt="The hub note shown as formatted text, with its type and status as chips and its links underlined">
+  <img src="docs/screenshots/edit.png" width="260"
+       alt="The same note open for editing, as plain markdown with its front matter">
+</p>
+
 ## Build and install
 
 ```bash
