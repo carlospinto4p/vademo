@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.20.13 - 16th November 2026
+
+- Removed the Actions cache of the compileSdk 37 platform from
+  `.github/workflows/build-apk.yml`, added in v0.20.12. The ubuntu-26.04
+  runner image already ships the platform, so the cache held 350 MB to
+  restore on every run and saved nothing. The install step now says the
+  platform is already installed instead of claiming a cache restore.
+
+
 ### v0.20.12 - 16th November 2026
 
 - Fixed work repeated on every recomposition:

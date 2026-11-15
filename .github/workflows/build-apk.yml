@@ -42,27 +42,22 @@ jobs:
         with:
           packages: ''
 
-      # compileSdk is 37 and the runner image does not ship that platform.
-      # Platforms are published per minor version now (36.1, 37.0, 37.1…),
+      # compileSdk is 37. The ubuntu-26.04 image ships that platform; older
+      # images did not, so it is still installed when missing. Platforms are published per minor version now (36.1, 37.0, 37.1…),
       # so `platforms;android-37` does not exist: `compileSdk = 37` with no
       # `compileSdkMinor` means 37.0. Both names are tried, across every
       # channel (0 stable, 1 beta, 2 dev, 3 canary), and if none resolves
       # the platforms that do exist are printed instead of failing later
       # inside Gradle with a vaguer message.
-      # The platform download is the same on every run, so it is kept
-      # between runs. Bump the key's last part to download it afresh.
-      - name: Restore the compileSdk platform
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.ANDROID_HOME }}/platforms/android-37*
-          key: android-platform-37-v1
-
+      # Not cached with actions/cache: the ubuntu-26.04 image already ships
+      # it (seen 2026-11-16), and the cache came to 350 MB to restore on
+      # every run for nothing.
       - name: Install the compileSdk platform
         run: |
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           sdkmanager 'platform-tools'
           if ls -d "$ANDROID_HOME"/platforms/android-37* >/dev/null 2>&1; then
-            echo "compileSdk platform restored from the cache"
+            echo "compileSdk platform already installed on the runner"
             exit 0
           fi
           for package in 'platforms;android-37.0' 'platforms;android-37'; do
