@@ -1,6 +1,16 @@
 ## Changelog - vademo
 
 
+### v0.16.0 - 15th November 2026
+
+- The type, status and tag chips at the top of a note now do something:
+  tapping one opens search in that knowledge base with the matching
+  filter (`type:`, `status:` or `tag:`), listing the notes that share it.
+- Removed the "decorative chips" item from
+  `.claude/rules/ux-areas-android.md`, which this settles.
+- Added `ReadAndEditTest.aNoteTypeChipListsTheNotesOfThatType`.
+
+
 ### v0.15.0 - 15th November 2026
 
 - A knowledge base's top screen has four tabs: Folders (as before),

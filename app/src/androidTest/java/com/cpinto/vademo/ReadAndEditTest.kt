@@ -197,6 +197,23 @@ class ReadAndEditTest {
     }
 
     @Test
+    fun aNoteTypeChipListsTheNotesOfThatType() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+        // The type chip, labelled with the type alone.
+        compose.onNodeWithText("idea").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("kb:distributed-systems type:idea")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Tyfold desktop app").assertIsDisplayed()
+        compose.onNodeWithText("Business idea scorecard").assertDoesNotExist()
+    }
+
+    @Test
     fun searchFromTheHomeScreenAndOpenANote() {
         compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Back").performClick()

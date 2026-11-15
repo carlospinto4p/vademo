@@ -116,6 +116,7 @@ fun VademoNavHost() {
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
                 onEdit = { kb, path -> nav.navigate(Routes.edit(kb, path)) },
                 onOpenDiagram = { kb, name -> nav.navigate(Routes.diagram(kb, name)) },
+                onSearch = { kb, filters -> nav.navigate(Routes.searchIn(kb, filters)) },
             )
         }
         composable(Routes.EDIT, arguments = kbArgs) {

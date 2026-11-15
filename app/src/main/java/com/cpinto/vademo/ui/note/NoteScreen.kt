@@ -171,6 +171,7 @@ fun NoteScreen(
     onOpenNote: (kb: String, path: String) -> Unit,
     onEdit: (kb: String, path: String) -> Unit,
     onOpenDiagram: (kb: String, name: String) -> Unit,
+    onSearch: (kb: String, filters: String) -> Unit,
     viewModel: NoteViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -237,9 +238,14 @@ fun NoteScreen(
                     return@Column
                 }
                 state.frontmatter?.let { front ->
+                    // Each chip searches this knowledge base for the notes sharing it.
+                    val filters = listOfNotNull(
+                        front.type?.let { it to "type:$it" },
+                        front.status?.let { it to "status:$it" },
+                    ) + front.tags.map { it to "tag:$it" }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOfNotNull(front.type, front.status).plus(front.tags).forEach {
-                            AssistChip(onClick = {}, label = { Text(it) })
+                        filters.forEach { (label, filter) ->
+                            AssistChip(onClick = { onSearch(viewModel.kbName, filter) }, label = { Text(label) })
                         }
                     }
                     front.updated?.let {

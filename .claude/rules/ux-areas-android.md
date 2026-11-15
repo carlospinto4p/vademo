@@ -33,12 +33,6 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
   → Note → Edit are plain pushes with the default abrupt swap; no
   shared-element or slide transition marks the drill-down/back
   relationship between a folder and its contents.
-- **Decorative chips that look tappable**: `NoteScreen`'s
-  frontmatter `AssistChip`s (type, status, tags) have an empty
-  `onClick = {}` — they render with a ripple but do nothing. Either
-  give them a real action (e.g. filter notes by tag) or render them
-  as plain, non-interactive labels so they stop implying a tap does
-  something.
 - **Broken-link feedback is text-only**: tapping a `[[wiki-link]]`
   to a missing note shows a Snackbar ("No note named X") with no
   haptic — easy to miss on a fast tap-and-move-on. A missing-note

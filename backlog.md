@@ -52,9 +52,6 @@ v0.9.0 (export). What is left is checking each on a phone.
 From `docs/kb-views-and-queries.md`, which has the reasoning and the
 measurements behind these. In order — each needs the one before it.
 
-- [ ] **Make the note's chips run a query** instead of `onClick = {}`,
-  which also closes the decorative-chips item in
-  `.claude/rules/ux-areas-android.md`. Effort: Small.
 - [ ] **Health view per knowledge base**: orphans, broken links,
   `(unverified)` figures, open questions, waiting inbox items — each row
   opening the list behind the number. Effort: Medium.

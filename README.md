@@ -68,7 +68,8 @@ scrolling sideways, and the size is kept for every note until it is
 changed again.
 
 Under the text, "Linked from" lists the notes that link to this one. Tap
-one to open it.
+one to open it. Tap the type, status or a tag at the top of a note to
+search for the other notes that share it.
 
 ## Search
 
