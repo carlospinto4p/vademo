@@ -1,5 +1,7 @@
 package com.cpinto.vademo.ui.diagram
 
+import com.cpinto.vademo.ui.BackForward
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -29,7 +31,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Close
@@ -235,11 +236,7 @@ private fun MainBar(
     var menu by remember { mutableStateOf(false) }
     TopAppBar(
         title = { Text(state.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        navigationIcon = {
-            IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-            }
-        },
+        navigationIcon = { BackForward(onBack) },
         actions = {
             val diagram = state.diagram ?: return@TopAppBar
             val editable = state.editable

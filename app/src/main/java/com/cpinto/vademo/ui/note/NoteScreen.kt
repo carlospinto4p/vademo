@@ -1,5 +1,7 @@
 package com.cpinto.vademo.ui.note
 
+import com.cpinto.vademo.ui.BackForward
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -177,11 +178,7 @@ fun NoteScreen(
         topBar = {
             TopAppBar(
                 title = { Text(state.title, maxLines = 1) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                navigationIcon = { BackForward(onBack) },
                 actions = {
                     if (!state.missing) {
                         IconButton(onClick = { onEdit(viewModel.kbName, viewModel.path) }) {

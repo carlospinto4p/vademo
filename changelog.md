@@ -1,6 +1,21 @@
 ## Changelog - vademo
 
 
+### v0.20.0 - 15th November 2026
+
+- Back and Forward, as in a browser. Next to the back arrow on a note, a
+  folder, search, the map of notes, the diagram list and a diagram there
+  is now a Forward arrow. After going back, Forward opens again the screen
+  just left, step by step; opening anything new forgets the way forward.
+  The editor, settings and the conflict screen are never reopened by it.
+- Added `ui/NavHistory.kt`: `NavHistory`, which follows the screen on top
+  to tell a step back from a step somewhere new, and `BackForward`, the
+  pair of buttons each of those screens now uses.
+- Added tests:
+  - `NavHistoryTest`: 7 tests.
+  - `ReadAndEditTest.goBackThenForwardAgain`.
+
+
 ### v0.19.0 - 15th November 2026
 
 - New note. Inside a folder, a New note button starts a note from one of

@@ -2,6 +2,8 @@ package com.cpinto.vademo
 
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
@@ -188,6 +190,40 @@ class ReadAndEditTest {
             compose.onAllNodes(hasText("Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
         }
         assertTrue(!File(kb, "ideas/scratch.md").exists())
+    }
+
+    @Test
+    fun goBackThenForwardAgain() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Forward").assertIsNotEnabled()
+
+        // From a note, by a link, then back and forward.
+        compose.onNodeWithText("the scorecard").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Seven criteria.")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Forward").assertIsEnabled().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Seven criteria.")).fetchSemanticsNodes().isNotEmpty() }
+
+        // From a note to the diagram it embeds, back to the note, forward to the diagram.
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNode(hasContentDescription("Diagram: How an idea is scored")).performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("scored by")).fetchSemanticsNodes().isNotEmpty() }
+        // Opening something new forgot the scorecard as the way forward.
+        compose.onNodeWithContentDescription("Forward").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Forward").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("scored by")).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test

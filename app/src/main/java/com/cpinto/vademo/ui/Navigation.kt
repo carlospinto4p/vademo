@@ -2,6 +2,11 @@ package com.cpinto.vademo.ui
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -56,9 +61,32 @@ private val kbArgs = listOf(
     navArgument("path") { type = NavType.StringType; defaultValue = "" },
 )
 
+/** Screens Forward may reopen. The editor, settings and conflicts are steps, not places. */
+private val PLACES = setOf(Routes.BROWSE, Routes.NOTE, Routes.GRAPH, Routes.DIAGRAMS, Routes.DIAGRAM, Routes.SEARCH)
+
+/** The route that opens [entry] again, its pattern with each `{argument}` filled in. */
+private fun routeOf(entry: NavBackStackEntry): String =
+    Regex("""\{(\w+)\}""").replace(entry.destination.route.orEmpty()) {
+        Uri.encode(entry.arguments?.getString(it.groupValues[1]).orEmpty())
+    }
+
 @Composable
 fun VademoNavHost() {
     val nav = rememberNavController()
+    val history = remember { NavHistory() }
+    history.open = { nav.navigate(it) }
+    LaunchedEffect(nav) {
+        nav.currentBackStackEntryFlow.collect { entry ->
+            history.onTop(entry.id, routeOf(entry), entry.destination.route in PLACES)
+        }
+    }
+    CompositionLocalProvider(LocalNavHistory provides history) {
+        AppNavHost(nav)
+    }
+}
+
+@Composable
+private fun AppNavHost(nav: NavHostController) {
     NavHost(navController = nav, startDestination = Routes.HOME) {
         composable(Routes.HOME) {
             HomeScreen(

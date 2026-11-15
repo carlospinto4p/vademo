@@ -1,5 +1,7 @@
 package com.cpinto.vademo.ui.browse
 
+import com.cpinto.vademo.ui.BackForward
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
@@ -187,11 +188,7 @@ fun BrowseScreen(
         topBar = {
             TopAppBar(
                 title = { Text(state.title) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+                navigationIcon = { BackForward(onBack) },
                 actions = {
                     IconButton(onClick = { onSearch(viewModel.kbName, "") }) {
                         Icon(Icons.Filled.Search, contentDescription = "Search")

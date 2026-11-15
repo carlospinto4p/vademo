@@ -79,6 +79,10 @@ search for the other notes that share it.
 A table sizes its columns by their content: short columns keep their
 width and long ones wrap to fill the rest of the screen.
 
+The two arrows at the top left work as in a browser. Back returns to
+where you came from, whether a note, a diagram, search or a folder.
+After going back, Forward opens again what you just left.
+
 ## Writing a new note
 
 Inside a folder, New note starts a note from one of the knowledge base's
