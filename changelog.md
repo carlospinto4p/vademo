@@ -1,6 +1,23 @@
 ## Changelog - vademo
 
 
+### v0.18.1 - 15th November 2026
+
+- A table in a note sizes its columns by their content. The renderer gave
+  every column the same width, so a long Reason column beside a one-digit
+  Score came out tall and narrow. Now each column is measured, short ones
+  keep their natural width, and the long ones share what is left, wrapping
+  inside the screen. The table scrolls sideways only when its longest
+  words do not fit.
+- Added `ui/note/NoteTable.kt`, replacing the renderer's table, and
+  `ui/note/TableColumns.kt` with `columnWidths()`, which shares the width
+  out.
+- Added tests:
+  - `TableColumnsTest`: 7 tests.
+  - `ReadAndEditTest.aTableGivesItsLongColumnTheWidth`, which fails on the
+    old equal-width table.
+
+
 ### v0.18.0 - 15th November 2026
 
 - Saved searches. Before anything is typed, the search screen lists them:

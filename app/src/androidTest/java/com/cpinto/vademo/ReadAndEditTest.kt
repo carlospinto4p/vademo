@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
@@ -105,6 +106,32 @@ class ReadAndEditTest {
         assertTrue(saved, saved.contains("Eight criteria now."))
         // Saving refreshes the note's updated date, per the knowledge-base convention.
         assertTrue(saved, !saved.contains("updated: 2026-01-01"))
+    }
+
+    @Test
+    fun aTableGivesItsLongColumnTheWidth() {
+        val reasons = "Plenty of people already pay for something close to this, and the " +
+            "cost of building a first version is a few weekends of work at most."
+        write(
+            "ideas/scores.md",
+            note("Scores", "concept", "| Criterion | Score | Reasons |\n|---|---|---|\n| Demand | four | $reasons |\n"),
+        )
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Scores").performClick()
+        // A cell's text keeps the spaces around it in the markdown.
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Demand", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        val score = compose.onNodeWithText("four", substring = true).fetchSemanticsNode().boundsInRoot
+        val reason = compose.onNodeWithText(reasons, substring = true).fetchSemanticsNode().boundsInRoot
+        val screen = compose.onRoot().fetchSemanticsNode().boundsInRoot
+        // The reasons wrap inside the screen instead of running off it. Equal
+        // columns left their text less than a third of the screen, padding
+        // taken off; sized by content they get more.
+        assertTrue("reasons $reason, screen $screen", reason.right <= screen.right)
+        assertTrue("reasons $reason, screen $screen", reason.width > screen.width / 3)
+        assertTrue("score $score, reasons $reason", score.right < reason.left)
     }
 
     @Test

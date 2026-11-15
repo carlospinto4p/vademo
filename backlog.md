@@ -60,11 +60,6 @@ v0.9.0 (export). What is left is checking each on a phone.
 
 ### 2026.09.16 (first version)
 
-- [ ] **Size table columns by their content.** The markdown renderer gives
-  every column the same width, so a long reasons column (a scorecard note
-  in the largest knowledge base) becomes tall and narrow and needs a
-  sideways swipe. Needs a custom table layout in `ui/note/NoteScreen.kt`.
-  Effort: Medium.
 - [ ] **Create a new note from a knowledge base's `templates/`** with the
   frontmatter filled in. Effort: Medium.
 - [ ] **Add JGit keep rules before switching on release minification.**

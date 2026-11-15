@@ -54,15 +54,10 @@ import com.cpinto.vademo.kb.WikiLinks
 import com.cpinto.vademo.kb.readDiagram
 import com.cpinto.vademo.ui.diagram.DiagramCard
 import java.io.File
-import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.components.markdownComponents
-import com.mikepenz.markdown.compose.elements.MarkdownTable
-import com.mikepenz.markdown.compose.elements.MarkdownTableHeader
-import com.mikepenz.markdown.compose.elements.MarkdownTableRow
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.elements.MarkdownCheckBox
 import com.mikepenz.markdown.m3.markdownTypography
-import androidx.compose.ui.Alignment
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -143,25 +138,6 @@ class NoteViewModel @Inject constructor(
 
     /** Path of the note a `[[target]]` link points at, or `null` when no such note exists. */
     fun resolve(target: String): String? = kb.resolve(target)?.let(kb::relativePath)
-}
-
-/**
- * The renderer's table cuts every cell to one line with an ellipsis, which
- * hides the reasoning column of a scorecard. Cells here wrap instead.
- */
-@Composable
-private fun WrappingTable(model: MarkdownComponentModel) {
-    MarkdownTable(
-        content = model.content,
-        node = model.node,
-        style = model.typography.table,
-        headerBlock = { content, header, width, style ->
-            MarkdownTableHeader(content, header, width, style, verticalAlignment = Alignment.Top, maxLines = Int.MAX_VALUE)
-        },
-        rowBlock = { content, row, width, style ->
-            MarkdownTableRow(content, row, width, style, verticalAlignment = Alignment.Top, maxLines = Int.MAX_VALUE)
-        },
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -272,7 +248,7 @@ fun NoteScreen(
                                 ),
                                 components = markdownComponents(
                                     checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
-                                    table = { WrappingTable(it) },
+                                    table = { NoteTable(it) },
                                 ),
                                 modifier = Modifier.fillMaxWidth(),
                             )

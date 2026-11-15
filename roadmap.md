@@ -10,9 +10,9 @@ rationale lives in the docs or ADRs it cites.
 
 ## Current phase: first version in daily use
 
-1. **Fix what daily use turns up**, starting with table readability
-   (backlog 2026.09.16). The phone-to-GitHub round trip works
-   (checked 2026-11-15), so the gate on new features is cleared.
+1. **Fix what daily use turns up.** Table readability is done (v0.18.1).
+   The phone-to-GitHub round trip works (checked 2026-11-15), so the gate
+   on new features is cleared.
 2. **Search, views and health counts** — designed in
    `docs/kb-views-and-queries.md`. Done: all six steps of its order of
    work shipped by v0.18.0 (Health tab v0.17.0, saved searches v0.18.0).
