@@ -13,25 +13,21 @@ data class GraphNote(val name: String, val title: String, val folder: String, va
 data class NoteGraph(val notes: List<GraphNote>, val links: List<Pair<Int, Int>>) {
 
     companion object {
-        fun of(kb: KnowledgeBase): NoteGraph {
-            val files = kb.allNotes().values
-                .filter { it.parentFile != kb.root || it == kb.index }
-                .sortedBy { kb.relativePath(it) }
-            val parsed = files.map { FrontmatterParser.parse(it.readText()) }
-            val notes = files.mapIndexed { i, file ->
-                val path = kb.relativePath(file)
+        /** The map of the notes [index] holds, which are the ones it shows. */
+        fun of(index: NoteIndex): NoteGraph {
+            val notes = index.notes.map { note ->
                 GraphNote(
-                    name = file.nameWithoutExtension,
-                    title = parsed[i].frontmatter?.title ?: file.nameWithoutExtension,
-                    folder = if ('/' in path) path.substringBefore('/') else "",
-                    path = path,
+                    name = note.name,
+                    title = note.title,
+                    folder = if ('/' in note.path) note.path.substringBefore('/') else "",
+                    path = note.path,
                 )
             }
             val byName = notes.withIndex().associate { (i, note) -> note.name to i }
             val links = sortedSetOf(compareBy<Pair<Int, Int>>({ it.first }, { it.second }))
-            parsed.forEachIndexed { from, note ->
-                for (target in WikiLinks.targets(note.body)) {
-                    val to = byName[target.removeSuffix(".md")] ?: continue
+            index.notes.forEachIndexed { from, note ->
+                for (target in note.links) {
+                    val to = byName[target] ?: continue
                     if (to != from) links += minOf(from, to) to maxOf(from, to)
                 }
             }

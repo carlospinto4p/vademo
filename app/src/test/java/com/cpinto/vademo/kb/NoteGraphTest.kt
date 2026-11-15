@@ -17,7 +17,7 @@ class NoteGraphTest {
         file.writeText(front + body)
     }
 
-    private fun graph() = NoteGraph.of(KnowledgeBase(root))
+    private fun graph() = NoteGraph.of(NoteIndex.of(KnowledgeBase(root)))
 
     private fun NoteGraph.linkNames() = links.map { (a, b) -> notes[a].name to notes[b].name }.toSet()
 

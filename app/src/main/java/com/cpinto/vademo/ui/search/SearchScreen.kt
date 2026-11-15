@@ -120,9 +120,9 @@ class SearchViewModel @Inject constructor(
     }
 
     init {
-        // Built each time the screen opens, so it always reflects the last sync.
+        // Fetched each time the screen opens, so it always reflects the last sync.
         viewModelScope.launch(Dispatchers.IO) {
-            indexes.value = repository.downloaded().map(NoteIndex::of)
+            indexes.value = repository.indexes()
         }
     }
 

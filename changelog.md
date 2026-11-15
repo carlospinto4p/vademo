@@ -1,6 +1,25 @@
 ## Changelog - vademo
 
 
+### v0.20.9 - 16th November 2026
+
+- Fixed every note, folder, search and map opening reading every note of
+  the knowledge base again. The index of notes is now kept per knowledge
+  base and read again only when a note file changed.
+  - Added `kb/NoteIndexCache.kt`. Each lookup compares every note file's
+    path, size and modification time with the ones the index was built
+    from, so a sync, a save or a note added or deleted is always seen.
+  - `KbRepository`: added `index(name)` and `indexes()`. The note, browse,
+    search and map screens use them.
+  - `NoteIndex`: added `files(kb)`, the files it reads.
+  - `NoteGraph.of` now takes a `NoteIndex` instead of reading every note
+    itself.
+- Updated `docs/kb-views-and-queries.md` and CLAUDE.md to say the index is
+  kept until a note changes.
+- Added `NoteIndexCacheTest`: an unchanged knowledge base is not read again;
+  an edit of the same size, a new note and a deleted note are noticed.
+
+
 ### v0.20.8 - 16th November 2026
 
 - Fixed slow dragging in diagrams. Every frame of a drag measured the text

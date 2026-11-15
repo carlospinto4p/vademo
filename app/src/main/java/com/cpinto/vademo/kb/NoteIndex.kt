@@ -1,5 +1,7 @@
 package com.cpinto.vademo.kb
 
+import java.io.File
+
 /**
  * One note as the index holds it. [links] are the note names it links to, in
  * order and without `.md`; [body] is the text after the frontmatter, kept so
@@ -26,8 +28,8 @@ data class UnresolvedLink(val from: String, val target: String)
 /**
  * Every note of a knowledge base read in one pass, with what follows from
  * their links: who links to each note, which links lead nowhere, and which
- * notes nothing links to. Built in memory and thrown away, never written to
- * disk (`docs/kb-views-and-queries.md`, "The index").
+ * notes nothing links to. Held in memory by [NoteIndexCache], never written
+ * to disk (`docs/kb-views-and-queries.md`, "The index").
  *
  * The notes are the ones the map of notes shows: `index.md` and every note
  * in a folder, not the repository files at the root, not `templates/`.
@@ -90,10 +92,13 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
         note.type == "hub" || note.path.substringBeforeLast('/', "").substringAfterLast('/') == note.name
 
     companion object {
-        fun of(kb: KnowledgeBase): NoteIndex {
-            val notes = kb.allNotes().values
-                .filter { it.parentFile != kb.root || it == kb.index }
-                .sortedBy { kb.relativePath(it) }
+        /** The files the index reads, by path: `index.md` and every note in a folder. */
+        fun files(kb: KnowledgeBase): List<File> = kb.allNotes().values
+            .filter { it.parentFile != kb.root || it == kb.index }
+            .sortedBy { kb.relativePath(it) }
+
+        fun of(kb: KnowledgeBase, files: List<File> = files(kb)): NoteIndex {
+            val notes = files
                 .map { file ->
                     val parsed = FrontmatterParser.parse(file.readText())
                     val front = parsed.frontmatter

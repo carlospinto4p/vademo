@@ -91,7 +91,7 @@ private const val SOURCE = "source"
 @HiltViewModel
 class BrowseViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    repository: KbRepository,
+    private val repository: KbRepository,
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
@@ -114,8 +114,8 @@ class BrowseViewModel @Inject constructor(
                 notes = notes,
                 templates = if (path.isEmpty()) emptyList() else kb.templates().map { it.nameWithoutExtension },
             )
-            // Read after the folders are on screen, since it opens every note.
-            if (isTop) _state.value = _state.value.copy(index = NoteIndex.of(kb))
+            // Read after the folders are on screen, since it may open every note.
+            if (isTop) _state.value = _state.value.copy(index = repository.index(kbName))
         }
     }
 

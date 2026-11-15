@@ -64,11 +64,10 @@ data class GraphState(
 @HiltViewModel
 class GraphViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    repository: KbRepository,
+    private val repository: KbRepository,
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
-    private val kb = repository.knowledgeBase(kbName)
 
     private val _state = MutableStateFlow(GraphState())
     val state: StateFlow<GraphState> = _state
@@ -77,7 +76,7 @@ class GraphViewModel @Inject constructor(
     fun load(aspect: Double) {
         if (_state.value.graph != null) return
         viewModelScope.launch(Dispatchers.Default) {
-            val graph = NoteGraph.of(kb)
+            val graph = NoteGraph.of(repository.index(kbName))
             val layout = GraphLayout.layout(
                 count = graph.notes.size,
                 links = graph.links,

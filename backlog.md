@@ -76,12 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] Every note open rebuilds `NoteIndex.of(kb)` (`ui/note/NoteScreen.kt:135`)
-  just for backlinks; Browse (`ui/browse/BrowseScreen.kt:118`) and Search
-  (`ui/search/SearchScreen.kt:125`) build it again, and `kb/NoteGraph.kt:16-38`
-  re-reads every note with a copy of `NoteIndex`'s filter. Cache one index
-  per knowledge base in `KbRepository`, drop it after sync, resolve or a
-  save, and build `NoteGraph` from it. HIGH, effort M.
 - [ ] `ui/diagram/DiagramViewModel.kt:110-115` (`publish`): on every edit,
   undo or redo, for each box with a `ref`, `kb.noteAt()` does file checks
   and for a bare name walks the whole tree, on the main thread. Resolve
@@ -128,8 +122,8 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   again. LOW, effort S.
 - [ ] `docs/kb-views-and-queries.md:28-30` says reading every note is "a
   few hundred milliseconds on a phone". It is an undated estimate, never
-  measured, and the index is now rebuilt on every note open, not once per
-  knowledge base. Measure it on the phone and update the doc. LOW,
+  measured. Since v0.20.9 it is paid once per knowledge base and again
+  after a note changes. Measure it on the phone and update the doc. LOW,
   effort S.
 
 #### Refactoring

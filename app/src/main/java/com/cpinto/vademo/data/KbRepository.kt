@@ -7,6 +7,8 @@ import com.cpinto.vademo.git.GitSync
 import com.cpinto.vademo.git.LocalState
 import com.cpinto.vademo.git.SyncOutcome
 import com.cpinto.vademo.kb.KnowledgeBase
+import com.cpinto.vademo.kb.NoteIndex
+import com.cpinto.vademo.kb.NoteIndexCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +61,14 @@ class KbRepository @Inject constructor(
     }
 
     fun knowledgeBase(name: String): KnowledgeBase = KnowledgeBase(File(root, name))
+
+    private val indexes = NoteIndexCache()
+
+    /** Every note of [name] with its links, read again only when a note file changed. */
+    suspend fun index(name: String): NoteIndex = withContext(Dispatchers.IO) { indexes.of(knowledgeBase(name)) }
+
+    /** The index of every downloaded knowledge base, in the order of the settings. */
+    suspend fun indexes(): List<NoteIndex> = withContext(Dispatchers.IO) { downloaded().map(indexes::of) }
 
     /** Whether [name] stopped on a conflict, so editing waits for a choice. Cheaper than [list]. */
     suspend fun needsChoice(name: String): Boolean = withContext(Dispatchers.IO) {

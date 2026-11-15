@@ -49,7 +49,6 @@ import com.cpinto.vademo.kb.DiagramFile
 import com.cpinto.vademo.kb.Frontmatter
 import com.cpinto.vademo.kb.FrontmatterParser
 import com.cpinto.vademo.kb.IndexedNote
-import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.WikiLinks
 import com.cpinto.vademo.kb.readDiagram
 import com.cpinto.vademo.ui.diagram.DiagramCard
@@ -83,7 +82,7 @@ data class NoteState(
 @HiltViewModel
 class NoteViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    repository: KbRepository,
+    private val repository: KbRepository,
     private val settings: SettingsRepository,
 ) : ViewModel() {
 
@@ -130,7 +129,7 @@ class NoteViewModel @Inject constructor(
                 frontmatter = parsed.frontmatter,
                 blocks = blocks,
             )
-            val linkedFrom = NoteIndex.of(kb).linkedFrom(path)
+            val linkedFrom = repository.index(kbName).linkedFrom(path)
             _state.value = _state.value.copy(linkedFrom = linkedFrom)
         }
     }

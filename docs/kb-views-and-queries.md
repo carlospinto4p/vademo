@@ -28,7 +28,9 @@ Two consequences, and they decide most of the design:
 - **No database, no index file, no background indexer.** Reading every
   note and parsing its frontmatter is a few hundred milliseconds of work
   on a phone. An index is built in memory when a knowledge base is opened
-  and thrown away when it is not needed, which keeps the roadmap's
+  and kept, in memory only, until a note file changes
+  (`kb/NoteIndexCache.kt` compares each file's size and modification time
+  on every lookup). Nothing is written to disk, which keeps the roadmap's
   invariant that the app holds no second copy of the notes.
 - **Sources dominate.** More than half of the largest knowledge base is
   `sources/`.
