@@ -1,6 +1,29 @@
 ## Changelog - vademo
 
 
+### v0.11.0 - 15th November 2026
+
+- An arrow that runs backwards, against the diagram's direction, now goes
+  round a box in its way instead of staying straight. It leaves its
+  source by the side or the back, runs back along a free lane (a gap
+  between columns of boxes, or past the outermost one, inside the
+  picture), and enters its target by the side or the front, with its
+  label on the lane. Of the ways that cross no box, the shortest is taken;
+  with none, the arrow stays straight. tyfold leaves such an arrow
+  straight, so this is vademo's own until tyfold does the same.
+- `kb/EdgeRoute.kt`: a route is now a list of straight and curved pieces
+  (`Piece`), so both kinds of route share one shape; the arrowhead points
+  along the last straight run.
+- Checked on two real diagrams: every arrow that crossed a box now
+  crosses none, including the backwards "Parquet message" arrow.
+- Added tests in `kb/EdgeRouteTest.kt`:
+  - A backwards arrow goes round beside the column.
+  - It takes the lane between two columns when only that one is free.
+  - It leaves by the back, or enters by the front, when a side is taken.
+  - It stays straight with no lane inside the picture, or with every way
+    round taken.
+
+
 ### v0.10.1 - 15th November 2026
 
 - Fixed a flaky device test: `DiagramEditTest.createADiagramFromTheList`

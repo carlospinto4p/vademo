@@ -22,9 +22,10 @@ rationale lives in the docs or ADRs it cites.
    write the same files. By v0.10.0 the phone does what tyfold's diagram
    pane does, arrows kept off and bent round other boxes included, except
    links from a box to a terminal session, which need tyfold's desktop.
-   An arrow running backwards can still cross a box, in tyfold too
-   (backlog 2026.11.15, diagrams). The phone checks are in backlog
-   2026.11.15 (diagrams, and editing diagrams on the phone).
+   Since v0.11.0 it also routes an arrow running backwards round boxes,
+   which tyfold does not yet (filed in tyfold's own backlog). The phone
+   checks are in backlog 2026.11.15 (diagrams, and editing diagrams on
+   the phone).
 
 ## Standing invariants (apply to every session)
 

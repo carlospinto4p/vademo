@@ -584,8 +584,8 @@ private class DrawnEdge(val edge: DiagramEdge, val start: Position, val end: Pos
 }
 
 /**
- * The arrows, with their labels at their middles, or on the bend of an arrow
- * that goes round a box ([EdgeRoute]). When [onEdge] is given each arrow can be
+ * The arrows, with their labels at their middles, or on the bend or lane of
+ * an arrow that goes round a box ([EdgeRoute]). When [onEdge] is given each arrow can be
  * tapped there, on its label or, without one, on a small handle, to edit it.
  */
 @Composable
@@ -596,7 +596,7 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
             val a = places.boxes[edge.source] ?: return@mapNotNull null
             val b = places.boxes[edge.target] ?: return@mapNotNull null
             if (edge.source == edge.target) return@mapNotNull null
-            val detour = EdgeRoute.detour(a, b, diagram.direction, EdgeRoute.obstacles(diagram, places, edge.source, edge.target))
+            val detour = EdgeRoute.detour(a, b, diagram.direction, EdgeRoute.obstacles(diagram, places, edge.source, edge.target), places)
             DrawnEdge(edge, detour?.start ?: EdgeRoute.exit(a, b), detour?.end ?: EdgeRoute.exit(b, a), detour)
         }
     }
@@ -609,12 +609,17 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
             val end = px(line.end)
             val path = Path().apply {
                 moveTo(start.x, start.y)
-                line.detour?.let { d ->
-                    px(d.bendStart).let { lineTo(it.x, it.y) }
-                    val (c1, c2, to) = listOf(px(d.control1), px(d.control2), px(d.bendEnd))
-                    cubicTo(c1.x, c1.y, c2.x, c2.y, to.x, to.y)
+                val pieces = line.detour?.pieces ?: listOf(EdgeRoute.Piece.Line(line.end))
+                for (piece in pieces) {
+                    val to = px(piece.to)
+                    when (piece) {
+                        is EdgeRoute.Piece.Line -> lineTo(to.x, to.y)
+                        is EdgeRoute.Piece.Curve -> {
+                            val (c1, c2) = px(piece.control1) to px(piece.control2)
+                            cubicTo(c1.x, c1.y, c2.x, c2.y, to.x, to.y)
+                        }
+                    }
                 }
-                lineTo(end.x, end.y)
             }
             drawPath(
                 path,
@@ -624,8 +629,8 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
                     pathEffect = if (line.edge.style == DiagramEdge.Style.DASHED) dashes else null,
                 ),
             )
-            // The head points along the last straight run: from the bend's end when there is one.
-            val from = line.detour?.let { px(it.bendEnd) } ?: start
+            // The head points along the last straight run into the target.
+            val from = line.detour?.let { px(it.beforeEnd) } ?: start
             val angle = atan2(end.y - from.y, end.x - from.x)
             val head = Path().apply {
                 moveTo(end.x, end.y)

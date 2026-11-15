@@ -79,7 +79,9 @@ For README screenshots, Android's demo mode gives a clean status bar:
   when writing; vademo only reads, so it skips unknown keys and words
   instead of failing. `DiagramLayout` follows tyfold's
   `src/lib/graph/canvas/layout.ts` and `EdgeRoute` its `edgeRoute.ts`;
-  keep the two drawing the same file alike. Edits go through `DiagramDocument`, which works on the file's own
+  keep the two drawing the same file alike. One part is vademo's own for
+  now: `EdgeRoute` routes an arrow that runs backwards round boxes, which
+  tyfold leaves straight; when tyfold does it too, follow tyfold's. Edits go through `DiagramDocument`, which works on the file's own
   JSON so unknown keys survive, writes keys in tyfold's order, and never
   adds a `position` (tyfold keeps dragged places off the file).
 - **Nothing app-private goes inside a knowledge base's folder.** Sync
