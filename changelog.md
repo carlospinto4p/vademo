@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.12.0 - 15th November 2026
+
+- Added `kb/NoteIndex.kt`: every note of a knowledge base read in one
+  pass, in memory, never written to disk. Per note it holds the path,
+  title, type, status, tags, dates, headings, outgoing links and the
+  count of `(unverified)` markers. From the links it works out the
+  backlinks, the links that name no note, and the orphans (notes nothing
+  links to, leaving out `index.md` and hubs). Nothing shows it yet;
+  search, backlinks and the health view will read from it.
+- Added `kb/NoteIndexTest.kt`: 7 tests.
+
+
 ### v0.11.0 - 15th November 2026
 
 - An arrow that runs backwards, against the diagram's direction, now goes

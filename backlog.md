@@ -52,12 +52,6 @@ v0.9.0 (export). What is left is checking each on a phone.
 From `docs/kb-views-and-queries.md`, which has the reasoning and the
 measurements behind these. In order — each needs the one before it.
 
-- [ ] **Index a knowledge base in memory.** `kb/NoteIndex.kt`: one pass
-  producing per note its path, title, type, status, tags, dates,
-  headings, outgoing links and `(unverified)` count, plus the backlinks,
-  unresolved links and orphans derived from them. Pure Kotlin beside
-  `KnowledgeBase`, rebuilt after a sync, never written to disk. Effort:
-  Medium.
 - [ ] **Search across the notes** on that index: free text over title,
   headings and body, ranked in that order, with the `type:`, `status:`,
   `tag:`, `updated:`, `kb:`, `links:` and `is:` filters. Replaces the
