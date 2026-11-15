@@ -3,9 +3,12 @@ package com.cpinto.vademo.ui.diagram
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpinto.vademo.data.DiagramClipboard
+import com.cpinto.vademo.data.DiagramMoves
 import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.kb.DiagramDocument
+import com.cpinto.vademo.kb.Position
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,6 +35,13 @@ data class DiagramState(
     val problems: List<String> = emptyList(),
     /** The box an arrow is being drawn from, waiting for a tap on the box it goes to. */
     val connectingFrom: String? = null,
+    /** Boxes picked for an action on several at once; dragging one of them moves them all. */
+    val selected: Set<String> = emptySet(),
+    /** Where boxes were dragged on this phone, as offsets from the layout. Never in the file. */
+    val moves: Map<String, Position> = emptyMap(),
+    val canPaste: Boolean = false,
+    /** Set once the diagram's file has been deleted, so the screen can close. */
+    val deleted: Boolean = false,
     /** A one-off message for the snackbar. */
     val message: String? = null,
 )
@@ -52,6 +62,8 @@ data class DiagramState(
 class DiagramViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val repository: KbRepository,
+    private val placesStore: DiagramMoves,
+    private val clipboard: DiagramClipboard,
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
@@ -73,7 +85,11 @@ class DiagramViewModel @Inject constructor(
     val document: DiagramDocument? get() = doc
 
     fun load() {
-        viewModelScope.launch(Dispatchers.IO) { read(message = null) }
+        viewModelScope.launch(Dispatchers.IO) {
+            val moves = placesStore.read(kbName, name)
+            _state.update { it.copy(moves = moves, canPaste = clipboard.clip != null) }
+            read(message = null)
+        }
     }
 
     private suspend fun read(message: String?) {
@@ -145,23 +161,124 @@ class DiagramViewModel @Inject constructor(
         scheduleSave()
     }
 
-    fun startConnecting(from: String) = _state.update { it.copy(connectingFrom = from) }
+    fun startConnecting(from: String) = _state.update { it.copy(connectingFrom = from, selected = emptySet()) }
 
     fun cancelConnecting() = _state.update { it.copy(connectingFrom = null) }
 
     /**
      * A tap on a box: while an arrow is being drawn it ends the arrow there;
-     * otherwise the box's note opens when it links to one. Returns the note's
-     * path to open, if any.
+     * while boxes are selected it adds the box to the selection or takes it
+     * out; otherwise the box's note opens when it links to one. Returns the
+     * note's path to open, if any.
      */
     fun tap(id: String): String? {
-        val from = _state.value.connectingFrom
+        val now = _state.value
+        val from = now.connectingFrom
         if (from != null) {
             _state.update { it.copy(connectingFrom = null) }
             if (from != id) editReturning { it.addEdge(from, id) }
             return null
         }
-        return _state.value.notes[id]
+        if (now.selected.isNotEmpty()) {
+            _state.update { it.copy(selected = if (id in it.selected) it.selected - id else it.selected + id) }
+            return null
+        }
+        return now.notes[id]
+    }
+
+    // ---- selection --------------------------------------------------------
+
+    fun select(id: String) = _state.update { it.copy(selected = setOf(id), connectingFrom = null) }
+
+    fun clearSelection() = _state.update { it.copy(selected = emptySet()) }
+
+    /** Applies [change] to the selected boxes as one undo step, then ends the selection. */
+    fun editSelected(change: (DiagramDocument, Set<String>) -> DiagramDocument) {
+        val ids = _state.value.selected
+        if (ids.isEmpty()) return
+        edit { change(it, ids) }
+        clearSelection()
+    }
+
+    // ---- dragging (places on this phone only) -----------------------------
+
+    /**
+     * Moves the selected boxes by ([dx], [dy]) dp while a finger drags one of
+     * them. A box inside a selected group is moved by its group, not twice.
+     */
+    fun drag(dx: Float, dy: Float) {
+        val diagram = _state.value.diagram ?: return
+        val parentOf = diagram.nodes.associate { it.id to it.parent }
+        val selected = _state.value.selected
+        val outer = selected.filter { id ->
+            generateSequence(parentOf[id]) { parentOf[it] }.take(diagram.nodes.size).none { it in selected }
+        }
+        _state.update { s ->
+            val moves = s.moves.toMutableMap()
+            for (id in outer) {
+                val was = moves[id] ?: Position(0.0, 0.0)
+                moves[id] = Position(was.x + dx, was.y + dy)
+            }
+            s.copy(moves = moves)
+        }
+    }
+
+    fun dragEnded() = saveMoves()
+
+    /** tyfold's Tidy: forgets every place dragged on this phone, so the layout places everything again. */
+    fun tidy() {
+        _state.update { it.copy(moves = emptyMap()) }
+        saveMoves()
+    }
+
+    private fun saveMoves() {
+        val moves = _state.value.moves
+        viewModelScope.launch(Dispatchers.IO) { placesStore.write(kbName, name, moves) }
+    }
+
+    // ---- cut, copy, paste, duplicate --------------------------------------
+
+    fun copy(ids: Set<String>) {
+        val clip = doc?.copy(ids) ?: return
+        clipboard.clip = clip
+        _state.update { it.copy(canPaste = true, selected = emptySet(), message = copied(clip.size)) }
+    }
+
+    fun cut(ids: Set<String>) {
+        var clip: com.cpinto.vademo.kb.DiagramClip? = null
+        edit { d -> d.cut(ids)?.also { clip = it.second }?.first ?: d }
+        clip?.let { c ->
+            clipboard.clip = c
+            _state.update { it.copy(canPaste = true, selected = emptySet(), message = copied(c.size)) }
+        }
+    }
+
+    /** Pastes what was cut or copied, here or in another diagram; the pasted boxes come back selected. */
+    fun paste() {
+        val clip = clipboard.clip ?: return
+        val pasted = editReturning { it.paste(clip) } ?: return
+        _state.update { it.copy(selected = pasted) }
+    }
+
+    fun duplicate(ids: Set<String>) {
+        val copies = editReturning { it.duplicate(ids) } ?: return
+        _state.update { it.copy(selected = copies) }
+    }
+
+    private fun copied(count: Int) = if (count == 1) "1 box copied" else "$count boxes copied"
+
+    // ---- the diagram as a file --------------------------------------------
+
+    /** Deletes the diagram's file and what this phone kept about it; the screen then closes. */
+    fun deleteDiagram() {
+        if (!_state.value.editable) return
+        pendingSave?.cancel()
+        viewModelScope.launch(Dispatchers.IO) {
+            file.delete()
+            placesStore.forget(kbName, name)
+            doc = null
+            _state.update { it.copy(deleted = true) }
+        }
     }
 
     fun messageShown() = _state.update { it.copy(message = null) }

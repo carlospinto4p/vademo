@@ -13,6 +13,11 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
+/** Boxes and arrows taken by a cut or copy, to be pasted into this diagram or another. */
+class DiagramClip internal constructor(internal val nodes: List<JsonObject>, internal val edges: List<JsonObject>) {
+    val size: Int get() = nodes.size
+}
+
 /** The fields of a box the editor sets. A blank or null field is left out of the file. */
 data class NodeFields(
     val label: String = "",
@@ -222,6 +227,77 @@ class DiagramDocument private constructor(val json: JsonObject) {
     fun removeLegendEntry(id: String): DiagramDocument =
         with("legend", JsonArray(legend.filter { it.id != id }))
             .withNodes(nodes.map { if (it.string("category") == id) it.edit { remove("category") } else it })
+
+    // ---- cut, copy, paste, duplicate ---------------------------------------
+
+    /**
+     * What a copy of [ids] holds, as tyfold's Copy: the boxes, everything
+     * inside a copied group, and the arrows with both ends among them. Null
+     * when none of [ids] is in the diagram.
+     */
+    fun copy(ids: Set<String>): DiagramClip? {
+        val taken = nodes.filter { node -> ids.any { within(node.id, it) } }
+        if (taken.isEmpty()) return null
+        val inside = taken.map { it.id }.toSet()
+        val arrows = edges.filter { it.string("source") in inside && it.string("target") in inside }
+        return DiagramClip(taken, arrows)
+    }
+
+    /** tyfold's Cut: what [copy] holds, and the diagram without it. */
+    fun cut(ids: Set<String>): Pair<DiagramDocument, DiagramClip>? = copy(ids)?.let { removeNodes(ids) to it }
+
+    /**
+     * Adds what [clip] holds, as tyfold's Paste. A box or arrow keeps its id
+     * when this diagram has none like it, so a cut and a paste move it, into
+     * another diagram too; otherwise it gets a free one. A copy goes into the
+     * group its original was in when this diagram has that group, else to the
+     * top level. A category this legend lacks is dropped, and so are places
+     * from the file, which were relative to where the original sat. Returns
+     * the document and the ids of the pasted boxes not inside another pasted one.
+     */
+    fun paste(clip: DiagramClip): Pair<DiagramDocument, Set<String>> {
+        val taken = nodes.map { it.id }.toMutableSet()
+        val renamed = mutableMapOf<String, String>()
+        for (node in clip.nodes) {
+            val id = node.id
+            val fresh = if (id in taken) freeId(taken, if (node.string("kind") == "group") "group" else "node") else id
+            taken += fresh
+            renamed[id] = fresh
+        }
+        val legendIds = legend.map { it.id }.toSet()
+        val top = mutableSetOf<String>()
+        val pasted = clip.nodes.map { node ->
+            val parent = node.string("parent")
+            val newParent = when {
+                parent == null -> null
+                parent in renamed -> renamed.getValue(parent)
+                isGroup(parent) -> parent
+                else -> null
+            }
+            if (parent == null || parent !in renamed) top += renamed.getValue(node.id)
+            node.edit {
+                put("id", JsonPrimitive(renamed.getValue(node.id)))
+                setOrRemove("parent", newParent)
+                if (node.string("category") !in legendIds) remove("category")
+                remove("position")
+                remove("size")
+            }
+        }
+        val edgeIds = edges.map { it.id }.toMutableSet()
+        val arrows = clip.edges.map { edge ->
+            val id = edge.id.takeIf { it.isNotEmpty() && it !in edgeIds } ?: freeId(edgeIds, "e")
+            edgeIds += id
+            edge.edit {
+                put("id", JsonPrimitive(id))
+                put("source", JsonPrimitive(renamed.getValue(edge.string("source")!!)))
+                put("target", JsonPrimitive(renamed.getValue(edge.string("target")!!)))
+            }
+        }
+        return withNodes(nodes + pasted).withEdges(edges + arrows) to top
+    }
+
+    /** tyfold's Duplicate: a copy of [ids] pasted into the same diagram. */
+    fun duplicate(ids: Set<String>): Pair<DiagramDocument, Set<String>>? = copy(ids)?.let { paste(it) }
 
     // ---- the check --------------------------------------------------------
 

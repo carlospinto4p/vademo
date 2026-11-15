@@ -84,6 +84,13 @@ legend, and Undo and Redo sit beside it. Edits are saved to the file as
 you go and sync like edited notes. Nothing is saved while a sync conflict
 in that knowledge base waits to be resolved.
 
+New diagram on the Diagrams list starts an empty one. In a box's actions,
+Select starts picking several boxes: tap others to add them, then use the
+top bar to group, copy, cut, duplicate or delete them together, or drag a
+selected box to move them all. Where you drag boxes is remembered on this
+phone only; Tidy in the menu puts everything back where the layout wants
+it.
+
 ## Syncing
 
 Tap **Sync** to send notes edited on the phone and get changes made

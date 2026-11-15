@@ -5,6 +5,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import com.cpinto.vademo.kb.Position
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -89,6 +93,11 @@ internal class DiagramActions(
     val onEdge: ((id: String) -> Unit)?,
     /** The box an arrow is being drawn from, drawn highlighted. */
     val highlighted: String?,
+    /** Selected boxes, drawn outlined; dragging one moves them all. */
+    val selected: Set<String> = emptySet(),
+    /** A drag of a selected box, in dp; null when nothing can be dragged. */
+    val onDrag: ((dx: Float, dy: Float) -> Unit)? = null,
+    val onDragEnd: () -> Unit = {},
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -108,48 +117,13 @@ fun DiagramScreen(
         }
     }
     var open by remember { mutableStateOf<DiagramDialog?>(null) }
-    var menu by remember { mutableStateOf(false) }
+    LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
-            TopAppBar(
-                title = { Text(state.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    if (state.editable && state.diagram != null) {
-                        IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
-                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
-                        }
-                        IconButton(onClick = viewModel::redo, enabled = state.canRedo) {
-                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
-                        }
-                        Box {
-                            IconButton(onClick = { menu = true }) {
-                                Icon(Icons.Filled.MoreVert, contentDescription = "More")
-                            }
-                            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                                DropdownMenuItem(text = { Text("Add box") }, onClick = {
-                                    menu = false
-                                    viewModel.editReturning { it.addNode(group = false) }?.let { open = DiagramDialog.EditNode(it) }
-                                })
-                                DropdownMenuItem(text = { Text("Add group") }, onClick = {
-                                    menu = false
-                                    viewModel.editReturning { it.addNode(group = true) }?.let { open = DiagramDialog.EditNode(it) }
-                                })
-                                DropdownMenuItem(text = { Text("Legend") }, onClick = {
-                                    menu = false
-                                    open = DiagramDialog.Legend
-                                })
-                            }
-                        }
-                    }
-                },
-            )
+            if (state.selected.isNotEmpty()) SelectionBar(state.selected, viewModel, onOpen = { open = it })
+            else MainBar(state, viewModel, onBack, onOpen = { open = it })
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -163,13 +137,16 @@ fun DiagramScreen(
                     Modifier.padding(16.dp),
                 )
                 else -> {
-                    val places = rememberPlaces(diagram)
+                    val places = rememberPlaces(diagram, state.moves)
                     val colours = diagramColours()
                     val actions = DiagramActions(
                         onTap = { id -> viewModel.tap(id)?.let { onOpenNote(viewModel.kbName, it) } },
                         onLongPress = if (state.editable) { id -> open = DiagramDialog.Actions(id) } else null,
                         onEdge = if (state.editable) { id -> open = DiagramDialog.Edge(id) } else null,
                         highlighted = state.connectingFrom,
+                        selected = state.selected,
+                        onDrag = viewModel::drag,
+                        onDragEnd = viewModel::dragEnded,
                     )
                     PanZoom(places.width.dp, places.height.dp) {
                         DiagramContent(diagram, places, colours, state.notes, actions)
@@ -184,6 +161,9 @@ fun DiagramScreen(
                 }
             }
             Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+                if (state.selected.isNotEmpty()) {
+                    Banner("Tap boxes to add or remove them. Drag a selected box to move them all.")
+                }
                 if (state.connectingFrom != null) {
                     Banner("Tap the box the arrow goes to.", action = "Cancel", onAction = viewModel::cancelConnecting)
                 }
@@ -200,6 +180,95 @@ fun DiagramScreen(
     open?.let { dialog ->
         DiagramDialogs(dialog, viewModel, onChange = { open = it })
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MainBar(state: DiagramState, viewModel: DiagramViewModel, onBack: () -> Unit, onOpen: (DiagramDialog) -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    TopAppBar(
+        title = { Text(state.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
+        },
+        actions = {
+            if (!state.editable || state.diagram == null) return@TopAppBar
+            IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
+                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+            }
+            IconButton(onClick = viewModel::redo, enabled = state.canRedo) {
+                Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
+            }
+            Box {
+                IconButton(onClick = { menu = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    val item = @Composable { text: String, enabled: Boolean, action: () -> Unit ->
+                        DropdownMenuItem(text = { Text(text) }, enabled = enabled, onClick = {
+                            menu = false
+                            action()
+                        })
+                    }
+                    item("Add box", true) {
+                        viewModel.editReturning { it.addNode(group = false) }?.let { onOpen(DiagramDialog.EditNode(it)) }
+                    }
+                    item("Add group", true) {
+                        viewModel.editReturning { it.addNode(group = true) }?.let { onOpen(DiagramDialog.EditNode(it)) }
+                    }
+                    item("Paste", state.canPaste, viewModel::paste)
+                    item("Legend", true) { onOpen(DiagramDialog.Legend) }
+                    item("Title and direction", true) { onOpen(DiagramDialog.Title) }
+                    item("Tidy (forget where boxes were dragged)", state.moves.isNotEmpty(), viewModel::tidy)
+                    item("Delete diagram", true) { onOpen(DiagramDialog.DeleteDiagram) }
+                }
+            }
+        },
+    )
+}
+
+/** The top bar while boxes are selected: what can be done to all of them at once. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectionBar(selected: Set<String>, viewModel: DiagramViewModel, onOpen: (DiagramDialog) -> Unit) {
+    var menu by remember { mutableStateOf(false) }
+    TopAppBar(
+        title = { Text(if (selected.size == 1) "1 selected" else "${selected.size} selected") },
+        navigationIcon = {
+            IconButton(onClick = viewModel::clearSelection) {
+                Icon(Icons.Filled.Close, contentDescription = "End selection")
+            }
+        },
+        actions = {
+            Box {
+                IconButton(onClick = { menu = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "Actions on selected")
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    val item = @Composable { text: String, action: () -> Unit ->
+                        DropdownMenuItem(text = { Text(text) }, onClick = {
+                            menu = false
+                            action()
+                        })
+                    }
+                    item("Group") {
+                        val group = viewModel.editReturning { it.groupAround(selected) }
+                        viewModel.clearSelection()
+                        group?.let { onOpen(DiagramDialog.EditNode(it)) }
+                    }
+                    item("Move to group…") { onOpen(DiagramDialog.MoveTo(selected)) }
+                    item("Status…") { onOpen(DiagramDialog.Status(selected)) }
+                    item("Category…") { onOpen(DiagramDialog.Category(selected)) }
+                    item("Copy") { viewModel.copy(selected) }
+                    item("Cut") { viewModel.cut(selected) }
+                    item("Duplicate") { viewModel.duplicate(selected) }
+                    item("Delete") { viewModel.editSelected { d, ids -> d.removeNodes(ids) } }
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -238,13 +307,13 @@ internal fun refText(ref: Ref): String = ref.line?.let { "${ref.path}:$it" } ?: 
 private const val LABEL_LINES = 3
 private const val NOTES_LINES = 4
 
-/** Measures every box's text, then lays the diagram out around those sizes. */
+/** Measures every box's text, then lays the diagram out around those sizes, with the boxes [moves] dragged. */
 @Composable
-internal fun rememberPlaces(diagram: Diagram): DiagramPlaces {
+internal fun rememberPlaces(diagram: Diagram, moves: Map<String, Position> = emptyMap()): DiagramPlaces {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val styles = boxStyles()
-    return remember(diagram, density, styles.label, styles.notes) {
+    return remember(diagram, moves, density, styles.label, styles.notes) {
         with(density) {
             val sizes = diagram.nodes.filterNot { it.isGroup }.associate { node ->
                 val inner = NODE_WIDTH - NODE_PADDING * 2 - (if (node.category != null) STRIPE + GAP else 0.dp)
@@ -258,7 +327,7 @@ internal fun rememberPlaces(diagram: Diagram): DiagramPlaces {
                 if (node.ref != null) height += GAP + height("Ag", styles.line, 1)
                 node.id to DiagramLayout.Box(NODE_WIDTH.value.toDouble(), (height + 2.dp).value.toDouble())
             }
-            DiagramLayout.place(diagram, sizes)
+            DiagramLayout.place(diagram, sizes, moves)
         }
     }
 }
@@ -308,15 +377,37 @@ internal fun DiagramContent(
 private fun Modifier.at(place: Placed) =
     offset(place.x.dp, place.y.dp).size(place.width.dp, place.height.dp)
 
-/** Tap and long press on a box or group, when the drawing answers touches. */
+/**
+ * Tap and long press on a box or group, when the drawing answers touches,
+ * and a drag when it is selected. The drag is consumed, so the diagram does
+ * not pan under the finger at the same time.
+ */
 @OptIn(ExperimentalFoundationApi::class)
-private fun Modifier.touch(id: String, actions: DiagramActions?): Modifier =
-    if (actions == null) this
-    else combinedClickable(
+private fun Modifier.touch(id: String, actions: DiagramActions?): Modifier {
+    if (actions == null) return this
+    val drag = actions.onDrag?.takeIf { id in actions.selected }
+    return combinedClickable(
         onLongClickLabel = if (actions.onLongPress != null) "Edit" else null,
         onLongClick = actions.onLongPress?.let { { it(id) } },
         onClick = { actions.onTap(id) },
+    ).then(
+        if (drag == null) Modifier
+        else Modifier.pointerInput(id, drag) {
+            detectDragGestures(onDragEnd = actions.onDragEnd, onDragCancel = actions.onDragEnd) { change, amount ->
+                change.consume()
+                // Inside the zoomed drawing, so the amount is already in the drawing's own units.
+                drag(amount.x.toDp().value, amount.y.toDp().value)
+            }
+        },
     )
+}
+
+@Composable
+private fun outline(id: String, actions: DiagramActions?, status: Color?, plain: Color): Pair<Dp, Color> = when {
+    actions?.highlighted == id || id in actions?.selected.orEmpty() -> 3.dp to MaterialTheme.colorScheme.primary
+    status != null -> 2.dp to status
+    else -> 1.dp to plain
+}
 
 @Composable
 private fun NodeBox(
@@ -330,12 +421,11 @@ private fun NodeBox(
     val styles = boxStyles()
     val hue = diagram.hueOf(node.category)
     val shape = RoundedCornerShape(8.dp)
-    val lit = actions?.highlighted == node.id
-    val border = if (lit) MaterialTheme.colorScheme.primary else colours.status(node.status) ?: MaterialTheme.colorScheme.outlineVariant
+    val (width, border) = outline(node.id, actions, colours.status(node.status), MaterialTheme.colorScheme.outlineVariant)
     Surface(
         modifier = Modifier
             .at(place)
-            .border(if (lit) 3.dp else if (node.status != null) 2.dp else 1.dp, border, shape)
+            .border(width, border, shape)
             .touch(node.id, actions),
         shape = shape,
         color = hue?.let(colours::tint) ?: MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -392,13 +482,12 @@ private fun GroupBox(
     val styles = boxStyles()
     val hue = diagram.hueOf(group.category)
     val shape = RoundedCornerShape(12.dp)
-    val lit = actions?.highlighted == group.id
-    val border = if (lit) MaterialTheme.colorScheme.primary else colours.status(group.status) ?: MaterialTheme.colorScheme.outline
+    val (width, border) = outline(group.id, actions, colours.status(group.status), MaterialTheme.colorScheme.outline)
     Box(
         Modifier
             .at(place)
             .background(hue?.let(colours::tint)?.copy(alpha = 0.6f) ?: MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f), shape)
-            .border(if (lit) 3.dp else if (group.status != null) 2.dp else 1.dp, border, shape)
+            .border(width, border, shape)
             .touch(group.id, actions),
     ) {
         if (hue != null) {

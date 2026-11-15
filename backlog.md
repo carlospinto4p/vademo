@@ -38,14 +38,11 @@ v0.7.0 is the first; the other two follow.
   another box, tap the new arrow's handle and label it, undo twice, then
   Sync and check the change on GitHub as a one-line diff in the
   `.tyfold-graphs/` file. Device tests cover these taps, not real fingers.
-- [ ] **Diagrams as files, and moving things (v0.8.0).** New diagram (a +
-  button on the Diagrams list: title and direction, written to
-  `.tyfold-graphs/<kebab-title>.json`); delete a diagram; edit a diagram's
-  title and direction; cut, copy, paste and duplicate (tyfold's
-  `graphClip.ts`: ids kept when free, copies go into the original's group);
-  select several boxes; drag boxes, with the places kept in the app's own
-  storage and never in the file or the clone; Tidy, which forgets the
-  places. Effort: Large.
+- [ ] **[manual]** Check v0.8.0 on the phone: New diagram on the Diagrams
+  list; in a diagram, Select a box, tap two more, drag one of them (all
+  three move); Copy, open another diagram, Paste; Tidy; Delete diagram.
+  Then Sync: the dragging must not show in the commit, only the pasted
+  boxes.
 - [ ] **Export (v0.9.0).** A PNG image and Mermaid text of a diagram,
   through Android's share sheet, as tyfold's Export does. Effort: Medium.
 

@@ -76,6 +76,19 @@ class DiagramTest {
     }
 
     @Test
+    fun `a new diagram is named from its title in kebab-case, and never over another`() {
+        assertEquals("request-flow-v2", diagramFileName("Request flow (v2)!", emptySet()))
+        assertEquals("request-flow-2", diagramFileName("Request flow", setOf("request-flow")))
+        assertEquals("diagram", diagramFileName("  ", emptySet()))
+        val first = createDiagram(root, "Request flow", Diagram.Direction.TB)
+        val second = createDiagram(root, "Request flow", Diagram.Direction.LR)
+        assertEquals(listOf("request-flow", "request-flow-2"), listOf(first, second))
+        val read = diagramsIn(root).first { it.name == first }.diagram!!
+        assertEquals("Request flow", read.title)
+        assertEquals(Diagram.Direction.TB, read.direction)
+    }
+
+    @Test
     fun `a knowledge base without the folder has no diagrams`() {
         assertEquals(emptyList<DiagramFile>(), diagramsIn(root))
     }

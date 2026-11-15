@@ -188,6 +188,43 @@ class DiagramDocumentTest {
     }
 
     @Test
+    fun `copying a group takes what is inside it and the arrows among them`() {
+        val clip = doc.copy(setOf("backend"))!!
+        assertEquals(2, clip.size)
+        assertNull(doc.copy(setOf("nowhere")))
+        // Pasted into a diagram that has none of these ids, everything keeps its id.
+        val (empty, _) = DiagramDocument.new("Other").addNode(group = false)
+        val (pasted, top) = empty.paste(clip)
+        assertEquals(setOf("backend"), top)
+        assertEquals("backend", pasted.node("api").parent)
+        assertNull(pasted.node("api").category) // the other diagram's legend has no such entry
+        assertNull(pasted.node("backend").position)
+    }
+
+    @Test
+    fun `a cut and a paste move a box, arrows included, into another diagram`() {
+        val (left, clip) = doc.cut(setOf("api", "ledger"))!!
+        assertEquals(listOf("backend"), left.diagram.nodes.map { it.id })
+        val (other, _) = DiagramDocument.parse(tyfoldText).removeNodes(setOf("api", "ledger")).paste(clip)
+        assertEquals(setOf("backend", "api", "ledger"), other.diagram.nodes.map { it.id }.toSet())
+        assertEquals("e1", other.diagram.edges.single().id)
+        assertEquals("backend", other.node("api").parent) // its group is there, so it goes back in
+    }
+
+    @Test
+    fun `duplicating gives fresh ids, keeps the group, and copies the arrows between the copies`() {
+        val (twice, copies) = doc.duplicate(setOf("api", "ledger"))!!
+        assertEquals(setOf("node-1", "node-2"), copies)
+        val apiCopy = twice.node("node-1")
+        assertEquals("API", apiCopy.label)
+        assertEquals("backend", apiCopy.parent)
+        val newArrow = twice.diagram.edges.single { it.id != "e1" }
+        assertEquals("e-1", newArrow.id)
+        assertEquals("node-1" to "node-2", newArrow.source to newArrow.target)
+        assertEquals(emptyList<String>(), twice.problems())
+    }
+
+    @Test
     fun `an arrow without an id gets e and a free number when written`() {
         val text = """{ "nodes": [{ "id": "a" }, { "id": "b" }], "edges": [{ "id": "e1", "source": "a", "target": "b" }, { "source": "b", "target": "a" }] }"""
         assertTrue("\"id\": \"e2\"" in DiagramDocument.parse(text).toText())

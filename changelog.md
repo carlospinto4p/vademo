@@ -1,6 +1,39 @@
 ## Changelog - vademo
 
 
+### v0.8.0 - 15th November 2026
+
+- Diagrams as files: New diagram on the Diagrams list (a title and a
+  direction; the file is named from the title in kebab-case, as notes
+  are); Delete diagram, and Title and direction, in a diagram's menu.
+- Cut, copy, paste and duplicate, with tyfold's rules: a copied group
+  takes what is in it and the arrows among them; a pasted box keeps its id
+  when the diagram has none like it, so a cut and a paste move it, into
+  another diagram too; a copy goes into its original's group when that
+  group is there. The copy is kept in the app, not on the system
+  clipboard.
+- Selecting several boxes: Select in a box's actions, then taps add or
+  remove boxes; the top bar then groups, moves to a group, sets status or
+  category, copies, cuts, duplicates or deletes them all at once.
+- Dragging: a selected box can be dragged, and drags the other selected
+  boxes with it; a group takes what it holds, and the groups around a box
+  grow to keep holding it. Where boxes were dragged is kept on the phone
+  only, in the app's own storage, never in the file or the knowledge base
+  folder (tyfold's rule). Tidy, in the menu, forgets it.
+- The New diagram button now has a label TalkBack reads.
+- Added `data/DiagramMoves.kt`, `data/DiagramClipboard.kt`; `copy`, `cut`,
+  `paste` and `duplicate` in `kb/DiagramDocument.kt`; `diagramFileName`
+  and `createDiagram` in `kb/Diagram.kt`; dragged offsets in
+  `DiagramLayout.place`.
+- Added tests:
+  - `kb/DiagramDocumentTest.kt`: 3 tests for cut, copy, paste, duplicate.
+  - `kb/DiagramLayoutTest.kt`: 2 tests for dragged boxes and groups.
+  - `kb/DiagramTest.kt`: 1 test for new diagram names.
+  - `data/DiagramMovesTest.kt`: 2 tests.
+  - `DiagramEditTest.kt`: creating, duplicating, dragging (the file stays
+    unchanged) and deleting, on a device.
+
+
 ### v0.7.0 - 15th November 2026
 
 - Diagrams can be edited on the phone, in tyfold's format and with

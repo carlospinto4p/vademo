@@ -113,6 +113,28 @@ class DiagramLayoutTest {
     }
 
     @Test
+    fun `a dragged box moves by its offset, and its groups grow to keep holding it`() {
+        val sizes = nested.nodes.filterNot { it.isGroup }.associate { it.id to Box(200.0, 64.0) }
+        val before = DiagramLayout.place(nested, sizes).boxes
+        val after = DiagramLayout.place(nested, sizes, mapOf("api" to Position(500.0, 0.0))).boxes
+        // Everything is shifted alike when the picture is moved to start at 0, 0, so compare to a box that stayed.
+        fun gap(boxes: Map<String, Placed>) = boxes.getValue("api").x - boxes.getValue("user").x
+        assertEquals(gap(before) + 500.0, gap(after), 1e-9)
+        assertTrue(after.getValue("src").contains(after.getValue("api")))
+        assertTrue(after.getValue("repo").contains(after.getValue("src")))
+    }
+
+    @Test
+    fun `a dragged group takes what it holds along`() {
+        val sizes = nested.nodes.filterNot { it.isGroup }.associate { it.id to Box(200.0, 64.0) }
+        val before = DiagramLayout.place(nested, sizes).boxes
+        val after = DiagramLayout.place(nested, sizes, mapOf("tests" to Position(0.0, 300.0))).boxes
+        fun drop(boxes: Map<String, Placed>, id: String) = boxes.getValue(id).y - boxes.getValue("user").y
+        assertEquals(drop(before, "unit") + 300.0, drop(after, "unit"), 1e-9)
+        assertEquals(drop(before, "tests") + 300.0, drop(after, "tests"), 1e-9)
+    }
+
+    @Test
     fun `the same file always gives the same picture`() {
         assertEquals(place(nested), place(nested))
     }

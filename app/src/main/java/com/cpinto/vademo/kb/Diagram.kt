@@ -121,6 +121,24 @@ data class DiagramFile(val name: String, val diagram: Diagram?, val error: Strin
     val title: String get() = diagram?.title?.ifBlank { null } ?: name
 }
 
+/**
+ * A file name for a new diagram called [title]: its words in kebab-case, as
+ * note file names are, then `-2`, `-3`… when [taken] has it already.
+ */
+fun diagramFileName(title: String, taken: Set<String>): String {
+    val base = title.lowercase().replace(Regex("""[^\p{L}\p{N}]+"""), "-").trim('-').ifEmpty { "diagram" }
+    return if (base !in taken) base else generateSequence(2) { it + 1 }.map { "$base-$it" }.first { it !in taken }
+}
+
+/** Writes a new, empty diagram into the knowledge base at [root] and returns its name. */
+fun createDiagram(root: File, title: String, direction: Diagram.Direction): String {
+    val folder = File(root, Diagram.FOLDER).apply { mkdirs() }
+    val taken = folder.listFiles().orEmpty().map { it.nameWithoutExtension }.toSet()
+    val name = diagramFileName(title, taken)
+    File(folder, "$name.json").writeText(DiagramDocument.new(title.trim(), direction).toText())
+    return name
+}
+
 /** The diagrams of the knowledge base at [root], by title. */
 fun diagramsIn(root: File): List<DiagramFile> =
     File(root, Diagram.FOLDER).listFiles().orEmpty()

@@ -10,6 +10,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
+import androidx.compose.ui.geometry.Offset
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -120,6 +122,61 @@ class DiagramEditTest {
         }
         assertEquals(before, diagram.readText())
         assertTrue(compose.onAllNodes(hasContentDescription("Undo")).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
+    fun createADiagramFromTheList() {
+        scenario = ActivityScenario.launch(MainActivity::class.java)
+        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.onNodeWithContentDescription("Diagrams").performClick()
+        // The button appears once the list has checked that no sync conflict waits.
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasContentDescription("New diagram")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("New diagram").performClick()
+        compose.onNode(hasSetTextAction()).performTextReplacement("Write path")
+        compose.onNodeWithText("Top to bottom").performClick()
+        compose.onNodeWithText("Create").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("This diagram has no boxes yet", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        val created = File(kb, ".tyfold-graphs/write-path.json").readText()
+        assertTrue(created, "\"title\": \"Write path\"" in created && "\"direction\": \"TB\"" in created)
+    }
+
+    @Test
+    fun duplicateABox() {
+        openDiagram()
+        longPress("Server")
+        compose.onNodeWithText("Duplicate").performClick()
+        waitForFile { "\"id\": \"node-1\"" in it }
+        // The copy comes back selected, ready to be dragged away from the original.
+        compose.onNodeWithText("1 selected").fetchSemanticsNode()
+    }
+
+    @Test
+    fun draggingKeepsThePlaceOnThePhoneAndOutOfTheFile() {
+        openDiagram()
+        val before = diagram.readText()
+        longPress("Server")
+        compose.onNodeWithText("Select (to act on several, or drag)").performClick()
+        compose.onNodeWithText("Server").performTouchInput { swipe(center, center + Offset(0f, 300f), 600) }
+        val moves = File(InstrumentationRegistry.getInstrumentation().targetContext.filesDir, "diagram-moves/kb-distributed-systems/flow.json")
+        compose.waitUntil(5_000) { moves.isFile && "server" in moves.readText() }
+        assertEquals(before, diagram.readText())
+        assertTrue(kb.walkTopDown().none { it.name.contains("moves") })
+    }
+
+    @Test
+    fun deleteADiagram() {
+        openDiagram()
+        compose.onNodeWithContentDescription("More").performClick()
+        compose.onNodeWithText("Delete diagram").performClick()
+        compose.onNodeWithText("Delete").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("No diagrams yet", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertTrue(!diagram.exists())
     }
 
     /** Leaves the knowledge base in git's merging state, with a conflict in a note, so the diagram itself still reads. */

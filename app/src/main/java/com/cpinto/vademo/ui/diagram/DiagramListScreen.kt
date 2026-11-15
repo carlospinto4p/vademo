@@ -28,8 +28,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.kb.DiagramFile
+import com.cpinto.vademo.kb.createDiagram
 import com.cpinto.vademo.kb.diagramsIn
+import kotlinx.coroutines.withContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +53,7 @@ import javax.inject.Inject
 @HiltViewModel
 class DiagramListViewModel @Inject constructor(
     savedState: SavedStateHandle,
-    repository: KbRepository,
+    private val repository: KbRepository,
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
@@ -50,8 +63,24 @@ class DiagramListViewModel @Inject constructor(
     private val _diagrams = MutableStateFlow<List<DiagramFile>?>(null)
     val diagrams: StateFlow<List<DiagramFile>?> = _diagrams
 
+    /** False while a sync conflict waits in this knowledge base, as for editing notes. */
+    private val _editable = MutableStateFlow(false)
+    val editable: StateFlow<Boolean> = _editable
+
     fun load() {
-        viewModelScope.launch(Dispatchers.IO) { _diagrams.value = diagramsIn(kb.root) }
+        viewModelScope.launch(Dispatchers.IO) {
+            _diagrams.value = diagramsIn(kb.root)
+            _editable.value = repository.list().none { it.name == kbName && it.needsChoice }
+        }
+    }
+
+    /** Writes a new, empty diagram, then [onCreated] with its name so the screen can open it. */
+    fun create(title: String, direction: Diagram.Direction, onCreated: (String) -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            if (repository.list().any { it.name == kbName && it.needsChoice }) return@launch
+            val name = createDiagram(kb.root, title, direction)
+            withContext(Dispatchers.Main) { onCreated(name) }
+        }
     }
 }
 
@@ -63,9 +92,28 @@ fun DiagramListScreen(
     viewModel: DiagramListViewModel = hiltViewModel(),
 ) {
     val diagrams by viewModel.diagrams.collectAsStateWithLifecycle()
+    val editable by viewModel.editable.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
+    var creating by remember { mutableStateOf(false) }
+
+    if (creating) {
+        NewDiagramDialog(onDismiss = { creating = false }) { title, direction ->
+            creating = false
+            viewModel.create(title, direction) { onOpen(viewModel.kbName, it) }
+        }
+    }
 
     Scaffold(
+        floatingActionButton = {
+            if (editable) {
+                ExtendedFloatingActionButton(
+                    onClick = { creating = true },
+                    // The label's text does not reach TalkBack on this button, so the icon carries it.
+                    icon = { Icon(Icons.Filled.Add, contentDescription = "New diagram") },
+                    text = { Text("New diagram") },
+                )
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text("Diagrams") },
@@ -80,8 +128,8 @@ fun DiagramListScreen(
         val list = diagrams ?: return@Scaffold
         if (list.isEmpty()) {
             Text(
-                "No diagrams yet. They are the files in this knowledge base's .tyfold-graphs folder, " +
-                    "drawn by agents with tyfold's graph tool.",
+                "No diagrams yet. They are the files in this knowledge base's .tyfold-graphs folder: " +
+                    "start one with New diagram, or have an agent draw one with tyfold's graph tool.",
                 Modifier.padding(padding).padding(16.dp),
             )
             return@Scaffold
@@ -106,4 +154,24 @@ fun DiagramListScreen(
             }
         }
     }
+}
+
+@Composable
+private fun NewDiagramDialog(onDismiss: () -> Unit, onCreate: (String, Diagram.Direction) -> Unit) {
+    var title by remember { mutableStateOf("") }
+    var direction by remember { mutableStateOf(Diagram.Direction.LR) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New diagram") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(title, { title = it }, label = { Text("Title") }, singleLine = true)
+                DirectionChoice(direction) { direction = it }
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = title.isNotBlank(), onClick = { onCreate(title, direction) }) { Text("Create") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }

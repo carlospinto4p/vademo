@@ -51,11 +51,13 @@ import com.cpinto.vademo.kb.Ref
 sealed interface DiagramDialog {
     data class Actions(val id: String) : DiagramDialog
     data class EditNode(val id: String) : DiagramDialog
-    data class Status(val id: String) : DiagramDialog
-    data class Category(val id: String) : DiagramDialog
-    data class MoveTo(val id: String) : DiagramDialog
+    data class Status(val ids: Set<String>) : DiagramDialog
+    data class Category(val ids: Set<String>) : DiagramDialog
+    data class MoveTo(val ids: Set<String>) : DiagramDialog
     data class Edge(val id: String) : DiagramDialog
     data object Legend : DiagramDialog
+    data object Title : DiagramDialog
+    data object DeleteDiagram : DiagramDialog
 }
 
 /** Opens the editor [dialog] names; [onChange] opens another, or closes with null. */
@@ -77,26 +79,47 @@ internal fun DiagramDialogs(dialog: DiagramDialog, viewModel: DiagramViewModel, 
             title = "Status",
             options = listOf<DiagramNode.Status?>(null) + DiagramNode.Status.entries,
             label = { it?.name?.lowercase() ?: "None" },
-            selected = doc.fieldsOf(dialog.id)?.status,
+            // Ticked only when every box shares it, as tyfold's selection menu does.
+            selected = dialog.ids.map { doc.fieldsOf(it)?.status }.distinct().singleOrNull(),
             onDismiss = close,
         ) { status ->
-            viewModel.edit { it.setStatus(setOf(dialog.id), status) }
+            viewModel.edit { it.setStatus(dialog.ids, status) }
+            viewModel.clearSelection()
             close()
         }
-        is DiagramDialog.Category -> CategoryChooser(dialog.id, doc, viewModel, close)
+        is DiagramDialog.Category -> CategoryChooser(dialog.ids, doc, viewModel, close)
         is DiagramDialog.MoveTo -> {
-            val current = doc.diagram.nodes.firstOrNull { it.id == dialog.id }?.parent
+            val parents = dialog.ids.map { id -> doc.diagram.nodes.firstOrNull { it.id == id }?.parent }.distinct()
             Choice(
                 title = "Move to group",
-                options = listOf<DiagramNode?>(null) + doc.groupsFor(setOf(dialog.id)),
+                options = listOf<DiagramNode?>(null) + doc.groupsFor(dialog.ids),
                 label = { it?.text ?: "No group" },
-                selected = doc.diagram.nodes.firstOrNull { it.id == current },
+                selected = parents.singleOrNull()?.let { p -> doc.diagram.nodes.firstOrNull { it.id == p } },
                 onDismiss = close,
             ) { group ->
-                viewModel.edit { it.moveToGroup(setOf(dialog.id), group?.id) }
+                viewModel.edit { it.moveToGroup(dialog.ids, group?.id) }
+                viewModel.clearSelection()
                 close()
             }
         }
+        DiagramDialog.Title -> TitleEditor(doc, viewModel, close)
+        DiagramDialog.DeleteDiagram -> AlertDialog(
+            onDismissRequest = close,
+            title = { Text("Delete this diagram?") },
+            text = {
+                Text(
+                    "Its file is deleted from the knowledge base, and the deletion reaches GitHub at the next Sync. " +
+                        "Notes that show it with ![[…]] will say it is missing.",
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteDiagram()
+                    close()
+                }) { Text("Delete") }
+            },
+            dismissButton = { TextButton(onClick = close) { Text("Cancel") } },
+        )
         is DiagramDialog.Edge -> {
             val edge = doc.diagram.edges.firstOrNull { it.id == dialog.id } ?: return CloseNow(close)
             EdgeEditor(edge, doc, viewModel, close)
@@ -127,9 +150,25 @@ private fun ActionsSheet(id: String, doc: DiagramDocument, viewModel: DiagramVie
             viewModel.startConnecting(id)
             onChange(null)
         }
-        row("Status…") { onChange(DiagramDialog.Status(id)) }
-        row("Category…") { onChange(DiagramDialog.Category(id)) }
-        row("Move to group…") { onChange(DiagramDialog.MoveTo(id)) }
+        row("Select (to act on several, or drag)") {
+            viewModel.select(id)
+            onChange(null)
+        }
+        row("Status…") { onChange(DiagramDialog.Status(setOf(id))) }
+        row("Category…") { onChange(DiagramDialog.Category(setOf(id))) }
+        row("Move to group…") { onChange(DiagramDialog.MoveTo(setOf(id))) }
+        row("Copy") {
+            viewModel.copy(setOf(id))
+            onChange(null)
+        }
+        row("Cut") {
+            viewModel.cut(setOf(id))
+            onChange(null)
+        }
+        row("Duplicate") {
+            viewModel.duplicate(setOf(id))
+            onChange(null)
+        }
         row("Put in a new group") {
             val group = viewModel.editReturning { it.groupAround(setOf(id)) }
             onChange(group?.let { DiagramDialog.EditNode(it) })
@@ -244,16 +283,20 @@ private fun LegendDot(colour: Color) {
 
 /** The legend's entries to choose from, plus a field to add one, as tyfold's "New category…". */
 @Composable
-private fun CategoryChooser(id: String, doc: DiagramDocument, viewModel: DiagramViewModel, close: () -> Unit) {
+private fun CategoryChooser(ids: Set<String>, doc: DiagramDocument, viewModel: DiagramViewModel, close: () -> Unit) {
     val diagram = doc.diagram
     val colours = diagramColours()
     var fresh by remember { mutableStateOf("") }
     val full = diagram.legend.size >= Diagram.LEGEND_HUES.size
+    val done = {
+        viewModel.clearSelection()
+        close()
+    }
     Choice(
         title = "Category",
         options = listOf<String?>(null) + diagram.legend.map { it.id },
         label = { entry -> diagram.legend.firstOrNull { it.id == entry }?.label ?: "None" },
-        selected = doc.fieldsOf(id)?.category,
+        selected = ids.map { doc.fieldsOf(it)?.category }.distinct().singleOrNull(),
         onDismiss = close,
         leading = { entry -> diagram.hueOf(entry)?.let { LegendDot(colours.stripe(it)) } },
         footer = {
@@ -267,14 +310,56 @@ private fun CategoryChooser(id: String, doc: DiagramDocument, viewModel: Diagram
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(enabled = !full && fresh.isNotBlank(), onClick = {
-                    viewModel.edit { d -> d.addLegendEntry(fresh)?.let { (added, entry) -> added.setCategory(setOf(id), entry) } ?: d }
-                    close()
+                    viewModel.edit { d -> d.addLegendEntry(fresh)?.let { (added, entry) -> added.setCategory(ids, entry) } ?: d }
+                    done()
                 }) { Text("Add") }
             }
         },
     ) { entry ->
-        viewModel.edit { it.setCategory(setOf(id), entry) }
-        close()
+        viewModel.edit { it.setCategory(ids, entry) }
+        done()
+    }
+}
+
+@Composable
+private fun TitleEditor(doc: DiagramDocument, viewModel: DiagramViewModel, close: () -> Unit) {
+    var title by remember { mutableStateOf(doc.diagram.title) }
+    var direction by remember { mutableStateOf(doc.diagram.direction) }
+    AlertDialog(
+        onDismissRequest = close,
+        title = { Text("Title and direction") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(title, { title = it }, label = { Text("Title") }, singleLine = true)
+                DirectionChoice(direction) { direction = it }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                viewModel.edit { it.withTitle(title.trim()).withDirection(direction) }
+                close()
+            }) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = close) { Text("Cancel") } },
+    )
+}
+
+/** Which way the arrows run when the layout places the boxes. */
+@Composable
+internal fun DirectionChoice(direction: Diagram.Direction, onPick: (Diagram.Direction) -> Unit) {
+    Column {
+        listOf(Diagram.Direction.LR to "Left to right", Diagram.Direction.TB to "Top to bottom").forEach { (value, words) ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(selected = direction == value, role = Role.RadioButton) { onPick(value) }
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = direction == value, onClick = null)
+                Text(words, Modifier.padding(start = 8.dp))
+            }
+        }
     }
 }
 

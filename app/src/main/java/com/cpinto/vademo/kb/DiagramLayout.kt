@@ -39,7 +39,13 @@ object DiagramLayout {
     data class Box(val width: Double, val height: Double)
     private data class Spacing(val rank: Double, val node: Double)
 
-    fun place(diagram: Diagram, nodeSizes: Map<String, Box>): DiagramPlaces {
+    /**
+     * [moves] are where boxes were dragged on this phone, as offsets in dp
+     * from where the layout puts them; they are never in the file. A moved
+     * group takes what it holds along, and every group grows to keep holding
+     * a box moved past its edge.
+     */
+    fun place(diagram: Diagram, nodeSizes: Map<String, Box>, moves: Map<String, Position> = emptyMap()): DiagramPlaces {
         val nodes = diagram.nodes.distinctBy { it.id }
         if (nodes.isEmpty()) return DiagramPlaces(emptyMap(), 0.0, 0.0)
         val byId = nodes.associateBy { it.id }
@@ -47,7 +53,34 @@ object DiagramLayout {
         val relative = mutableMapOf<String, Placed>()
         val fromFile = nodes.all { it.position != null }
         if (fromFile) fileLayout(nodes, parentOf, nodeSizes, relative) else autoLayout(diagram, nodes, parentOf, nodeSizes, relative)
-        return absolute(nodes, parentOf, relative)
+        val placed = absolute(nodes, parentOf, relative)
+        return if (moves.isEmpty()) normalized(placed) else normalized(moved(nodes, parentOf, placed, moves))
+    }
+
+    private fun moved(
+        nodes: List<DiagramNode>,
+        parentOf: Map<String, String>,
+        placed: Map<String, Placed>,
+        moves: Map<String, Position>,
+    ): Map<String, Placed> {
+        val out = placed.mapValues { (id, p) ->
+            var dx = 0.0
+            var dy = 0.0
+            for (step in chain(id, parentOf)) moves[step]?.let { dx += it.x; dy += it.y }
+            p.copy(x = p.x + dx, y = p.y + dy)
+        }.toMutableMap()
+        // Innermost groups first, so a grown group is held by the group around it.
+        for (group in nodes.filter { it.isGroup }.sortedByDescending { chain(it.id, parentOf).size }) {
+            val held = nodes.filter { parentOf[it.id] == group.id }.mapNotNull { out[it.id] }
+            if (held.isEmpty()) continue
+            val g = out.getValue(group.id)
+            val left = minOf(g.x, held.minOf { it.x } - PAD_SIDE)
+            val top = minOf(g.y, held.minOf { it.y } - PAD_TOP)
+            val right = maxOf(g.x + g.width, held.maxOf { it.x + it.width } + PAD_SIDE)
+            val bottom = maxOf(g.y + g.height, held.maxOf { it.y + it.height } + PAD_BOTTOM)
+            out[group.id] = Placed(left, top, right - left, bottom - top)
+        }
+        return out
     }
 
     /**
@@ -150,9 +183,9 @@ object DiagramLayout {
         }
     }
 
-    /** From places relative to each parent group to places in the whole diagram, starting at 0, 0. */
-    private fun absolute(nodes: List<DiagramNode>, parentOf: Map<String, String>, relative: Map<String, Placed>): DiagramPlaces {
-        val boxes = nodes.associate { node ->
+    /** From places relative to each parent group to places in the whole diagram. */
+    private fun absolute(nodes: List<DiagramNode>, parentOf: Map<String, String>, relative: Map<String, Placed>): Map<String, Placed> =
+        nodes.associate { node ->
             val own = relative.getValue(node.id)
             var x = own.x
             var y = own.y
@@ -165,6 +198,9 @@ object DiagramLayout {
             }
             node.id to own.copy(x = x, y = y)
         }
+
+    /** Shifted so the diagram starts at 0, 0, with its size. */
+    private fun normalized(boxes: Map<String, Placed>): DiagramPlaces {
         val left = boxes.values.minOf { it.x }
         val top = boxes.values.minOf { it.y }
         val shifted = boxes.mapValues { (_, p) -> p.copy(x = p.x - left, y = p.y - top) }
