@@ -88,6 +88,15 @@ class NoteIndexTest {
     }
 
     @Test
+    fun `linkedFrom gives the notes linking to a note, by its path`() {
+        write("ideas/a.md", "---\ntitle: Note A\n---\n[[b]]")
+        write("ideas/b.md", "")
+        write("sources/c.md", "---\ntitle: Note C\n---\n[[b]]")
+        assertEquals(listOf("Note A", "Note C"), index().linkedFrom("ideas/b.md").map { it.title })
+        assertEquals(emptyList<IndexedNote>(), index().linkedFrom("ideas/a.md"))
+    }
+
+    @Test
     fun `links that name no note are unresolved, once per note`() {
         write("ideas/a.md", "[[gone]] [[gone]] [[b]]")
         write("ideas/b.md", "[[also-gone]]")

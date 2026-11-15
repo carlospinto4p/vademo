@@ -1,5 +1,6 @@
 package com.cpinto.vademo.ui.note
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -13,8 +14,10 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -45,6 +48,8 @@ import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.kb.DiagramFile
 import com.cpinto.vademo.kb.Frontmatter
 import com.cpinto.vademo.kb.FrontmatterParser
+import com.cpinto.vademo.kb.IndexedNote
+import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.WikiLinks
 import com.cpinto.vademo.kb.readDiagram
 import com.cpinto.vademo.ui.diagram.DiagramCard
@@ -77,6 +82,8 @@ data class NoteState(
     val frontmatter: Frontmatter? = null,
     val blocks: List<NoteBlock> = emptyList(),
     val missing: Boolean = false,
+    /** Notes linking to this one; filled in after the text, since it reads every note. */
+    val linkedFrom: List<IndexedNote> = emptyList(),
 )
 
 @HiltViewModel
@@ -129,6 +136,8 @@ class NoteViewModel @Inject constructor(
                 frontmatter = parsed.frontmatter,
                 blocks = blocks,
             )
+            val linkedFrom = NoteIndex.of(kb).linkedFrom(path)
+            _state.value = _state.value.copy(linkedFrom = linkedFrom)
         }
     }
 
@@ -260,6 +269,19 @@ fun NoteScreen(
                                     table = { WrappingTable(it) },
                                 ),
                                 modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
+                }
+                if (state.linkedFrom.isNotEmpty()) {
+                    HorizontalDivider()
+                    Text("Linked from (${state.linkedFrom.size})", style = MaterialTheme.typography.titleMedium)
+                    Column {
+                        for (from in state.linkedFrom) {
+                            ListItem(
+                                modifier = Modifier.clickable { onOpenNote(viewModel.kbName, from.path) },
+                                headlineContent = { Text(from.title) },
+                                supportingContent = from.type?.let { { Text(it) } },
                             )
                         }
                     }

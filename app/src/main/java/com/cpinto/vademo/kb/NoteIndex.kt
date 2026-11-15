@@ -60,6 +60,10 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
 
     fun note(name: String): IndexedNote? = byName[name.removeSuffix(".md")]
 
+    /** The notes linking to the note at [path], in path order. */
+    fun linkedFrom(path: String): List<IndexedNote> =
+        backlinks[path.substringAfterLast('/').removeSuffix(".md")].orEmpty().mapNotNull(byName::get)
+
     private fun isHub(note: IndexedNote): Boolean =
         note.type == "hub" || note.path.substringBeforeLast('/', "").substringAfterLast('/') == note.name
 

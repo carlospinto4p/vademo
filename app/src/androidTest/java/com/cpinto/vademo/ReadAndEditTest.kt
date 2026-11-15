@@ -152,6 +152,20 @@ class ReadAndEditTest {
     }
 
     @Test
+    fun followABacklinkToTheNoteLinkingHere() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Business idea scorecard").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Linked from (1)")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Tyfold desktop app").performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
     fun searchFromTheHomeScreenAndOpenANote() {
         compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Back").performClick()

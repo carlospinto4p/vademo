@@ -59,6 +59,9 @@ reflows to the width of the screen, so a larger size never means
 scrolling sideways, and the size is kept for every note until it is
 changed again.
 
+Under the text, "Linked from" lists the notes that link to this one. Tap
+one to open it.
+
 ## Search
 
 The search button on the home screen searches every knowledge base on the

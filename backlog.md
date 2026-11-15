@@ -52,8 +52,6 @@ v0.9.0 (export). What is left is checking each on a phone.
 From `docs/kb-views-and-queries.md`, which has the reasoning and the
 measurements behind these. In order — each needs the one before it.
 
-- [ ] **Show backlinks on a note** — "Linked from (N)" under the body.
-  Half the link spine is unwalkable without it. Effort: Small.
 - [ ] **Recent, Types and Tags views** of a knowledge base, beside the
   folder list. Sources are 47 of the largest knowledge base's 86 notes, so grouping
   by type is what makes a list readable. Effort: Medium.

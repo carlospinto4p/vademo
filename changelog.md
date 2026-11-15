@@ -1,6 +1,17 @@
 ## Changelog - vademo
 
 
+### v0.14.0 - 15th November 2026
+
+- A note now ends with "Linked from (N)": the notes that link to it, each
+  one tap away. Hidden when nothing links to the note. It is read after
+  the note's text, so the text never waits for it.
+- Added `NoteIndex.linkedFrom(path)`.
+- Added tests:
+  - `NoteIndexTest`: one test for `linkedFrom`.
+  - `ReadAndEditTest`: open a note, then the note linking to it.
+
+
 ### v0.13.0 - 15th November 2026
 
 - Search: a search button on the home screen searches every knowledge
