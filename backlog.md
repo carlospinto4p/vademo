@@ -76,6 +76,11 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
+- [ ] `.github/workflows/build-apk.yml`: CI warns (run 43777462878,
+  2026-11-16) that `actions/setup-java@v4` is deprecated (move to v5) and
+  that `checkout`, `setup-java`, `upload-artifact`, `setup-android` and
+  `setup-gradle` target Node.js 20, now forced onto Node 24. Bump each to
+  a release built for Node 24. LOW, effort S.
 - [ ] `data/SettingsRepository.kt:47,86-87`: every DataStore change (text
   size after a pinch, a saved search) decrypts the token again with the
   Keystore. Add `distinctUntilChanged` on the ciphertext or cache the
