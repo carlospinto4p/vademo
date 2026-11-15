@@ -215,35 +215,42 @@ fun BrowseScreen(
             when {
                 view == View.Folders -> FolderList(state, viewModel, onOpenFolder, onOpenNote)
                 index == null -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(16.dp))
-                view == View.Recent -> LazyColumn(Modifier.fillMaxSize()) {
-                    items(index.recent(), key = { it.path }) { note ->
-                        NoteRow(note, listOfNotNull(note.updated, note.type), openNote)
+                // Recent, Types and Tags sort or group every note, so once per index.
+                view == View.Recent -> {
+                    val recent = remember(index) { index.recent() }
+                    LazyColumn(Modifier.fillMaxSize()) {
+                        items(recent, key = { it.path }) { note ->
+                            NoteRow(note, listOfNotNull(note.updated, note.type), openNote)
+                        }
                     }
                 }
-                view == View.Types -> LazyColumn(Modifier.fillMaxSize()) {
-                    for ((type, notes) in index.byType()) {
-                        if (type == SOURCE) {
-                            item(key = "type:$type") {
-                                ListItem(
-                                    modifier = Modifier.clickable { onSearch(kbName, "type:$SOURCE") },
-                                    leadingContent = { Icon(Icons.AutoMirrored.Outlined.LibraryBooks, contentDescription = null) },
-                                    headlineContent = { Text("Sources") },
-                                    supportingContent = { Text(count(notes.size)) },
-                                )
-                                HorizontalDivider()
+                view == View.Types -> {
+                    val byType = remember(index) { index.byType() }
+                    LazyColumn(Modifier.fillMaxSize()) {
+                        for ((type, notes) in byType) {
+                            if (type == SOURCE) {
+                                item(key = "type:$type") {
+                                    ListItem(
+                                        modifier = Modifier.clickable { onSearch(kbName, "type:$SOURCE") },
+                                        leadingContent = { Icon(Icons.AutoMirrored.Outlined.LibraryBooks, contentDescription = null) },
+                                        headlineContent = { Text("Sources") },
+                                        supportingContent = { Text(count(notes.size)) },
+                                    )
+                                    HorizontalDivider()
+                                }
+                                continue
                             }
-                            continue
-                        }
-                        item(key = "type:$type") {
-                            Text(
-                                "${type ?: "No type"} (${notes.size})",
-                                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                        items(notes, key = { "type:$type:" + it.path }) { note ->
-                            NoteRow(note, listOfNotNull(note.status), openNote)
+                            item(key = "type:$type") {
+                                Text(
+                                    "${type ?: "No type"} (${notes.size})",
+                                    modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 4.dp),
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                            items(notes, key = { "type:$type:" + it.path }) { note ->
+                                NoteRow(note, listOfNotNull(note.status), openNote)
+                            }
                         }
                     }
                 }
@@ -268,7 +275,7 @@ fun BrowseScreen(
                     }
                 }
                 else -> {
-                    val tags = index.tagCounts()
+                    val tags = remember(index) { index.tagCounts() }
                     if (tags.isEmpty()) {
                         Text(
                             "No note has tags.",

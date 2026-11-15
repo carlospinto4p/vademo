@@ -76,20 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] `ui/browse/BrowseScreen.kt:219,224,271`: `recent()`, `byType()` and
-  `tagCounts()` sort or group every note on each recomposition. Wrap in
-  `remember(index)`. MED, effort S.
-- [ ] `ui/diagram/DiagramScreen.kt:173-181,414-424`: a new `DiagramActions`
-  is built on every recomposition and `DiagramContent` rebuilds `byId` and
-  the depth sort, so every box recomposes on each drag frame. Remember
-  both. MED, effort S/M.
-- [ ] `gradle.properties`: configuration cache and build cache are off
-  (Gradle 9.4.1). Turn on `org.gradle.configuration-cache` and
-  `org.gradle.caching`, then check KSP and Hilt still build. MED, effort S.
-- [ ] `.github/workflows/build-apk.yml:69,72`: two `./gradlew --no-daemon`
-  calls each pay a JVM start and configuration; run
-  `testDebugUnitTest assembleDebug` in one call. Also cache the platform
-  37 SDK download (:52-66). MED, effort S.
 - [ ] `data/SettingsRepository.kt:47,86-87`: every DataStore change (text
   size after a pinch, a saved search) decrypts the token again with the
   Keystore. Add `distinctUntilChanged` on the ciphertext or cache the

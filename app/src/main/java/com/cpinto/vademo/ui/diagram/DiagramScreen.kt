@@ -170,15 +170,18 @@ fun DiagramScreen(
                 else -> {
                     val places = rememberPlaces(diagram, state.moves)
                     val colours = diagramColours()
-                    val actions = DiagramActions(
-                        onTap = { id -> viewModel.tap(id)?.let { onOpenNote(viewModel.kbName, it) } },
-                        onLongPress = if (state.editable) { id -> open = DiagramDialog.Actions(id) } else null,
-                        onEdge = if (state.editable && !exporting) { id -> open = DiagramDialog.Edge(id) } else null,
-                        highlighted = state.connectingFrom,
-                        selected = state.selected,
-                        onDrag = viewModel::drag,
-                        onDragEnd = viewModel::dragEnded,
-                    )
+                    // Kept across drag frames, so the boxes that did not move skip recomposing.
+                    val actions = remember(viewModel, onOpenNote, state.editable, exporting, state.connectingFrom, state.selected) {
+                        DiagramActions(
+                            onTap = { id -> viewModel.tap(id)?.let { onOpenNote(viewModel.kbName, it) } },
+                            onLongPress = if (state.editable) { id -> open = DiagramDialog.Actions(id) } else null,
+                            onEdge = if (state.editable && !exporting) { id -> open = DiagramDialog.Edge(id) } else null,
+                            highlighted = state.connectingFrom,
+                            selected = state.selected,
+                            onDrag = viewModel::drag,
+                            onDragEnd = viewModel::dragEnded,
+                        )
+                    }
                     // Recorded with tyfold's export margin round it (`PADDING` in its graphExport.ts);
                     // the screen draws the recording back at the content's own place.
                     val recording = Modifier.drawWithContent {
@@ -387,8 +390,11 @@ internal fun rememberPlaces(diagram: Diagram, moves: Map<String, Position> = emp
     return remember(diagram, sizes, moves) { DiagramLayout.place(diagram, sizes, moves) }
 }
 
-/** Status and legend colours, readable on the light and the dark theme. */
-internal class DiagramColours(val dark: Boolean, val error: Color, val outline: Color) {
+/**
+ * Status and legend colours, readable on the light and the dark theme. A data
+ * class, so a box whose colours did not change can skip recomposing.
+ */
+internal data class DiagramColours(val dark: Boolean, val error: Color, val outline: Color) {
     fun stripe(hue: Float) = Color.hsl(hue, 0.55f, if (dark) 0.6f else 0.45f)
     fun tint(hue: Float) = Color.hsl(hue, if (dark) 0.3f else 0.6f, if (dark) 0.2f else 0.94f)
     fun status(status: DiagramNode.Status?): Color? = when (status) {
@@ -415,15 +421,19 @@ internal fun DiagramContent(
     notes: Map<String, String>,
     actions: DiagramActions?,
 ) {
-    val byId = diagram.nodes.associateBy { it.id }
-    val depth = { node: DiagramNode -> generateSequence(node) { it.parent?.let(byId::get) }.take(diagram.nodes.size + 1).count() }
-    Box(Modifier.fillMaxSize()) {
+    // A drag changes only the places, so the groups' order and the boxes are worked out once per diagram.
+    val (groups, boxes) = remember(diagram) {
+        val byId = diagram.nodes.associateBy { it.id }
+        val depth = { node: DiagramNode -> generateSequence(node) { it.parent?.let(byId::get) }.take(diagram.nodes.size + 1).count() }
         // Outer groups first, so a group inside another is drawn over it.
-        diagram.nodes.filter { it.isGroup }.sortedBy(depth).forEach { group ->
+        diagram.nodes.filter { it.isGroup }.sortedBy(depth) to diagram.nodes.filterNot { it.isGroup }
+    }
+    Box(Modifier.fillMaxSize()) {
+        groups.forEach { group ->
             places.boxes[group.id]?.let { GroupBox(group, diagram, it, colours, notes[group.id] != null, actions) }
         }
         Edges(diagram, places, actions?.onEdge)
-        diagram.nodes.filterNot { it.isGroup }.forEach { node ->
+        boxes.forEach { node ->
             places.boxes[node.id]?.let { NodeBox(node, diagram, it, colours, notes[node.id] != null, actions) }
         }
     }

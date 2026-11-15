@@ -1,6 +1,23 @@
 ## Changelog - vademo
 
 
+### v0.20.12 - 16th November 2026
+
+- Fixed work repeated on every recomposition:
+  - `BrowseScreen`: the Recent, Types and Tags tabs sort or group the
+    notes once per note index, not on every recomposition.
+  - `DiagramScreen`: the tap and drag handlers are kept across drag
+    frames, `DiagramColours` is a data class, and the groups' drawing
+    order is worked out once per diagram, so a drag recomposes only the
+    boxes that moved.
+- Faster builds:
+  - `gradle.properties`: turned on Gradle's configuration cache and
+    build cache.
+  - `.github/workflows/build-apk.yml`: unit tests and the APK build run in
+    one Gradle call, and the compileSdk 37 platform is kept in the
+    Actions cache between runs.
+
+
 ### v0.20.11 - 16th November 2026
 
 - Updated `.claude/rules/ux-areas-android.md`: the settings card on

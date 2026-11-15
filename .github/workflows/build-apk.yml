@@ -49,10 +49,22 @@ jobs:
       # channel (0 stable, 1 beta, 2 dev, 3 canary), and if none resolves
       # the platforms that do exist are printed instead of failing later
       # inside Gradle with a vaguer message.
+      # The platform download is the same on every run, so it is kept
+      # between runs. Bump the key's last part to download it afresh.
+      - name: Restore the compileSdk platform
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.ANDROID_HOME }}/platforms/android-37*
+          key: android-platform-37-v1
+
       - name: Install the compileSdk platform
         run: |
           yes | sdkmanager --licenses >/dev/null 2>&1 || true
           sdkmanager 'platform-tools'
+          if ls -d "$ANDROID_HOME"/platforms/android-37* >/dev/null 2>&1; then
+            echo "compileSdk platform restored from the cache"
+            exit 0
+          fi
           for package in 'platforms;android-37.0' 'platforms;android-37'; do
             for channel in 0 1 2 3; do
               yes | sdkmanager --licenses --channel=$channel >/dev/null 2>&1 || true
@@ -65,11 +77,9 @@ jobs:
           sdkmanager --list --channel=3 | grep -E 'platforms;android-' | sort -u
           exit 1
 
-      - name: Unit tests
-        run: ./gradlew --no-daemon testDebugUnitTest
-
-      - name: Build the debug APK
-        run: ./gradlew --no-daemon assembleDebug
+      # One Gradle call, so the JVM starts and the build is configured once.
+      - name: Unit tests and the debug APK
+        run: ./gradlew --no-daemon testDebugUnitTest assembleDebug
 
       - name: Name the APK after the version
         id: apk
