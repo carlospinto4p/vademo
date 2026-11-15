@@ -73,10 +73,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   held in CI secrets (`app/build.gradle.kts:28-35`,
   `.github/workflows/build-apk.yml:101-112`), which reverses the
   committed-keystore decision in CLAUDE.md. MED, effort M.
-- [ ] `gradle/libs.versions.toml:22`: JGit `5.13.3`. CVE-2025-4949 (XXE in
-  repo-manifest parsing, unused here) is fixed in 5.13.4 according to the
-  scan agent's recall, not checked online. Verify, then bump within
-  5.13.x and run `GitOnDeviceTest`. LOW, effort S.
 
 #### Performance
 

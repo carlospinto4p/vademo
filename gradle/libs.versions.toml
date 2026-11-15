@@ -19,7 +19,7 @@ datastore = "1.2.1"
 
 # Git. 5.13 is the last line built for Java 8: 6.x needs Java 11 and
 # 7.x Java 17, neither of which Android's runtime fully provides.
-jgit = "5.13.3.202401111512-r"
+jgit = "5.13.5.202508271544-r"
 
 # Diagram files (tyfold's graph format)
 serializationJson = "1.13.0"

@@ -37,5 +37,5 @@ rationale lives in the docs or ADRs it cites.
 ## What NOT to do (recent refuted directions)
 
 - **JGit 6.x or 7.x.** They need Java 11 / 17 APIs Android does not fully
-  provide; 5.13.3 is verified on a Pixel 8 emulator running Android 16
-  (2026-09-16).
+  provide; 5.13.5 is verified on a Pixel 8 emulator running Android 16
+  (2026-11-15).

@@ -1,6 +1,14 @@
 ## Changelog - vademo
 
 
+### v0.20.5 - 15th November 2026
+
+- Updated JGit from 5.13.3 to 5.13.5, the newest release of the 5.13 line.
+  5.13.4 fixed CVE-2025-4949, an XXE in repo-manifest parsing that vademo
+  does not use (GitHub advisory GHSA-vrpq-qp53-qv56, checked 15th November
+  2026). Unit and device tests, `GitOnDeviceTest` included, pass with it.
+
+
 ### v0.20.4 - 15th November 2026
 
 - Fixed symlinks in a knowledge base reaching the app's private files. A
