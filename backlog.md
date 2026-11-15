@@ -58,6 +58,16 @@ v0.9.0 (export). What is left is checking each on a phone.
   under Saved searches and runs again when tapped. Device tests ran on
   the emulator with a four-note fixture only.
 
+### 2026.11.15 (table columns, v0.18.1)
+
+- [ ] **Break long link names at their dashes, not mid-word.** In a table
+  cell, a link such as `how-many-developers-run-many-coding-agents` (the
+  scorecard in kb-business `ideas/tyfold.md`) wraps as "develop|ers"
+  because Android breaks a word that does not fit its line anywhere. Try
+  `LineBreak`/`Hyphens` on the table text style in `ui/note/NoteTable.kt`,
+  or an invisible break opportunity after each `-` in link text. Also
+  happens in body text on narrow screens. Effort: Small.
+
 ### 2026.09.16 (first version)
 
 - [ ] **Add JGit keep rules before switching on release minification.**
