@@ -257,6 +257,35 @@ class ReadAndEditTest {
         compose.onNodeWithText("Business idea scorecard").assertDoesNotExist()
     }
 
+    @Test
+    fun saveASearchRunItAgainThenDeleteIt() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithContentDescription("Search").performClick()
+        // Before anything is typed, the Health checks are offered as saved searches.
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Open questions")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(hasSetTextAction()).performTextInput("tag:scoring")
+        compose.onNodeWithContentDescription("Save search").performClick()
+        compose.onNode(hasSetTextAction() and hasText("Name")).performTextInput("Scoring notes")
+        compose.onNodeWithText("Save").performClick()
+
+        compose.onNodeWithContentDescription("Clear search").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scoring notes")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Scoring notes").performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Business idea scorecard")).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        compose.onNodeWithContentDescription("Clear search").performClick()
+        compose.onNodeWithContentDescription("Delete Scoring notes").performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scoring notes")).fetchSemanticsNodes().isEmpty()
+        }
+    }
+
     private fun write(path: String, text: String) {
         File(kb, path).apply { parentFile!!.mkdirs() }.writeText(text)
     }

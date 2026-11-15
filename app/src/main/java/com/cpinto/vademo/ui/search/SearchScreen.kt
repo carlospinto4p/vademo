@@ -11,8 +11,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Bookmark
+import androidx.compose.material.icons.outlined.BookmarkAdd
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,7 +50,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
+import com.cpinto.vademo.data.SavedQueries
+import com.cpinto.vademo.data.SettingsRepository
+import com.cpinto.vademo.kb.Health
 import com.cpinto.vademo.kb.NoteIndex
+import com.cpinto.vademo.kb.SavedQuery
 import com.cpinto.vademo.kb.NoteSearch
 import com.cpinto.vademo.kb.SearchHit
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,12 +74,19 @@ data class SearchState(
     val hits: List<SearchHit> = emptyList(),
     /** More than one knowledge base is searched, so each hit names its own. */
     val showKb: Boolean = false,
-)
+    /** The user's saved searches; the Health checks come before them and are not stored. */
+    val saved: List<SavedQuery> = emptyList(),
+) {
+    /** Nothing asked yet beyond which knowledge base: the saved searches are offered instead of results. */
+    val offersSaved: Boolean
+        get() = NoteSearch.parse(query).let { q -> q.words.isEmpty() && q.filters.all { it is NoteSearch.Filter.Kb } }
+}
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val repository: KbRepository,
+    private val settings: SettingsRepository,
 ) : ViewModel() {
 
     /** The text the field starts with: empty from the home screen, `kb:<name> ` from a knowledge base. */
@@ -76,13 +95,28 @@ class SearchViewModel @Inject constructor(
     private val indexes = MutableStateFlow<List<NoteIndex>?>(null)
     private val query = MutableStateFlow(initialQuery)
 
-    val state: StateFlow<SearchState> = combine(indexes, query) { all, text ->
+    val state: StateFlow<SearchState> = combine(indexes, query, settings.savedQueries) { all, text, saved ->
         if (all == null) {
-            SearchState(loading = true, query = text)
+            SearchState(loading = true, query = text, saved = saved)
         } else {
-            SearchState(loading = false, query = text, hits = NoteSearch.search(all, text), showKb = all.size > 1)
+            SearchState(
+                loading = false,
+                query = text,
+                hits = NoteSearch.search(all, text),
+                showKb = all.size > 1,
+                saved = saved,
+            )
         }
     }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, SearchState(query = initialQuery))
+
+    fun saveQuery(name: String) {
+        val text = query.value
+        viewModelScope.launch { settings.saveQuery(name, text) }
+    }
+
+    fun deleteQuery(name: String) {
+        viewModelScope.launch { settings.deleteQuery(name) }
+    }
 
     init {
         // Built each time the screen opens, so it always reflects the last sync.
@@ -114,6 +148,24 @@ fun SearchScreen(
         val start = NoteSearch.parse(viewModel.initialQuery)
         if (start.words.isEmpty() && start.filters.all { it is NoteSearch.Filter.Kb }) focus.requestFocus()
     }
+    val search = { text: String ->
+        field = TextFieldValue(text, TextRange(text.length))
+        viewModel.setQuery(text)
+    }
+    var naming by rememberSaveable { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    if (naming) {
+        NameDialog(
+            onDismiss = { naming = false },
+            onSave = { name ->
+                naming = false
+                viewModel.saveQuery(name)
+                scope.launch { snackbar.showSnackbar("Saved as \"$name\"") }
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -124,8 +176,16 @@ fun SearchScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
+                actions = {
+                    if (!state.offersSaved) {
+                        IconButton(onClick = { naming = true }) {
+                            Icon(Icons.Outlined.BookmarkAdd, contentDescription = "Save search")
+                        }
+                    }
+                },
             )
         },
+        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             OutlinedTextField(
@@ -139,10 +199,7 @@ fun SearchScreen(
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
                 trailingIcon = if (field.text.isEmpty()) null else {
                     {
-                        IconButton(onClick = {
-                            field = TextFieldValue("")
-                            viewModel.setQuery("")
-                        }) {
+                        IconButton(onClick = { search("") }) {
                             Icon(Icons.Filled.Close, contentDescription = "Clear search")
                         }
                     }
@@ -151,10 +208,19 @@ fun SearchScreen(
             )
             when {
                 state.loading -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp))
-                NoteSearch.parse(state.query).isEmpty -> Hint(
-                    "Words in titles, headings or text, and filters: type:question status:draft tag:raft " +
-                        "updated:>2026-09-01 kb:name folder:inbox links:note is:orphan is:unverified is:broken",
-                )
+                state.offersSaved -> LazyColumn(Modifier.fillMaxSize()) {
+                    item(key = "saved") { Heading("Saved searches") }
+                    val pick = { saved: SavedQuery -> search(SavedQueries.applied(saved, viewModel.initialQuery)) }
+                    items(Health.CHECKS, key = { "check:" + it.name }) { SavedRow(it, pick, onDelete = null) }
+                    items(state.saved, key = { "own:" + it.name }) { SavedRow(it, pick, viewModel::deleteQuery) }
+                    item(key = "hint") {
+                        Hint(
+                            "Words in titles, headings or text, and filters: type:question status:draft tag:raft " +
+                                "updated:>2026-09-01 kb:name folder:inbox links:note is:orphan is:unverified " +
+                                "is:broken. Save a search with the bookmark at the top.",
+                        )
+                    }
+                }
                 state.hits.isEmpty() -> Hint("No notes match.")
                 else -> LazyColumn(Modifier.fillMaxSize()) {
                     val listsBroken = NoteSearch.Filter.Is("broken") in NoteSearch.parse(state.query).filters
@@ -176,6 +242,56 @@ fun SearchScreen(
             }
         }
     }
+}
+
+/** A saved search; [onDelete] is null for the Health checks, which are built in. */
+@Composable
+private fun SavedRow(saved: SavedQuery, onPick: (SavedQuery) -> Unit, onDelete: ((String) -> Unit)?) {
+    ListItem(
+        modifier = Modifier.clickable { onPick(saved) },
+        leadingContent = { Icon(Icons.Outlined.Bookmark, contentDescription = null) },
+        headlineContent = { Text(saved.name) },
+        supportingContent = { Text(saved.query) },
+        trailingContent = onDelete?.let { delete ->
+            {
+                IconButton(onClick = { delete(saved.name) }) {
+                    Icon(Icons.Outlined.Delete, contentDescription = "Delete ${saved.name}")
+                }
+            }
+        },
+    )
+    HorizontalDivider()
+}
+
+@Composable
+private fun NameDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var name by rememberSaveable { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Save search") },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Name") },
+                singleLine = true,
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(name.trim()) }, enabled = name.isNotBlank()) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun Heading(text: String) {
+    Text(
+        text,
+        modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+        style = MaterialTheme.typography.titleSmall,
+        color = MaterialTheme.colorScheme.primary,
+    )
 }
 
 @Composable

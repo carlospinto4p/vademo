@@ -95,6 +95,11 @@ is:unverified    notes with an (unverified) marker
 is:broken        notes linking to a note that does not exist
 ```
 
+Before anything is typed, search lists saved searches: the Health checks,
+then your own. Tap the bookmark at the top to save the current search
+under a name, and the bin on a row to delete it. Saved searches stay on
+the phone and are not synced.
+
 ## Map of notes
 
 The map button at the top of a knowledge base shows every note as a box

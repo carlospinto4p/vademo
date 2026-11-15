@@ -47,13 +47,16 @@ v0.9.0 (export). What is left is checking each on a phone.
   small round handles on the arrows), and Share as Mermaid into a GitHub
   issue comment's preview (the chart renders).
 
-### 2026.09.20 (viewing and querying)
+### 2026.11.15 (Health tab and saved searches, v0.17.0 and v0.18.0)
 
-From `docs/kb-views-and-queries.md`, which has the reasoning and the
-measurements behind these. In order — each needs the one before it.
-
-- [ ] **Saved queries**, with the Health rows as the first ones. Effort:
-  Small.
+- [ ] **[manual]** Check on the phone with v0.18.0 installed, on a real
+  knowledge base: open it, tap the Health tab (scroll the tabs left if it
+  is hidden). A pass is: the counts look right for what you know of it,
+  and each row opens a list of exactly those notes; the Broken links list
+  names the missing note under each one. Then in search, type a filter,
+  tap the bookmark at the top, name it, clear the field: it is listed
+  under Saved searches and runs again when tapped. Device tests ran on
+  the emulator with a four-note fixture only.
 
 ### 2026.09.16 (first version)
 

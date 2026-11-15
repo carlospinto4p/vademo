@@ -14,9 +14,9 @@ rationale lives in the docs or ADRs it cites.
    (backlog 2026.09.16). The phone-to-GitHub round trip works
    (checked 2026-11-15), so the gate on new features is cleared.
 2. **Search, views and health counts** — designed in
-   `docs/kb-views-and-queries.md`, itemised in backlog 2026.09.20. The
-   index comes first; everything else reads from it. New notes from
-   templates (backlog 2026.09.16) is independent of that order.
+   `docs/kb-views-and-queries.md`. Done: all six steps of its order of
+   work shipped by v0.18.0 (Health tab v0.17.0, saved searches v0.18.0).
+   New notes from templates (backlog 2026.09.16) is still open.
 3. **Diagrams**: shown since v0.6.0, edited on the phone since v0.7.0, in
    tyfold's format so agents (with tyfold's graph tool) and the phone
    write the same files. By v0.10.0 the phone does what tyfold's diagram

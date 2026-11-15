@@ -1,6 +1,27 @@
 ## Changelog - vademo
 
 
+### v0.18.0 - 15th November 2026
+
+- Saved searches. Before anything is typed, the search screen lists them:
+  the five Health checks first, then the user's own. Tapping one runs it,
+  kept to the knowledge base the search was opened from unless it names
+  one itself. The bookmark button at the top saves the current search
+  under a name; the bin on a row deletes it. The Health checks cannot be
+  deleted.
+- A search opened from a knowledge base now starts on the saved searches
+  instead of listing every one of its notes.
+- Saved searches are kept in the app's settings, not in a knowledge base,
+  so they never sync to GitHub.
+- Added `data/SavedQueries.kt`: storing, replacing by name, deleting, and
+  `applied()`, which keeps the starting `kb:` filter.
+- `SettingsRepository`: added `savedQueries`, `saveQuery()` and
+  `deleteQuery()`.
+- Added tests:
+  - `SavedQueriesTest`: 6 tests.
+  - `ReadAndEditTest.saveASearchRunItAgainThenDeleteIt`.
+
+
 ### v0.17.0 - 15th November 2026
 
 - A knowledge base's top screen has a fifth tab, Health. It counts the
