@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.nio.file.Files
 
 /**
  * Runs [GitSync] against real repositories: a bare repository stands in for
@@ -240,5 +241,46 @@ class GitSyncTest {
     fun `sync on a damaged repository fails without throwing`() {
         File(tmp, "broken/.git").mkdirs()
         assertInstanceOf(SyncOutcome.Failed::class.java, sync.sync(remoteUrl, File(tmp, "broken")))
+    }
+
+    private fun computerAddsSymlink(path: String, target: File) = Git.open(computer).use { git ->
+        Files.createSymbolicLink(File(computer, path).toPath(), target.toPath())
+        git.add().addFilepattern(".").call()
+        git.commit().setMessage("note: link").setAuthor("Computer", "c@example.invalid").call()
+        git.push().call()
+    }
+
+    @Test
+    fun `a symlink on GitHub arrives as a plain file holding its target`() {
+        val outside = File(tmp, "app-private.txt").apply { writeText("secret") }
+        computerAddsSymlink("ideas/link.md", outside)
+
+        sync.sync(remoteUrl, phone)
+        val link = File(phone, "ideas/link.md")
+        assertFalse(Files.isSymbolicLink(link.toPath()))
+        assertEquals(outside.path, link.readText())
+
+        // Git still records it as a symlink, so the next sync has nothing to send.
+        assertEquals(SyncOutcome.Synced(), sync.sync(remoteUrl, phone))
+    }
+
+    @Test
+    fun `an empty repository still clones`() {
+        val empty = File(tmp, "empty.git")
+        Git.init().setBare(true).setInitialBranch("main").setDirectory(empty).call().close()
+        assertEquals(SyncOutcome.Synced(cloned = true), sync.sync(empty.toURI().toString(), File(tmp, "phone/kb-empty")))
+    }
+
+    @Test
+    fun `a clone made before symlinks were turned off has its symlinks rewritten`() {
+        val outside = File(tmp, "app-private.txt").apply { writeText("secret") }
+        computerAddsSymlink("ideas/link.md", outside)
+        Git.cloneRepository().setURI(remoteUrl).setDirectory(phone).call().close()
+        val link = File(phone, "ideas/link.md").toPath()
+        assertTrue(Files.isSymbolicLink(link))
+
+        assertEquals(SyncOutcome.Synced(), sync.sync(remoteUrl, phone))
+        assertFalse(Files.isSymbolicLink(link))
+        assertEquals("secret", outside.readText())
     }
 }

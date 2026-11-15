@@ -3,8 +3,10 @@ package com.cpinto.vademo.kb
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import java.nio.file.Files
 
 class KnowledgeBaseTest {
 
@@ -87,6 +89,66 @@ class KnowledgeBaseTest {
         for (name in listOf("../secret", "../../files/settings", "a/b", "..\\x", "", " ")) {
             assertNull(kb.diagramFile(name), name)
         }
+    }
+
+    /** A folder outside the knowledge base, standing in for the app's private files. */
+    @TempDir
+    lateinit var elsewhere: File
+
+    private fun outside(): File = elsewhere.apply {
+        File(this, "secret.md").writeText("---\ntitle: Secret\n---\ntoken")
+        File(this, "secret.json").writeText("""{"nodes":[]}""")
+    }
+
+    private fun link(path: String, target: File) {
+        File(root, path).parentFile!!.mkdirs()
+        Files.createSymbolicLink(File(root, path).toPath(), target.toPath())
+    }
+
+    @Test
+    fun `a note linked to a file outside is never listed or found`() {
+        note("ideas/ideas.md", "Ideas")
+        link("ideas/secret.md", File(outside(), "secret.md"))
+        val kb = KnowledgeBase(root)
+        assertEquals(listOf("ideas"), kb.notesIn(File(root, "ideas")).map { it.name })
+        assertEquals(1, kb.foldersIn(root).single().noteCount)
+        assertNull(kb.resolve("secret"))
+        assertNull(kb.noteAt("ideas/secret.md"))
+        assertThrows<IllegalArgumentException> { kb.fileAt("ideas/secret.md") }
+    }
+
+    @Test
+    fun `a folder linked to one outside is never listed or walked`() {
+        note("ideas/ideas.md", "Ideas")
+        link("elsewhere", outside())
+        val kb = KnowledgeBase(root)
+        assertEquals(listOf("ideas"), kb.foldersIn(root).map { it.name })
+        assertNull(kb.resolve("secret"))
+    }
+
+    @Test
+    fun `an index linked to a file outside is not the index`() {
+        link("index.md", File(outside(), "secret.md"))
+        assertNull(KnowledgeBase(root).index)
+    }
+
+    @Test
+    fun `a diagram linked to a file outside is not opened`() {
+        link(".tyfold-graphs/secret.json", File(outside(), "secret.json"))
+        assertNull(KnowledgeBase(root).diagramFile("secret"))
+        assertEquals(emptyList<DiagramFile>(), diagramsIn(root))
+    }
+
+    @Test
+    fun `fileAt refuses a path out of the knowledge base`() {
+        assertThrows<IllegalArgumentException> { KnowledgeBase(root).fileAt("../outside.md") }
+    }
+
+    @Test
+    fun `a link that stays inside the knowledge base still works`() {
+        note("ideas/ideas.md", "Ideas")
+        link("ideas/alias.md", File(root, "ideas/ideas.md"))
+        assertEquals(listOf("ideas", "alias"), KnowledgeBase(root).notesIn(File(root, "ideas")).map { it.name })
     }
 
     @Test

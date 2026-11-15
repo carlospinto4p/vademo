@@ -1,6 +1,31 @@
 ## Changelog - vademo
 
 
+### v0.20.4 - 15th November 2026
+
+- Fixed symlinks in a knowledge base reaching the app's private files. A
+  symlink committed to GitHub became a real symlink on the phone (checked on
+  the emulator: JGit 5.13 creates them on Android), so a note that was a link
+  to an app file would be shown, and saving it would write into that file.
+  - `GitSync` turns off git's `core.symlinks` in every clone, so a symlink is
+    written as a plain file holding its target. Clones made before this have
+    their symlinks rewritten at the next sync. Git still records them as
+    symlinks, so nothing is pushed back.
+  - `KnowledgeBase` skips any note, folder, index or diagram whose real
+    location is outside the knowledge base, through `isInside(root, file)`.
+    `fileAt` refuses such a path, and a new diagram is not written into a
+    `.tyfold-graphs` that leads outside.
+  - Choosing a side in a conflict replaces the file instead of writing
+    through it.
+- Added tests:
+  - `GitSyncTest`: a symlink arrives as a plain file and the next sync sends
+    nothing; an older clone's symlink is rewritten; an empty repository
+    still clones.
+  - `KnowledgeBaseTest`: notes, folders, the index and diagrams linked to
+    files outside are skipped; a link that stays inside still works.
+  - `GitOnDeviceTest`: the same symlink case on a device.
+
+
 ### v0.20.3 - 15th November 2026
 
 - Fixed three ways a knowledge base from GitHub, or a link in a note, could

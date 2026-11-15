@@ -21,14 +21,14 @@ class KnowledgeBase(val root: File) {
 
     val name: String get() = root.name
 
-    val index: File? get() = File(root, "index.md").takeIf { it.isFile }
+    val index: File? get() = File(root, "index.md").takeIf { it.isFile && isInside(root, it) }
 
     /** Top-level topic folders, excluding hidden directories and `templates/`. */
     fun folders(): List<Folder> = foldersIn(root)
 
     fun foldersIn(dir: File): List<Folder> =
         dir.listFiles().orEmpty()
-            .filter { it.isDirectory && isVisible(it) }
+            .filter { it.isDirectory && isVisible(it) && isInside(root, it) }
             .map { Folder(it, it.name, noteFiles(it).size) }
             .sortedBy { it.name }
 
@@ -49,14 +49,14 @@ class KnowledgeBase(val root: File) {
      */
     fun noteAt(path: String): File? {
         val direct = File(root, path.removePrefix("./"))
-        if (direct.isFile && direct.extension == "md" && direct.canonicalPath.startsWith(root.canonicalPath + File.separator)) return direct
+        if (direct.isFile && direct.extension == "md" && isInside(root, direct)) return direct
         return if ('/' in path) null else resolve(path)
     }
 
     fun allNotes(): Map<String, File> =
         root.walkTopDown()
-            .onEnter { it == root || isVisible(it) }
-            .filter { it.isFile && it.extension == "md" }
+            .onEnter { it == root || (isVisible(it) && isInside(root, it)) }
+            .filter { it.isFile && it.extension == "md" && isInside(root, it) }
             .associateBy { it.nameWithoutExtension }
 
     fun summary(file: File): NoteSummary {
@@ -73,7 +73,13 @@ class KnowledgeBase(val root: File) {
     /** Path of [file] relative to the repository root, with `/` separators. */
     fun relativePath(file: File): String = file.relativeTo(root).invariantSeparatorsPath
 
-    fun fileAt(relativePath: String): File = File(root, relativePath)
+    /**
+     * The file at [relativePath]. Paths come from this class's own listings,
+     * so one that leads outside the repository is a bug, not a missing note.
+     */
+    fun fileAt(relativePath: String): File = File(root, relativePath).also {
+        require(isInside(root, it)) { "$relativePath is outside ${root.name}" }
+    }
 
     /**
      * The file of the diagram called [name] in `.tyfold-graphs/`, or null when
@@ -82,7 +88,7 @@ class KnowledgeBase(val root: File) {
      */
     fun diagramFile(name: String): File? =
         if (name.isBlank() || '/' in name || '\\' in name || '\u0000' in name) null
-        else File(File(root, Diagram.FOLDER), "$name.json")
+        else File(File(root, Diagram.FOLDER), "$name.json").takeIf { isInside(root, it) }
 
     /** The note templates in `templates/`, by name. */
     fun templates(): List<File> =
@@ -92,7 +98,7 @@ class KnowledgeBase(val root: File) {
     fun hubOf(dir: File): String? = dir.name.takeIf { File(dir, "${dir.name}.md").isFile }
 
     private fun noteFiles(dir: File): List<File> =
-        dir.listFiles().orEmpty().filter { it.isFile && it.extension == "md" }
+        dir.listFiles().orEmpty().filter { it.isFile && it.extension == "md" && isInside(root, it) }
 
     private fun isVisible(dir: File): Boolean =
         !dir.name.startsWith(".") && dir.name !in HIDDEN_DIRS
@@ -102,3 +108,11 @@ class KnowledgeBase(val root: File) {
         val HIDDEN_DIRS = setOf("templates")
     }
 }
+
+/**
+ * Whether [file], once its symlinks are followed, is inside [root]. A clone
+ * should hold no symlinks (`GitSync` turns them off), but one made before
+ * that could, and following it would read or write the app's private files.
+ */
+fun isInside(root: File, file: File): Boolean =
+    file.canonicalFile.toPath().startsWith(root.canonicalFile.toPath())

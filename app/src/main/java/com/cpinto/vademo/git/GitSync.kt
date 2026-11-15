@@ -3,7 +3,10 @@ package com.cpinto.vademo.git
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeCommand
 import org.eclipse.jgit.api.MergeResult
+import org.eclipse.jgit.dircache.DirCacheEntry
+import org.eclipse.jgit.lib.ConfigConstants
 import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.FileMode
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.lib.Repository
@@ -57,6 +60,7 @@ class GitSync(
     fun sync(remoteUrl: String, dir: File): SyncOutcome = runCatching {
         if (!File(dir, ".git").isDirectory) return clone(remoteUrl, dir)
         Git.open(dir).use { git ->
+            turnOffSymlinks(git)
             if (git.repository.repositoryState == RepositoryState.MERGING) {
                 return SyncOutcome.Conflict(conflictingPaths(git))
             }
@@ -109,6 +113,8 @@ class GitSync(
                         git.rm().addFilepattern(path).call()
                     } else {
                         file.parentFile?.mkdirs()
+                        // Replaces a symlink left by an older clone instead of writing through it.
+                        file.delete()
                         file.writeText(content)
                         git.add().addFilepattern(path).call()
                     }
@@ -136,7 +142,7 @@ class GitSync(
                 .setCredentialsProvider(credentials)
                 .setTimeout(TIMEOUT_SECONDS)
                 .call()
-                .close()
+                .use(::turnOffSymlinks)
             check(partial.renameTo(dir)) { "Could not move the download into place" }
         } finally {
             partial.deleteRecursively()
@@ -206,6 +212,27 @@ class GitSync(
             }
         }
         return SyncOutcome.Failed("GitHub kept changing during sync; try again")
+    }
+
+    /**
+     * Makes git write a symlink from GitHub as a plain file holding its
+     * target, and rewrites the ones already on disk that way. A followed
+     * symlink would let a note read or overwrite the app's private files.
+     * Git keeps recording them as symlinks, so syncing sends nothing back.
+     */
+    private fun turnOffSymlinks(git: Git) {
+        val repo = git.repository
+        val config = repo.config
+        if (!config.getBoolean(ConfigConstants.CONFIG_CORE_SECTION, ConfigConstants.CONFIG_KEY_SYMLINKS, true)) return
+        config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_SYMLINKS, false)
+        config.save()
+        val cache = repo.readDirCache()
+        val links = (0 until cache.entryCount).map(cache::getEntry)
+            .filter { it.fileMode == FileMode.SYMLINK && it.stage == DirCacheEntry.STAGE_0 }
+            .map { it.pathString }
+        if (links.isEmpty()) return
+        links.forEach { File(repo.workTree, it).delete() }
+        git.checkout().addPaths(links).call()
     }
 
     private fun conflictingPaths(git: Git): List<String> = git.status().call().conflicting.sorted()

@@ -79,7 +79,7 @@ class DiagramListViewModel @Inject constructor(
     fun create(title: String, direction: Diagram.Direction, onCreated: (String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
             if (repository.list().any { it.name == kbName && it.needsChoice }) return@launch
-            val name = createDiagram(kb.root, title, direction)
+            val name = runCatching { createDiagram(kb.root, title, direction) }.getOrNull() ?: return@launch
             withContext(Dispatchers.Main) { onCreated(name) }
         }
     }

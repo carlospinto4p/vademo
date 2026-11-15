@@ -133,6 +133,7 @@ fun diagramFileName(title: String, taken: Set<String>): String {
 /** Writes a new, empty diagram into the knowledge base at [root] and returns its name. */
 fun createDiagram(root: File, title: String, direction: Diagram.Direction): String {
     val folder = File(root, Diagram.FOLDER).apply { mkdirs() }
+    require(isInside(root, folder)) { "${Diagram.FOLDER} leads outside the knowledge base" }
     val taken = folder.listFiles().orEmpty().map { it.nameWithoutExtension }.toSet()
     val name = diagramFileName(title, taken)
     File(folder, "$name.json").writeText(DiagramDocument.new(title.trim(), direction).toText())
@@ -142,7 +143,7 @@ fun createDiagram(root: File, title: String, direction: Diagram.Direction): Stri
 /** The diagrams of the knowledge base at [root], by title. */
 fun diagramsIn(root: File): List<DiagramFile> =
     File(root, Diagram.FOLDER).listFiles().orEmpty()
-        .filter { it.isFile && it.extension == "json" }
+        .filter { it.isFile && it.extension == "json" && isInside(root, it) }
         .map(::readDiagram)
         .sortedBy { it.title.lowercase() }
 

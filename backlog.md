@@ -73,11 +73,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   held in CI secrets (`app/build.gradle.kts:28-35`,
   `.github/workflows/build-apk.yml:101-112`), which reverses the
   committed-keystore decision in CLAUDE.md. MED, effort M.
-- [ ] Symlinks in a clone are followed: `kb/KnowledgeBase.kt:56-60` and
-  `:76` do not check canonical paths (only `noteAt` does), so a note that
-  is a symlink to an app-private file would be shown and written through
-  by the editor. First check with `GitOnDeviceTest` whether JGit 5.13
-  creates real symlinks on Android. LOW (MED if it does), effort S/M.
 - [ ] `gradle/libs.versions.toml:22`: JGit `5.13.3`. CVE-2025-4949 (XXE in
   repo-manifest parsing, unused here) is fixed in 5.13.4 according to the
   scan agent's recall, not checked online. Verify, then bump within
