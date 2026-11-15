@@ -52,13 +52,18 @@ one of those needs the app uninstalled once first.
    to put on commits. Without a name and email, an edit stays on the
    phone and sync tells you what is missing.
 
-## Folders, Recent, Types and Tags
+## Folders, Recent, Types, Tags and Health
 
 A knowledge base opens on its folders. The tabs above them list the same
 notes other ways: Recent by the date each was last updated, Types grouped
 by type (all sources in one row), and Tags with every tag and how many
 notes carry it. Tap a tag, or the sources row, to see those notes in
 search.
+
+Health counts what needs looking after: notes nothing links to, notes
+with a link to a note that does not exist, notes with an `(unverified)`
+marker, open questions (`type: question` still at `status: draft`), and
+files waiting in `inbox/`. Tap a row to see those notes in search.
 
 ## Reading a note
 
@@ -84,8 +89,10 @@ type:question  status:draft  tag:consensus
 updated:>2026-09-01  updated:2026-09   (a bare date matches its start)
 kb:distributed-systems
 links:quorum     notes linking to quorum
+folder:inbox     notes inside a folder
 is:orphan        notes nothing links to
 is:unverified    notes with an (unverified) marker
+is:broken        notes linking to a note that does not exist
 ```
 
 ## Map of notes

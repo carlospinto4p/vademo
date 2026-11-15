@@ -153,10 +153,11 @@ fun SearchScreen(
                 state.loading -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 16.dp))
                 NoteSearch.parse(state.query).isEmpty -> Hint(
                     "Words in titles, headings or text, and filters: type:question status:draft tag:raft " +
-                        "updated:>2026-09-01 kb:name links:note is:orphan is:unverified",
+                        "updated:>2026-09-01 kb:name folder:inbox links:note is:orphan is:unverified is:broken",
                 )
                 state.hits.isEmpty() -> Hint("No notes match.")
                 else -> LazyColumn(Modifier.fillMaxSize()) {
+                    val listsBroken = NoteSearch.Filter.Is("broken") in NoteSearch.parse(state.query).filters
                     items(state.hits, key = { it.kb + "/" + it.note.path }) { hit ->
                         ListItem(
                             modifier = Modifier.clickable { onOpenNote(hit.kb, hit.note.path) },
@@ -166,6 +167,7 @@ fun SearchScreen(
                                 hit.kb.takeIf { state.showKb },
                                 hit.note.type,
                                 hit.note.status,
+                                ("No note named " + hit.missing.joinToString(", ")).takeIf { listsBroken },
                             ).takeIf { it.isNotEmpty() }?.let { { Text(it.joinToString(" · ")) } },
                         )
                         HorizontalDivider()

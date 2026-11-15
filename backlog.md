@@ -52,9 +52,6 @@ v0.9.0 (export). What is left is checking each on a phone.
 From `docs/kb-views-and-queries.md`, which has the reasoning and the
 measurements behind these. In order — each needs the one before it.
 
-- [ ] **Health view per knowledge base**: orphans, broken links,
-  `(unverified)` figures, open questions, waiting inbox items — each row
-  opening the list behind the number. Effort: Medium.
 - [ ] **Saved queries**, with the Health rows as the first ones. Effort:
   Small.
 
@@ -67,7 +64,5 @@ measurements behind these. In order — each needs the one before it.
   Effort: Medium.
 - [ ] **Create a new note from a knowledge base's `templates/`** with the
   frontmatter filled in. Effort: Medium.
-- [ ] **Show the health counts of a knowledge base**: `(unverified)`
-  markers, notes nothing links to, broken links. Effort: Medium.
 - [ ] **Add JGit keep rules before switching on release minification.**
   `isMinifyEnabled` is false; JGit uses reflection. Effort: Small.

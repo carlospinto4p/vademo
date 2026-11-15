@@ -1,6 +1,27 @@
 ## Changelog - vademo
 
 
+### v0.17.0 - 15th November 2026
+
+- A knowledge base's top screen has a fifth tab, Health. It counts the
+  notes nothing links to, the notes with a link to a note that does not
+  exist, the notes with an `(unverified)` marker, the open questions
+  (`type: question`, `status: draft`), and the files waiting in `inbox/`.
+  Tapping a row opens search with the matching filters, listing those
+  notes. The tabs now scroll sideways, since five no longer fit.
+- `kb/NoteSearch.kt`:
+  - Added `is:broken`: notes linking to a note that does not exist. The
+    results name the missing notes.
+  - Added `folder:<path>`: notes inside that folder, at any depth.
+  - `SearchHit.missing` lists a note's links to missing notes.
+- Added `kb/Health.kt`: `SavedQuery` (a named search) and `Health.CHECKS`,
+  the five rows above, with `Health.counts(index)`.
+- Added tests:
+  - `HealthTest`: the five counts on a knowledge base on disk.
+  - `NoteSearchTest`: `is:broken` and `folder:`.
+  - `ReadAndEditTest.aHealthRowListsTheNotesItCounts`.
+
+
 ### v0.16.0 - 15th November 2026
 
 - The type, status and tag chips at the top of a note now do something:

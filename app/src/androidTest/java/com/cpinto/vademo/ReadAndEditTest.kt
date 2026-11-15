@@ -197,6 +197,22 @@ class ReadAndEditTest {
     }
 
     @Test
+    fun aHealthRowListsTheNotesItCounts() {
+        write("inbox/read-later.md", "A link to look at.")
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("Health").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Waiting in the inbox")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Waiting in the inbox").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("read-later")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(hasSetTextAction()).assert(hasText("kb:distributed-systems folder:inbox"))
+        compose.onNodeWithText("Tyfold desktop app").assertDoesNotExist()
+    }
+
+    @Test
     fun aNoteTypeChipListsTheNotesOfThatType() {
         compose.openKnowledgeBase()
         compose.onNodeWithText("ideas").performClick()

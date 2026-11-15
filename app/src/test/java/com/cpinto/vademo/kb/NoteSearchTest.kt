@@ -114,6 +114,34 @@ class NoteSearchTest {
         assertEquals(emptyList<String>(), names("is:lost"))
     }
 
+    private val messy = NoteIndex(
+        "kb-messy",
+        listOf(
+            note("raft", links = listOf("quorum", "paxos", "paxos", "gone")),
+            note("quorum", links = listOf("raft")),
+            note("capture", links = listOf("raft")).copy(path = "inbox/capture.md"),
+            note("deeper", links = listOf("raft")).copy(path = "Inbox/2026/deeper.md"),
+            note("elsewhere", links = listOf("raft")).copy(path = "inboxes/elsewhere.md"),
+        ),
+    )
+
+    @Test
+    fun `is broken finds notes linking to a missing note, and names each missing note once`() {
+        val hits = NoteSearch.search(listOf(messy), "is:broken")
+        assertEquals(listOf("raft"), hits.map { it.note.name })
+        assertEquals(listOf("paxos", "gone"), hits.single().missing)
+        // Every hit carries its missing links, whatever the query.
+        assertEquals(emptyList<String>(), NoteSearch.search(listOf(messy), "folder:inbox").flatMap { it.missing })
+    }
+
+    @Test
+    fun `folder keeps the notes inside a folder at any depth, ignoring case and slashes`() {
+        assertEquals(listOf("capture", "deeper"), names("folder:inbox", listOf(messy)))
+        assertEquals(listOf("capture", "deeper"), names("folder:/inbox/", listOf(messy)))
+        assertEquals(listOf("deeper"), names("folder:inbox/2026", listOf(messy)))
+        assertEquals(emptyList<String>(), names("folder:topic/raft.md", listOf(messy)))
+    }
+
     @Test
     fun `an unknown key or an empty value is a word to find`() {
         val query = NoteSearch.parse("http://x.org type: Raft")

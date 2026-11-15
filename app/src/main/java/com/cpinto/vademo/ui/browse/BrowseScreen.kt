@@ -12,7 +12,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AccountTree
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Sell
@@ -24,7 +26,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -32,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -43,6 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.kb.Folder
+import com.cpinto.vademo.kb.Health
 import com.cpinto.vademo.kb.IndexedNote
 import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.NoteSummary
@@ -62,7 +66,9 @@ data class BrowseState(
 )
 
 /** The ways to list a knowledge base at its top level (`docs/kb-views-and-queries.md`, "Views"). */
-private enum class View(val label: String) { Folders("Folders"), Recent("Recent"), Types("Types"), Tags("Tags") }
+private enum class View(val label: String) {
+    Folders("Folders"), Recent("Recent"), Types("Types"), Tags("Tags"), Health("Health")
+}
 
 /** Collapsed into one row in the Types tab, since sources outnumber the notes you think with. */
 private const val SOURCE = "source"
@@ -144,7 +150,7 @@ fun BrowseScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (viewModel.isTop) {
-                SecondaryTabRow(selectedTabIndex = view.ordinal) {
+                SecondaryScrollableTabRow(selectedTabIndex = view.ordinal, edgePadding = 0.dp) {
                     View.entries.forEach {
                         Tab(selected = view == it, onClick = { view = it }, text = { Text(it.label) })
                     }
@@ -183,6 +189,26 @@ fun BrowseScreen(
                         }
                         items(notes, key = { "type:$type:" + it.path }) { note ->
                             NoteRow(note, listOfNotNull(note.status), openNote)
+                        }
+                    }
+                }
+                view == View.Health -> {
+                    // Runs five searches over every note, so not on each recomposition.
+                    val health = remember(index) { Health.counts(index) }
+                    LazyColumn(Modifier.fillMaxSize()) {
+                        items(health, key = { it.first.query }) { (check, n) ->
+                            ListItem(
+                                modifier = Modifier.clickable { onSearch(kbName, check.query) },
+                                leadingContent = {
+                                    Icon(
+                                        if (n == 0) Icons.Outlined.CheckCircle else Icons.Outlined.ErrorOutline,
+                                        contentDescription = null,
+                                    )
+                                },
+                                headlineContent = { Text(check.name) },
+                                supportingContent = { Text(if (n == 0) "None" else count(n)) },
+                            )
+                            HorizontalDivider()
                         }
                     }
                 }

@@ -1,7 +1,10 @@
 package com.cpinto.vademo.kb
 
-/** A note that matched a search, in the knowledge base [kb]. */
-data class SearchHit(val kb: String, val note: IndexedNote, val score: Int)
+/**
+ * A note that matched a search, in the knowledge base [kb]. [missing] are the
+ * notes it links to that do not exist, so a list of broken links can name them.
+ */
+data class SearchHit(val kb: String, val note: IndexedNote, val score: Int, val missing: List<String> = emptyList())
 
 /**
  * Search over [NoteIndex]es, as `docs/kb-views-and-queries.md` ("Queries")
@@ -13,7 +16,9 @@ data class SearchHit(val kb: String, val note: IndexedNote, val score: Int)
  *   `<`, `<=` in front, compared as ISO dates. Notes without `updated:` fail.
  * - `kb:` names a knowledge base, with or without its `kb-` prefix.
  * - `links:quorum` keeps the notes linking to `quorum`.
- * - `is:orphan` (nothing links to it), `is:unverified` (has the marker).
+ * - `folder:inbox` keeps the notes inside that folder, at any depth.
+ * - `is:orphan` (nothing links to it), `is:unverified` (has the marker),
+ *   `is:broken` (links to a note that does not exist).
  *
  * Anything else is a word to find in the title, a heading or the body.
  * Matches rank by where the words are, title first, then headings, then
@@ -28,6 +33,7 @@ object NoteSearch {
         data class Updated(val op: String, val date: String) : Filter
         data class Kb(val name: String) : Filter
         data class Links(val target: String) : Filter
+        data class InFolder(val path: String) : Filter
         data class Is(val what: String) : Filter
     }
 
@@ -52,6 +58,7 @@ object NoteSearch {
                 }
                 "kb" -> Filter.Kb(value)
                 "links" -> Filter.Links(value.removeSuffix(".md"))
+                "folder" -> Filter.InFolder(value.trim('/'))
                 "is" -> Filter.Is(value.lowercase())
                 else -> null
             }
@@ -66,9 +73,11 @@ object NoteSearch {
         if (query.isEmpty) return emptyList()
         return indexes.flatMap { index ->
             val orphans = index.orphans.mapTo(HashSet()) { it.name }
+            val missing = index.unresolved.groupBy({ it.from }, { it.target })
             index.notes.mapNotNull { note ->
-                if (!query.filters.all { matches(it, index, note, orphans) }) return@mapNotNull null
-                score(note, query.words)?.let { SearchHit(index.kbName, note, it) }
+                val noteMissing = missing[note.name].orEmpty()
+                if (!query.filters.all { matches(it, index, note, orphans, noteMissing) }) return@mapNotNull null
+                score(note, query.words)?.let { SearchHit(index.kbName, note, it, noteMissing) }
             }
         }.sortedWith(
             compareByDescending<SearchHit> { it.score }
@@ -77,7 +86,13 @@ object NoteSearch {
         )
     }
 
-    private fun matches(filter: Filter, index: NoteIndex, note: IndexedNote, orphans: Set<String>): Boolean =
+    private fun matches(
+        filter: Filter,
+        index: NoteIndex,
+        note: IndexedNote,
+        orphans: Set<String>,
+        missing: List<String>,
+    ): Boolean =
         when (filter) {
             is Filter.Type -> note.type.equals(filter.value, ignoreCase = true)
             is Filter.Status -> note.status.equals(filter.value, ignoreCase = true)
@@ -94,9 +109,11 @@ object NoteSearch {
             is Filter.Kb -> index.kbName.equals(filter.name, ignoreCase = true) ||
                 index.kbName.equals("kb-" + filter.name, ignoreCase = true)
             is Filter.Links -> filter.target in note.links
+            is Filter.InFolder -> note.path.startsWith(filter.path + "/", ignoreCase = true)
             is Filter.Is -> when (filter.what) {
                 "orphan" -> note.name in orphans
                 "unverified" -> note.unverified > 0
+                "broken" -> missing.isNotEmpty()
                 else -> false
             }
         }
