@@ -18,8 +18,8 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
   `KbRow` supporting text swaps abruptly between "Not downloaded
   yet", "Synced", "N edits not synced", and the conflict prompt —
   no `Crossfade`/`animateContentSize` softens the change. Same for
-  the "Add your GitHub token…" card, which appears/disappears
-  instantly when `settingsComplete` flips.
+  the "Public knowledge bases sync without setup…" card, which
+  appears/disappears instantly when `state.canWrite` flips.
 - **No in-progress indicator during sync**: the app-bar sync
   `IconButton` only disables (`enabled = state.canSync`) while
   syncing — nothing shows *that* a sync is running except each

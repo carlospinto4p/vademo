@@ -1,6 +1,14 @@
 ## Changelog - vademo
 
 
+### v0.20.11 - 16th November 2026
+
+- Updated `.claude/rules/ux-areas-android.md`: the settings card on
+  `HomeScreen` is named by its current text ("Public knowledge bases sync
+  without setup…") and shown on `state.canWrite`, not the removed
+  `settingsComplete`.
+
+
 ### v0.20.10 - 16th November 2026
 
 - Fixed work done on the main thread or repeated on every keystroke or edit:
