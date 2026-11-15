@@ -22,14 +22,29 @@
   `ref` paths from the repository root, `![[name]]` to show one in a note.
   v0.6.0 follows that draft; if the committed rule differs, follow it.
   Effort: Small.
-- [ ] **Keep arrows that leave a group off other boxes.** tyfold's layout
-  has a step after placing each group (`settle` and `clearRays` in its
-  `src/lib/graph/canvas/layout.ts`) that moves boxes out of the line of an
-  arrow leaving the group. `kb/DiagramLayout.kt` does not, so such an arrow
-  can cross a box (seen on a real 18-box diagram). tyfold also draws an
-  arrow that would still cross a box as a curve round it
-  (`src/lib/graph/canvas/edgeRoute.ts`); vademo draws straight lines.
-  Effort: Medium.
+- [ ] **Port tyfold's rules for arrows, so no arrow is drawn over a box.**
+  vademo draws every arrow as a straight line from box to box, so an arrow
+  can cross a box that is not one of its ends (seen on a real 18-box
+  diagram: "Parquet message" runs over a box). tyfold has two rules, both
+  in its repository, both described in `docs/GRAPH-PANE.md`:
+  - **In the layout** (`settle` and `clearRays` in
+    `src/lib/graph/canvas/layout.ts`): after a group is laid out, a box
+    with an arrow leaving the group is moved sideways until the arrow's
+    line misses every box ahead of it, and the box at the arrow's other
+    end is brought level with that line where it is free to move. Goes in
+    `kb/DiagramLayout.kt`, after each group's `rank`.
+  - **When drawing** ("An arrow goes round a box its curve would cross",
+    `src/lib/graph/canvas/edgeRoute.ts`): an arrow that would still pass
+    over a box goes straight out of its source, makes one short bend in
+    the gap nearest its middle that no box is in, and goes straight into
+    its target, with its label on the bend. Worked out from where the
+    boxes are each time it is drawn, so it holds after dragging, and
+    nothing about it goes in the file. With no such gap, or running
+    backwards, it stays straight. Goes in `Edges` in
+    `ui/diagram/DiagramScreen.kt`; the route itself is pure and testable
+    in `kb/`.
+  It does not look at other arrows, so two arrows can still cross, as in
+  tyfold. Effort: Medium.
 
 ### 2026.11.15 (editing diagrams on the phone, v0.7.0)
 
