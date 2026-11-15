@@ -16,35 +16,21 @@
   box linked to a note. Then open a note with a `![[name]]` line: the
   diagram shows in the note, the note still scrolls over it, and a tap
   opens it. Device tests cover the taps, not real fingers.
-- [ ] **Check the knowledge-base "Diagrams" rule once it is committed.** On
-  2026-11-15 it was an uncommitted draft in
-  `kb-distributed-systems/.claude/rules/knowledge-base.md`: files in `.tyfold-graphs/`,
-  `ref` paths from the repository root, `![[name]]` to show one in a note.
-  v0.6.0 follows that draft; if the committed rule differs, follow it.
-  Effort: Small.
-- [ ] **Port tyfold's rules for arrows, so no arrow is drawn over a box.**
-  vademo draws every arrow as a straight line from box to box, so an arrow
-  can cross a box that is not one of its ends (seen on a real 18-box
-  diagram: "Parquet message" runs over a box). tyfold has two rules, both
-  in its repository, both described in `docs/GRAPH-PANE.md`:
-  - **In the layout** (`settle` and `clearRays` in
-    `src/lib/graph/canvas/layout.ts`): after a group is laid out, a box
-    with an arrow leaving the group is moved sideways until the arrow's
-    line misses every box ahead of it, and the box at the arrow's other
-    end is brought level with that line where it is free to move. Goes in
-    `kb/DiagramLayout.kt`, after each group's `rank`.
-  - **When drawing** ("An arrow goes round a box its curve would cross",
-    `src/lib/graph/canvas/edgeRoute.ts`): an arrow that would still pass
-    over a box goes straight out of its source, makes one short bend in
-    the gap nearest its middle that no box is in, and goes straight into
-    its target, with its label on the bend. Worked out from where the
-    boxes are each time it is drawn, so it holds after dragging, and
-    nothing about it goes in the file. With no such gap, or running
-    backwards, it stays straight. Goes in `Edges` in
-    `ui/diagram/DiagramScreen.kt`; the route itself is pure and testable
-    in `kb/`.
-  It does not look at other arrows, so two arrows can still cross, as in
-  tyfold. Effort: Medium.
+- [ ] **[manual]** Check v0.10.0's arrows on the phone with a diagram whose
+  arrows cross boxes, such as nakamoto's `price-to-model.json`: the "gRPC"
+  arrow should go straight down out of its box, bend once beside the boxes
+  of the models group, and go straight into its target, with its label on
+  the bend. Then drag a box into an arrow's way: the arrow bends round it.
+  Unit tests check the paths, but nothing has looked at them on a screen.
+- [ ] **Keep an arrow that runs backwards off the boxes.** v0.10.0 ported
+  tyfold's two rules, and both leave an arrow that runs against the
+  diagram's direction straight, as tyfold does. In nakamoto's
+  `price-to-model.json` (top to bottom), "Parquet message" goes up from the
+  service box to RabbitMQ, because its group and the shared-storage group
+  have arrows both ways between them, and it still crosses the
+  "Indicators → 60 model inputs" box. Going beyond tyfold here means the
+  two apps draw this file differently; decide that first, or raise it in
+  tyfold so both change. Route in `kb/EdgeRoute.kt`. Effort: Medium.
 
 ### 2026.11.15 (editing diagrams on the phone, v0.7.0)
 

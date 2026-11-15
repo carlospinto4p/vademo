@@ -1,6 +1,28 @@
 ## Changelog - vademo
 
 
+### v0.10.0 - 15th November 2026
+
+- Arrows are kept off boxes, with tyfold's two rules (its
+  `docs/GRAPH-PANE.md`):
+  - In the layout (`kb/DiagramLayout.kt`, tyfold's `settle` and
+    `clearRays`): a box with an arrow leaving its group is moved sideways
+    until the arrow's line misses every box ahead of it, and the box at the
+    arrow's other end is brought level with that line where it is free to
+    move.
+  - When drawing (`kb/EdgeRoute.kt`, tyfold's `edgeRoute.ts`): an arrow
+    whose straight line would cross a box goes straight out of its source,
+    bends once in the gap nearest its middle, and goes straight into its
+    target, with its label on the bend. Worked out from where the boxes
+    are, so it holds after dragging; nothing goes in the file.
+- An arrow that runs backwards, against the diagram's direction, still
+  stays straight and can still cross a box, as in tyfold.
+- Added tests:
+  - `kb/EdgeRouteTest.kt`: 7 tests.
+  - `kb/DiagramLayoutTest.kt`: an arrow leaving a group misses the boxes
+    ahead of it.
+
+
 ### v0.9.0 - 15th November 2026
 
 - Export, as tyfold's Export does, through Android's share sheet:

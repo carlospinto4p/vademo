@@ -78,11 +78,12 @@ import com.cpinto.vademo.kb.DiagramEdge
 import com.cpinto.vademo.kb.DiagramLayout
 import com.cpinto.vademo.kb.DiagramNode
 import com.cpinto.vademo.kb.DiagramPlaces
+import com.cpinto.vademo.kb.EdgeRoute
 import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Ref
+import androidx.compose.ui.graphics.drawscope.Stroke
 import com.cpinto.vademo.ui.graph.Legend
 import com.cpinto.vademo.ui.graph.PanZoom
-import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -420,7 +421,7 @@ internal fun DiagramContent(
         diagram.nodes.filter { it.isGroup }.sortedBy(depth).forEach { group ->
             places.boxes[group.id]?.let { GroupBox(group, diagram, it, colours, notes[group.id] != null, actions) }
         }
-        Edges(diagram.edges, places, actions?.onEdge)
+        Edges(diagram, places, actions?.onEdge)
         diagram.nodes.filterNot { it.isGroup }.forEach { node ->
             places.boxes[node.id]?.let { NodeBox(node, diagram, it, colours, notes[node.id] != null, actions) }
         }
@@ -569,19 +570,6 @@ private fun GroupBox(
     }
 }
 
-/** Where the line from [from]'s centre towards [to] leaves [from]'s box. */
-private fun exitPoint(from: Placed, to: Offset, density: Float): Offset {
-    val cx = from.centreX.toFloat() * density
-    val cy = from.centreY.toFloat() * density
-    val dx = to.x - cx
-    val dy = to.y - cy
-    if (dx == 0f && dy == 0f) return Offset(cx, cy)
-    val halfW = from.width.toFloat() * density / 2
-    val halfH = from.height.toFloat() * density / 2
-    val t = minOf(if (dx != 0f) halfW / abs(dx) else Float.MAX_VALUE, if (dy != 0f) halfH / abs(dy) else Float.MAX_VALUE)
-    return Offset(cx + dx * t, cy + dy * t)
-}
-
 /** Places a child centred on ([x], [y]) inside the drawing. */
 private fun Modifier.centredAt(x: Dp, y: Dp, maxWidth: Dp) = layout { measurable, constraints ->
     val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = maxWidth.roundToPx()))
@@ -590,33 +578,55 @@ private fun Modifier.centredAt(x: Dp, y: Dp, maxWidth: Dp) = layout { measurable
     }
 }
 
+/** One arrow as drawn: straight between [start] and [end], or round a box along [detour]. */
+private class DrawnEdge(val edge: DiagramEdge, val start: Position, val end: Position, val detour: EdgeRoute.Detour?) {
+    val label: Position get() = detour?.label ?: Position((start.x + end.x) / 2, (start.y + end.y) / 2)
+}
+
 /**
- * The arrows, with their labels at their middles. When [onEdge] is given each
- * arrow can be tapped at its middle, on its label or, without one, on a small
- * handle, to edit it.
+ * The arrows, with their labels at their middles, or on the bend of an arrow
+ * that goes round a box ([EdgeRoute]). When [onEdge] is given each arrow can be
+ * tapped there, on its label or, without one, on a small handle, to edit it.
  */
 @Composable
-private fun Edges(edges: List<DiagramEdge>, places: DiagramPlaces, onEdge: ((String) -> Unit)?) {
+private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> Unit)?) {
     val colour = MaterialTheme.colorScheme.onSurfaceVariant
-    val drawn = edges.mapNotNull { edge ->
-        val a = places.boxes[edge.source] ?: return@mapNotNull null
-        val b = places.boxes[edge.target] ?: return@mapNotNull null
-        if (edge.source == edge.target) null else Triple(edge, a, b)
+    val drawn = remember(diagram, places) {
+        diagram.edges.mapNotNull { edge ->
+            val a = places.boxes[edge.source] ?: return@mapNotNull null
+            val b = places.boxes[edge.target] ?: return@mapNotNull null
+            if (edge.source == edge.target) return@mapNotNull null
+            val detour = EdgeRoute.detour(a, b, diagram.direction, EdgeRoute.obstacles(diagram, places, edge.source, edge.target))
+            DrawnEdge(edge, detour?.start ?: EdgeRoute.exit(a, b), detour?.end ?: EdgeRoute.exit(b, a), detour)
+        }
     }
     Canvas(Modifier.fillMaxSize()) {
         val arrow = 10.dp.toPx()
         val dashes = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx()))
-        for ((edge, a, b) in drawn) {
-            val start = exitPoint(a, Offset(b.centreX.toFloat() * density, b.centreY.toFloat() * density), density)
-            val end = exitPoint(b, Offset(a.centreX.toFloat() * density, a.centreY.toFloat() * density), density)
-            drawLine(
+        fun px(p: Position) = Offset(p.x.toFloat() * density, p.y.toFloat() * density)
+        for (line in drawn) {
+            val start = px(line.start)
+            val end = px(line.end)
+            val path = Path().apply {
+                moveTo(start.x, start.y)
+                line.detour?.let { d ->
+                    px(d.bendStart).let { lineTo(it.x, it.y) }
+                    val (c1, c2, to) = listOf(px(d.control1), px(d.control2), px(d.bendEnd))
+                    cubicTo(c1.x, c1.y, c2.x, c2.y, to.x, to.y)
+                }
+                lineTo(end.x, end.y)
+            }
+            drawPath(
+                path,
                 colour,
-                start,
-                end,
-                strokeWidth = 1.5.dp.toPx(),
-                pathEffect = if (edge.style == DiagramEdge.Style.DASHED) dashes else null,
+                style = Stroke(
+                    width = 1.5.dp.toPx(),
+                    pathEffect = if (line.edge.style == DiagramEdge.Style.DASHED) dashes else null,
+                ),
             )
-            val angle = atan2(end.y - start.y, end.x - start.x)
+            // The head points along the last straight run: from the bend's end when there is one.
+            val from = line.detour?.let { px(it.bendEnd) } ?: start
+            val angle = atan2(end.y - from.y, end.x - from.x)
             val head = Path().apply {
                 moveTo(end.x, end.y)
                 lineTo(end.x - arrow * cos(angle - 0.4f), end.y - arrow * sin(angle - 0.4f))
@@ -626,10 +636,11 @@ private fun Edges(edges: List<DiagramEdge>, places: DiagramPlaces, onEdge: ((Str
             drawPath(head, colour)
         }
     }
-    for ((edge, a, b) in drawn) {
+    for (line in drawn) {
+        val edge = line.edge
         val label = edge.label?.takeIf { it.isNotBlank() }
-        val midX = ((a.centreX + b.centreX) / 2).dp
-        val midY = ((a.centreY + b.centreY) / 2).dp
+        val midX = line.label.x.dp
+        val midY = line.label.y.dp
         val tap = onEdge?.let { Modifier.combinedClickableEdge { it(edge.id) } } ?: Modifier
         when {
             label != null -> Surface(

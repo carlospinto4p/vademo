@@ -135,6 +135,33 @@ class DiagramLayoutTest {
     }
 
     @Test
+    fun `an arrow leaving a group is not laid out over a box ahead of it in the group`() {
+        // Without tyfold's `clearRays`, `d` sits centred under `b` and `c`, right on b's way out to `x`.
+        val d = diagram(
+            """{ "direction": "TB",
+                 "nodes": [
+                   { "id": "g", "kind": "group" },
+                   { "id": "a", "parent": "g" }, { "id": "b", "parent": "g" },
+                   { "id": "c", "parent": "g" }, { "id": "d", "parent": "g" },
+                   { "id": "x" }
+                 ],
+                 "edges": [
+                   { "source": "a", "target": "b" }, { "source": "a", "target": "c" },
+                   { "source": "c", "target": "d" }, { "source": "b", "target": "x" }
+                 ] }""",
+        )
+        val boxes = place(d).boxes
+        val b = boxes.getValue("b")
+        for (id in listOf("a", "c", "d")) {
+            val o = boxes.getValue(id)
+            if (o.y < b.y + b.height) continue
+            assertTrue(b.centreX <= o.x - 16 || b.centreX >= o.x + o.width + 16, "b's arrow runs over $id")
+        }
+        val all = boxes.filterKeys { it != "g" }.values.toList()
+        for (i in all.indices) for (j in i + 1 until all.size) assertTrue(!all[i].overlaps(all[j]))
+    }
+
+    @Test
     fun `the same file always gives the same picture`() {
         assertEquals(place(nested), place(nested))
     }

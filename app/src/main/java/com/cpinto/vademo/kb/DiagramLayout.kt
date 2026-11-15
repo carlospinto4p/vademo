@@ -23,6 +23,12 @@ data class DiagramPlaces(val boxes: Map<String, Placed>, val width: Double, val 
  * the same kind (layers by longest path, order by barycentre), since dagre is
  * a JavaScript library.
  *
+ * After each run, `settle` (tyfold's `settle` and `clearRays`) moves a box
+ * with an arrow leaving its group sideways until the arrow's line misses every
+ * box ahead of it, and brings the box at the arrow's other end level with that
+ * line where it is free to move. An arrow still over a box when drawn goes
+ * round it ([EdgeRoute]).
+ *
  * [nodeSizes] gives the size of every box that is not a group; the screen
  * measures its text to know it.
  */
@@ -156,12 +162,71 @@ object DiagramLayout {
 
         val sizes = mutableMapOf<String, Box>()
         fun sizeOf(node: DiagramNode) = sizes[node.id] ?: nodeSizes[node.id] ?: DEFAULT_NODE
+        val direction = diagram.direction
+        val byId = nodes.associateBy { it.id }
+        val edges =diagram.edges.filter { it.source in chains && it.target in chains }
+
+        // Where an arrow's end `id` is in `container`: the box directly inside it
+        // that holds the end, and how far across that box the arrow's line is. The
+        // end may be deep in a group; that group is already laid out, so the end's
+        // place in it is known. Null when the end is not inside `container`.
+        fun endIn(id: String, container: String?): End? {
+            val path = chains.getValue(id)
+            val i = if (container == null) path.size else path.indexOf(container)
+            if (i <= 0) return null
+            val steps = path.subList(0, i - 1)
+            val half = breadth(sizeOf(byId.getValue(id)), direction) / 2
+            return End(path[i - 1], half + steps.sumOf { step -> out[step]?.let { cross(it, direction) } ?: 0.0 }, steps.isNotEmpty())
+        }
+
+        // What `rank` cannot see, put right in place, in two steps. An arrow from
+        // deep in one box to a plain box that has no other arrow here is made
+        // straight by moving the plain box level with it, unless that would land
+        // it on another box. Then an arrow with one end outside `container` is
+        // kept off the boxes ahead of the end inside ([clearRays]). That step is
+        // last, so nothing moves a box back into such an arrow's way.
+        fun settle(container: String?, placed: Map<String, Spot>, boxes: Map<String, Box>, gap: Double) {
+            if (boxes.isEmpty()) return
+            val ends = edges.map { endIn(it.source, container) to endIn(it.target, container) }
+            val arrows = mutableMapOf<String, Int>()
+            for ((source, target) in ends) {
+                source?.let { arrows.merge(it.member, 1, Int::plus) }
+                target?.let { arrows.merge(it.member, 1, Int::plus) }
+            }
+            for ((source, target) in ends) {
+                if (source == null || target == null || source.member == target.member || source.deep == target.deep) continue
+                val (fixed, free) = if (source.deep) source to target else target to source
+                val at = placed[free.member] ?: continue
+                val box = boxes[free.member] ?: continue
+                val anchor = placed[fixed.member] ?: continue
+                if (arrows[free.member] != 1) continue
+                val to = anchor.cross + fixed.offset - free.offset
+                val taken = boxes.any { (other, size) ->
+                    val o = placed.getValue(other)
+                    other != free.member && beside(o, size, at, box, direction) &&
+                        o.cross < to + breadth(box, direction) + gap && to < o.cross + breadth(size, direction) + gap
+                }
+                if (!taken) at.cross = to
+            }
+            val least = minOf(0.0, placed.values.minOf { it.cross })
+            for (p in placed.values) p.cross -= least
+
+            val rays = ends.flatMap { (source, target) ->
+                listOfNotNull(
+                    source?.takeIf { target == null && it.member in boxes }?.let { Ray(it.member, it.offset, ahead = true) },
+                    target?.takeIf { source == null && it.member in boxes }?.let { Ray(it.member, it.offset, ahead = false) },
+                )
+            }
+            clearRays(placed, boxes, rays, direction, gap)
+        }
 
         val groups = nodes.filter { it.isGroup }.sortedByDescending { chains.getValue(it.id).size }
         for (group in groups) {
             val members = nodes.filter { parentOf[it.id] == group.id }
             val boxes = members.associate { it.id to sizeOf(it) }
-            val placed = rank(members.map { it.id }, boxes, linksIn(group.id, boxes.keys), INNER, diagram.direction)
+            val spots = spots(rank(members.map { it.id }, boxes, linksIn(group.id, boxes.keys), INNER, direction), direction)
+            settle(group.id, spots, boxes, INNER.node)
+            val placed = spots.mapValues { (_, s) -> s.position(direction) }
             var width = 0.0
             var height = 0.0
             for ((id, box) in boxes) {
@@ -176,11 +241,109 @@ object DiagramLayout {
 
         val top = nodes.filter { it.id !in parentOf }
         val boxes = top.associate { it.id to sizeOf(it) }
-        val placed = rank(top.map { it.id }, boxes, linksIn(null, boxes.keys), OUTER, diagram.direction)
+        val spots = spots(rank(top.map { it.id }, boxes, linksIn(null, boxes.keys), OUTER, direction), direction)
+        settle(null, spots, boxes, OUTER.node)
         for ((id, box) in boxes) {
-            val corner = placed.getValue(id)
+            val corner = spots.getValue(id).position(direction)
             out[id] = Placed(corner.x, corner.y, box.width, box.height)
         }
+    }
+
+    /** A box's corner along the arrows ([main]) and across them ([cross]), moved while settling. */
+    private class Spot(var main: Double, var cross: Double) {
+        fun position(direction: Direction) = if (direction == Direction.LR) Position(main, cross) else Position(cross, main)
+    }
+
+    private fun spots(placed: Map<String, Position>, direction: Direction): Map<String, Spot> =
+        placed.mapValues { (_, p) -> if (direction == Direction.LR) Spot(p.x, p.y) else Spot(p.y, p.x) }
+
+    /** One end of an arrow: the box it is in at this level, and how far across that box its line runs. */
+    private class End(val member: String, val offset: Double, val deep: Boolean)
+
+    /**
+     * One end of an arrow whose other end is outside the container being laid
+     * out. The arrow runs straight out of [member], [offset] across it, towards
+     * the far side of the container ([ahead], a source) or the near side (a target).
+     */
+    private class Ray(val member: String, val offset: Double, val ahead: Boolean)
+
+    /** How far an arrow's line stays from a box it passes. */
+    private const val RAY_MARGIN = 16.0
+
+    private fun length(box: Box, direction: Direction) = if (direction == Direction.LR) box.width else box.height
+    private fun breadth(box: Box, direction: Direction) = if (direction == Direction.LR) box.height else box.width
+    private fun cross(place: Placed, direction: Direction) = if (direction == Direction.LR) place.y else place.x
+
+    /** Whether two boxes share some of the run along the arrows, so one is beside the other. */
+    private fun beside(a: Spot, aBox: Box, b: Spot, bBox: Box, direction: Direction) =
+        a.main < b.main + length(bBox, direction) && b.main < a.main + length(aBox, direction)
+
+    /**
+     * Moves each ray's box across the flow, in place, until the ray misses every
+     * box in its way. The box goes past every box beside it that lay further
+     * across: left between two of them, its ray would cross an arrow from a box
+     * the ray passes to one of those. Any other box it would then sit on is
+     * pushed along. Boxes only ever move one way, so it settles; the pass limit
+     * is for a shape that would not. tyfold's `clearRays`.
+     */
+    private fun clearRays(placed: Map<String, Spot>, boxes: Map<String, Box>, rays: List<Ray>, direction: Direction, gap: Double) {
+        if (rays.isEmpty()) return
+
+        // The boxes beside `id` along the flow that sat at `was` or further across.
+        fun beyond(id: String, was: Double): List<String> {
+            val at = placed.getValue(id)
+            val box = boxes.getValue(id)
+            return boxes.filter { (other, size) ->
+                val o = placed.getValue(other)
+                other != id && o.cross >= was && beside(o, size, at, box, direction)
+            }.keys.toList()
+        }
+
+        // `id` moved from `was`: every box beside it that it now reaches goes past it.
+        fun push(id: String, was: Double) {
+            val at = placed.getValue(id)
+            val box = boxes.getValue(id)
+            for (other in beyond(id, was)) {
+                val o = placed.getValue(other)
+                val size = boxes.getValue(other)
+                val reached = o.cross < at.cross + breadth(box, direction) + gap && at.cross < o.cross + breadth(size, direction) + gap
+                if (!reached) continue
+                val from = o.cross
+                o.cross = at.cross + breadth(box, direction) + gap
+                push(other, from)
+            }
+        }
+
+        for (pass in 0..boxes.size * 2) {
+            var moved = false
+            for (ray in rays) {
+                val at = placed.getValue(ray.member)
+                val box = boxes.getValue(ray.member)
+                val inWay = boxes.filter { (id, size) ->
+                    val o = placed.getValue(id)
+                    id != ray.member &&
+                        if (ray.ahead) o.main >= at.main + length(box, direction) else o.main + length(size, direction) <= at.main
+                }.map { (id, size) ->
+                    val o = placed.getValue(id)
+                    (o.cross - RAY_MARGIN) to (o.cross + breadth(size, direction) + RAY_MARGIN)
+                }.sortedBy { it.first }
+                val line = at.cross + ray.offset
+                var clear = line
+                for ((from, to) in inWay) if (clear > from && clear < to) clear = to
+                if (clear == line) continue
+                val was = at.cross
+                at.cross += clear - line
+                for (other in beyond(ray.member, was)) {
+                    at.cross = maxOf(at.cross, placed.getValue(other).cross + breadth(boxes.getValue(other), direction) + gap)
+                }
+                push(ray.member, was)
+                moved = true
+            }
+            if (!moved) break
+        }
+
+        val least = placed.values.minOf { it.cross }
+        for (p in placed.values) p.cross -= least
     }
 
     /** From places relative to each parent group to places in the whole diagram. */
