@@ -1,34 +1,47 @@
 package com.cpinto.vademo.ui.diagram
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -38,6 +51,8 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextDecoration
@@ -46,11 +61,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.kb.DiagramEdge
 import com.cpinto.vademo.kb.DiagramLayout
@@ -58,16 +69,8 @@ import com.cpinto.vademo.kb.DiagramNode
 import com.cpinto.vademo.kb.DiagramPlaces
 import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Ref
-import com.cpinto.vademo.kb.readDiagram
 import com.cpinto.vademo.ui.graph.Legend
 import com.cpinto.vademo.ui.graph.PanZoom
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import java.io.File
-import javax.inject.Inject
 import kotlin.math.abs
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -78,39 +81,15 @@ private val NODE_PADDING = 10.dp
 private val STRIPE = 4.dp
 private val GAP = 4.dp
 
-data class DiagramState(
-    val title: String = "",
-    val diagram: Diagram? = null,
-    val error: String? = null,
-    /** Box id → path of the note its `ref` names, for the boxes whose ref is a note. */
-    val notes: Map<String, String> = emptyMap(),
+/** What a tap and a long press on the drawing do. Without it (a diagram inside a note) nothing in it answers. */
+internal class DiagramActions(
+    val onTap: (id: String) -> Unit,
+    /** Null when the diagram cannot be edited. */
+    val onLongPress: ((id: String) -> Unit)?,
+    val onEdge: ((id: String) -> Unit)?,
+    /** The box an arrow is being drawn from, drawn highlighted. */
+    val highlighted: String?,
 )
-
-@HiltViewModel
-class DiagramViewModel @Inject constructor(
-    savedState: SavedStateHandle,
-    repository: KbRepository,
-) : ViewModel() {
-
-    val kbName: String = checkNotNull(savedState["kb"])
-    private val name: String = checkNotNull(savedState["name"])
-    private val kb = repository.knowledgeBase(kbName)
-
-    private val _state = MutableStateFlow(DiagramState(title = name))
-    val state: StateFlow<DiagramState> = _state
-
-    fun load() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val file = readDiagram(File(File(kb.root, Diagram.FOLDER), "$name.json"))
-            val diagram = file.diagram
-            val notes = diagram?.nodes.orEmpty().mapNotNull { node ->
-                val note = node.ref?.let { kb.noteAt(it.path) } ?: return@mapNotNull null
-                node.id to kb.relativePath(note)
-            }.toMap()
-            _state.value = DiagramState(file.title, diagram, file.error, notes)
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,14 +100,53 @@ fun DiagramScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(state.message) {
+        state.message?.let {
+            snackbar.showSnackbar(it)
+            viewModel.messageShown()
+        }
+    }
+    var open by remember { mutableStateOf<DiagramDialog?>(null) }
+    var menu by remember { mutableStateOf(false) }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text(state.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (state.editable && state.diagram != null) {
+                        IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
+                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+                        }
+                        IconButton(onClick = viewModel::redo, enabled = state.canRedo) {
+                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
+                        }
+                        Box {
+                            IconButton(onClick = { menu = true }) {
+                                Icon(Icons.Filled.MoreVert, contentDescription = "More")
+                            }
+                            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                                DropdownMenuItem(text = { Text("Add box") }, onClick = {
+                                    menu = false
+                                    viewModel.editReturning { it.addNode(group = false) }?.let { open = DiagramDialog.EditNode(it) }
+                                })
+                                DropdownMenuItem(text = { Text("Add group") }, onClick = {
+                                    menu = false
+                                    viewModel.editReturning { it.addNode(group = true) }?.let { open = DiagramDialog.EditNode(it) }
+                                })
+                                DropdownMenuItem(text = { Text("Legend") }, onClick = {
+                                    menu = false
+                                    open = DiagramDialog.Legend
+                                })
+                            }
+                        }
                     }
                 },
             )
@@ -139,12 +157,22 @@ fun DiagramScreen(
             when {
                 state.error != null -> Text("This diagram could not be read: ${state.error}", Modifier.padding(16.dp))
                 diagram == null -> Unit
-                diagram.nodes.isEmpty() -> Text("This diagram has no boxes yet.", Modifier.padding(16.dp))
+                diagram.nodes.isEmpty() -> Text(
+                    if (state.editable) "This diagram has no boxes yet. Add one from the menu at the top right."
+                    else "This diagram has no boxes yet.",
+                    Modifier.padding(16.dp),
+                )
                 else -> {
                     val places = rememberPlaces(diagram)
                     val colours = diagramColours()
+                    val actions = DiagramActions(
+                        onTap = { id -> viewModel.tap(id)?.let { onOpenNote(viewModel.kbName, it) } },
+                        onLongPress = if (state.editable) { id -> open = DiagramDialog.Actions(id) } else null,
+                        onEdge = if (state.editable) { id -> open = DiagramDialog.Edge(id) } else null,
+                        highlighted = state.connectingFrom,
+                    )
                     PanZoom(places.width.dp, places.height.dp) {
-                        DiagramContent(diagram, places, colours, state.notes) { onOpenNote(viewModel.kbName, it) }
+                        DiagramContent(diagram, places, colours, state.notes, actions)
                     }
                     if (diagram.legend.isNotEmpty()) {
                         Legend(
@@ -155,6 +183,31 @@ fun DiagramScreen(
                     }
                 }
             }
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()) {
+                if (state.connectingFrom != null) {
+                    Banner("Tap the box the arrow goes to.", action = "Cancel", onAction = viewModel::cancelConnecting)
+                }
+                if (!state.editable && diagram != null) {
+                    Banner("Editing is off until the sync conflict in this knowledge base is resolved.")
+                }
+                if (state.problems.isNotEmpty()) {
+                    Banner("Not saved: " + state.problems.joinToString("; "))
+                }
+            }
+        }
+    }
+
+    open?.let { dialog ->
+        DiagramDialogs(dialog, viewModel, onChange = { open = it })
+    }
+}
+
+@Composable
+private fun Banner(text: String, action: String? = null, onAction: () -> Unit = {}) {
+    Surface(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.secondaryContainer) {
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(text, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+            if (action != null) TextButton(onClick = onAction) { Text(action) }
         }
     }
 }
@@ -180,7 +233,7 @@ private fun headline(node: DiagramNode, diagram: Diagram): String =
         diagram.legend.firstOrNull { it.id == node.category }?.label?.takeIf { it != node.text },
     ).joinToString(" · ")
 
-private fun refText(ref: Ref): String = ref.line?.let { "${ref.path}:$it" } ?: ref.path
+internal fun refText(ref: Ref): String = ref.line?.let { "${ref.path}:$it" } ?: ref.path
 
 private const val LABEL_LINES = 3
 private const val NOTES_LINES = 4
@@ -229,24 +282,25 @@ internal fun diagramColours(): DiagramColours {
     return DiagramColours(scheme.surface.luminance() < 0.5f, scheme.error, scheme.outline)
 }
 
+/** The drawing. [actions] is null where nothing in it should answer a touch, as inside a note. */
 @Composable
 internal fun DiagramContent(
     diagram: Diagram,
     places: DiagramPlaces,
     colours: DiagramColours,
     notes: Map<String, String>,
-    onOpen: (path: String) -> Unit,
+    actions: DiagramActions?,
 ) {
     val byId = diagram.nodes.associateBy { it.id }
     val depth = { node: DiagramNode -> generateSequence(node) { it.parent?.let(byId::get) }.take(diagram.nodes.size + 1).count() }
     Box(Modifier.fillMaxSize()) {
         // Outer groups first, so a group inside another is drawn over it.
         diagram.nodes.filter { it.isGroup }.sortedBy(depth).forEach { group ->
-            places.boxes[group.id]?.let { GroupBox(group, diagram, it, colours, notes[group.id], onOpen) }
+            places.boxes[group.id]?.let { GroupBox(group, diagram, it, colours, notes[group.id] != null, actions) }
         }
-        Edges(diagram.edges, places)
+        Edges(diagram.edges, places, actions?.onEdge)
         diagram.nodes.filterNot { it.isGroup }.forEach { node ->
-            places.boxes[node.id]?.let { NodeBox(node, diagram, it, colours, notes[node.id], onOpen) }
+            places.boxes[node.id]?.let { NodeBox(node, diagram, it, colours, notes[node.id] != null, actions) }
         }
     }
 }
@@ -254,24 +308,35 @@ internal fun DiagramContent(
 private fun Modifier.at(place: Placed) =
     offset(place.x.dp, place.y.dp).size(place.width.dp, place.height.dp)
 
+/** Tap and long press on a box or group, when the drawing answers touches. */
+@OptIn(ExperimentalFoundationApi::class)
+private fun Modifier.touch(id: String, actions: DiagramActions?): Modifier =
+    if (actions == null) this
+    else combinedClickable(
+        onLongClickLabel = if (actions.onLongPress != null) "Edit" else null,
+        onLongClick = actions.onLongPress?.let { { it(id) } },
+        onClick = { actions.onTap(id) },
+    )
+
 @Composable
 private fun NodeBox(
     node: DiagramNode,
     diagram: Diagram,
     place: Placed,
     colours: DiagramColours,
-    note: String?,
-    onOpen: (String) -> Unit,
+    isNote: Boolean,
+    actions: DiagramActions?,
 ) {
     val styles = boxStyles()
     val hue = diagram.hueOf(node.category)
     val shape = RoundedCornerShape(8.dp)
-    val border = colours.status(node.status) ?: MaterialTheme.colorScheme.outlineVariant
+    val lit = actions?.highlighted == node.id
+    val border = if (lit) MaterialTheme.colorScheme.primary else colours.status(node.status) ?: MaterialTheme.colorScheme.outlineVariant
     Surface(
         modifier = Modifier
             .at(place)
-            .border(if (node.status != null) 2.dp else 1.dp, border, shape)
-            .then(if (note != null) Modifier.clickable { onOpen(note) } else Modifier),
+            .border(if (lit) 3.dp else if (node.status != null) 2.dp else 1.dp, border, shape)
+            .touch(node.id, actions),
         shape = shape,
         color = hue?.let(colours::tint) ?: MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
@@ -296,7 +361,7 @@ private fun NodeBox(
                 node.notes?.takeIf { it.isNotBlank() }?.let {
                     Text(it, style = styles.notes, maxLines = NOTES_LINES, overflow = TextOverflow.Ellipsis)
                 }
-                node.ref?.let { RefLine(it, note != null, styles.line) }
+                node.ref?.let { RefLine(it, isNote, styles.line) }
             }
         }
     }
@@ -321,27 +386,25 @@ private fun GroupBox(
     diagram: Diagram,
     place: Placed,
     colours: DiagramColours,
-    note: String?,
-    onOpen: (String) -> Unit,
+    isNote: Boolean,
+    actions: DiagramActions?,
 ) {
     val styles = boxStyles()
     val hue = diagram.hueOf(group.category)
     val shape = RoundedCornerShape(12.dp)
-    val border = colours.status(group.status) ?: MaterialTheme.colorScheme.outline
+    val lit = actions?.highlighted == group.id
+    val border = if (lit) MaterialTheme.colorScheme.primary else colours.status(group.status) ?: MaterialTheme.colorScheme.outline
     Box(
         Modifier
             .at(place)
             .background(hue?.let(colours::tint)?.copy(alpha = 0.6f) ?: MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.6f), shape)
-            .border(if (group.status != null) 2.dp else 1.dp, border, shape),
+            .border(if (lit) 3.dp else if (group.status != null) 2.dp else 1.dp, border, shape)
+            .touch(group.id, actions),
     ) {
         if (hue != null) {
             Box(Modifier.padding(vertical = 12.dp).width(STRIPE).fillMaxHeight().background(colours.stripe(hue)))
         }
-        Column(
-            Modifier
-                .padding(horizontal = DiagramLayout.PAD_SIDE.dp, vertical = 6.dp)
-                .then(if (note != null) Modifier.clickable { onOpen(note) } else Modifier),
-        ) {
+        Column(Modifier.padding(horizontal = DiagramLayout.PAD_SIDE.dp, vertical = 6.dp)) {
             val title = listOfNotNull(group.text, headline(group, diagram).ifEmpty { null }).joinToString(" · ")
             Text(
                 title,
@@ -355,7 +418,7 @@ private fun GroupBox(
                 Text(
                     it,
                     style = styles.line,
-                    color = if (note != null && group.notes.isNullOrBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isNote && group.notes.isNullOrBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -377,8 +440,21 @@ private fun exitPoint(from: Placed, to: Offset, density: Float): Offset {
     return Offset(cx + dx * t, cy + dy * t)
 }
 
+/** Places a child centred on ([x], [y]) inside the drawing. */
+private fun Modifier.centredAt(x: Dp, y: Dp, maxWidth: Dp) = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = maxWidth.roundToPx()))
+    layout(placeable.width, placeable.height) {
+        placeable.place(x.roundToPx() - placeable.width / 2, y.roundToPx() - placeable.height / 2)
+    }
+}
+
+/**
+ * The arrows, with their labels at their middles. When [onEdge] is given each
+ * arrow can be tapped at its middle, on its label or, without one, on a small
+ * handle, to edit it.
+ */
 @Composable
-private fun Edges(edges: List<DiagramEdge>, places: DiagramPlaces) {
+private fun Edges(edges: List<DiagramEdge>, places: DiagramPlaces, onEdge: ((String) -> Unit)?) {
     val colour = MaterialTheme.colorScheme.onSurfaceVariant
     val drawn = edges.mapNotNull { edge ->
         val a = places.boxes[edge.source] ?: return@mapNotNull null
@@ -409,26 +485,44 @@ private fun Edges(edges: List<DiagramEdge>, places: DiagramPlaces) {
         }
     }
     for ((edge, a, b) in drawn) {
-        val label = edge.label?.takeIf { it.isNotBlank() } ?: continue
+        val label = edge.label?.takeIf { it.isNotBlank() }
         val midX = ((a.centreX + b.centreX) / 2).dp
         val midY = ((a.centreY + b.centreY) / 2).dp
-        Surface(
-            modifier = Modifier.layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0, maxWidth = 160.dp.roundToPx()))
-                layout(placeable.width, placeable.height) {
-                    placeable.place(midX.roundToPx() - placeable.width / 2, midY.roundToPx() - placeable.height / 2)
-                }
-            },
-            shape = RoundedCornerShape(4.dp),
-            color = MaterialTheme.colorScheme.surface,
-        ) {
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-            )
+        val tap = onEdge?.let { Modifier.combinedClickableEdge { it(edge.id) } } ?: Modifier
+        when {
+            label != null -> Surface(
+                modifier = Modifier.centredAt(midX, midY, 160.dp).then(tap),
+                shape = RoundedCornerShape(4.dp),
+                color = MaterialTheme.colorScheme.surface,
+            ) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                )
+            }
+            // A 14 dp dot inside a 32 dp target, so a finger can hit it.
+            onEdge != null -> Box(
+                Modifier
+                    .centredAt(midX, midY, 32.dp)
+                    .size(32.dp)
+                    .semantics { contentDescription = "Arrow ${edge.source} to ${edge.target}" }
+                    .then(tap),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    Modifier
+                        .size(14.dp)
+                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                        .border(1.5.dp, colour, CircleShape),
+                )
+            }
         }
     }
 }
+
+@OptIn(ExperimentalFoundationApi::class)
+private fun Modifier.combinedClickableEdge(onClick: () -> Unit) =
+    combinedClickable(onClickLabel = "Edit arrow", onClick = onClick)

@@ -76,6 +76,14 @@ lists them. A diagram opens with drag and pinch-zoom, and tapping a box
 that stands for a note opens that note. A note shows a diagram in place
 where it has a line `![[name]]`; tap it to open the diagram.
 
+Diagrams can be edited on the phone too. Long-press a box or a group for
+what can be done to it (edit, connect to another box, status, category,
+groups, delete); tap an arrow's label or its small round handle to edit
+the arrow. The menu at the top right adds boxes and groups and edits the
+legend, and Undo and Redo sit beside it. Edits are saved to the file as
+you go and sync like edited notes. Nothing is saved while a sync conflict
+in that knowledge base waits to be resolved.
+
 ## Syncing
 
 Tap **Sync** to send notes edited on the phone and get changes made

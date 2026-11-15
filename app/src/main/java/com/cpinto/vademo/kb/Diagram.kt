@@ -3,6 +3,7 @@ package com.cpinto.vademo.kb
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import java.io.File
 
 /**
@@ -46,6 +47,8 @@ data class Diagram(
         }
 
         fun parse(text: String): Diagram = json.decodeFromString(serializer(), text)
+
+        fun parse(element: JsonElement): Diagram = json.decodeFromJsonElement(serializer(), element)
     }
 }
 
@@ -61,6 +64,8 @@ data class DiagramNode(
     val tag: String? = null,
     val notes: String? = null,
     val ref: Ref? = null,
+    /** Where the box's work is done, such as a worktree; tyfold links it to a session there. */
+    val folder: String? = null,
     val status: Status? = null,
     val category: String? = null,
     /** Relative to the parent group's top-left corner, as tyfold draws it. */

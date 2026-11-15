@@ -1,6 +1,34 @@
 ## Changelog - vademo
 
 
+### v0.7.0 - 15th November 2026
+
+- Diagrams can be edited on the phone, in tyfold's format and with
+  tyfold's edits. A long press on a box or group opens its actions: edit
+  its name, tag, notes, linked file and folder; connect it to another box
+  with an arrow; set its status or category; move it into or out of a
+  group, put it in a new group, ungroup; delete it (a group with what is
+  in it). Tapping an arrow's label, or its small handle, edits the arrow:
+  what flows along it, dashed or solid, reverse, delete. The menu adds a
+  box or a group and edits the legend. Undo and redo in the top bar.
+- Saving: each edit is written 400 ms after the last one, keys in tyfold's
+  order with a two-space indent, so a phone edit to a file tyfold wrote
+  changes only its own lines. Nothing is written when the file changed on
+  disk since it was read (the screen reads it again and says so), when the
+  diagram has a problem tyfold would refuse (named in a banner, in
+  tyfold's words), or while a sync conflict waits in the knowledge base.
+- Added `kb/DiagramDocument.kt`: the edits and tyfold's checks, on the
+  file's own JSON, so keys vademo does not know are kept. `Diagram` now
+  reads `folder`.
+- Added `ui/diagram/DiagramViewModel.kt` and `DiagramEditors.kt`.
+- Added tests:
+  - `kb/DiagramDocumentTest.kt`: 13 tests, including a tyfold file
+    written back byte for byte.
+  - `ui/diagram/ParseRefTest.kt`: 2 tests.
+  - `DiagramEditTest.kt`: renaming and undoing, drawing an arrow, and
+    nothing saved once a conflict waits, on a device.
+
+
 ### v0.6.0 - 15th November 2026
 
 - Added diagrams: the files agents draw with tyfold's graph tool into a

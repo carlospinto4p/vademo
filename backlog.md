@@ -28,6 +28,27 @@
   arrow leaving the group. `kb/DiagramLayout.kt` does not, so such an arrow
   can cross a box (seen on a real 18-box diagram). Effort: Medium.
 
+### 2026.11.15 (editing diagrams on the phone, v0.7.0)
+
+Asked for on 2026-11-15: "everything tyfold has", in three versions.
+v0.7.0 is the first; the other two follow.
+
+- [ ] **[manual]** Check editing on the phone with v0.7.0 installed: long
+  press a box (the actions sheet opens), edit its name, connect it to
+  another box, tap the new arrow's handle and label it, undo twice, then
+  Sync and check the change on GitHub as a one-line diff in the
+  `.tyfold-graphs/` file. Device tests cover these taps, not real fingers.
+- [ ] **Diagrams as files, and moving things (v0.8.0).** New diagram (a +
+  button on the Diagrams list: title and direction, written to
+  `.tyfold-graphs/<kebab-title>.json`); delete a diagram; edit a diagram's
+  title and direction; cut, copy, paste and duplicate (tyfold's
+  `graphClip.ts`: ids kept when free, copies go into the original's group);
+  select several boxes; drag boxes, with the places kept in the app's own
+  storage and never in the file or the clone; Tidy, which forgets the
+  places. Effort: Large.
+- [ ] **Export (v0.9.0).** A PNG image and Mermaid text of a diagram,
+  through Android's share sheet, as tyfold's Export does. Effort: Medium.
+
 ### 2026.09.20 (viewing and querying)
 
 From `docs/kb-views-and-queries.md`, which has the reasoning and the

@@ -1,0 +1,140 @@
+package com.cpinto.vademo
+
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
+import androidx.compose.ui.test.longClick
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.performTouchInput
+import androidx.test.core.app.ActivityScenario
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.MergeResult
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.io.File
+
+/**
+ * Editing a diagram on a device, from the home screen, and checking the file
+ * on disk after each step: a box renamed, the rename undone, an arrow drawn,
+ * and nothing editable while a sync conflict waits.
+ */
+@RunWith(AndroidJUnit4::class)
+class DiagramEditTest {
+
+    @get:Rule
+    val compose = createEmptyComposeRule()
+
+    private lateinit var kb: File
+    private val diagram get() = File(kb, ".tyfold-graphs/flow.json")
+    private var scenario: ActivityScenario<MainActivity>? = null
+
+    private fun flow(client: String) =
+        """{ "version": 1, "title": "Request flow", "direction": "LR",
+             "nodes": [ { "id": "client", "label": "$client" }, { "id": "server", "label": "Server" } ],
+             "edges": [] }"""
+
+    @Before
+    fun writeKnowledgeBase() {
+        val filesDir = InstrumentationRegistry.getInstrumentation().targetContext.filesDir
+        File(filesDir, "kb").deleteRecursively()
+        kb = File(filesDir, "kb/kb-distributed-systems")
+        File(kb, "index.md").apply { parentFile!!.mkdirs() }.writeText("---\ntitle: Index\n---\n\nHome.\n")
+        diagram.apply { parentFile!!.mkdirs() }.writeText(flow("Client"))
+        Git.init().setInitialBranch("main").setDirectory(kb).call().use { git ->
+            git.add().addFilepattern(".").call()
+            git.commit().setMessage("fixture").setAuthor("Test", "test@example.invalid").call()
+        }
+    }
+
+    @After
+    fun close() {
+        scenario?.close()
+    }
+
+    private fun openDiagram() {
+        scenario = ActivityScenario.launch(MainActivity::class.java)
+        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.onNodeWithContentDescription("Diagrams").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Request flow")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Request flow").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Server")).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    /** Waits for the edit to be written; saving happens 400 ms after the last edit. */
+    private fun waitForFile(check: (String) -> Boolean) {
+        compose.waitUntil(5_000) { check(diagram.readText()) }
+    }
+
+    private fun longPress(text: String) {
+        compose.onNodeWithText(text).performTouchInput { longClick() }
+    }
+
+    @Test
+    fun renameABoxThenUndo() {
+        openDiagram()
+        longPress("Client")
+        compose.onNodeWithText("Edit").performClick()
+        compose.onNode(hasSetTextAction() and hasText("Client")).performTextReplacement("Browser")
+        compose.onNodeWithText("Save").performClick()
+        waitForFile { "\"label\": \"Browser\"" in it }
+
+        compose.onNodeWithContentDescription("Undo").performClick()
+        waitForFile { "\"label\": \"Client\"" in it }
+        val text = diagram.readText()
+        // Written as tyfold writes: two-space indent and a final newline.
+        assertTrue(text, text.startsWith("{\n  \"version\": 1,") && text.endsWith("}\n"))
+    }
+
+    @Test
+    fun drawAnArrowBetweenTwoBoxes() {
+        openDiagram()
+        longPress("Client")
+        compose.onNodeWithText("Connect to…").performClick()
+        compose.onNodeWithText("Tap the box the arrow goes to.").fetchSemanticsNode()
+        compose.onNodeWithText("Server").performClick()
+        waitForFile { "\"source\": \"client\"" in it && "\"target\": \"server\"" in it }
+    }
+
+    @Test
+    fun nothingIsSavedOnceAConflictWaits() {
+        openDiagram()
+        conflictInTheIndex()
+        val before = diagram.readText()
+        longPress("Client")
+        compose.onNodeWithText("Edit").performClick()
+        compose.onNode(hasSetTextAction() and hasText("Client")).performTextReplacement("Browser")
+        compose.onNodeWithText("Save").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Editing is off", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertEquals(before, diagram.readText())
+        assertTrue(compose.onAllNodes(hasContentDescription("Undo")).fetchSemanticsNodes().isEmpty())
+    }
+
+    /** Leaves the knowledge base in git's merging state, with a conflict in a note, so the diagram itself still reads. */
+    private fun conflictInTheIndex() {
+        val index = File(kb, "index.md")
+        Git.open(kb).use { git ->
+            git.branchCreate().setName("github").call()
+            index.writeText("---\ntitle: Index\n---\n\nPhone.\n")
+            git.commit().setAll(true).setMessage("phone").setAuthor("Test", "test@example.invalid").call()
+            git.checkout().setName("github").call()
+            index.writeText("---\ntitle: Index\n---\n\nGitHub.\n")
+            git.commit().setAll(true).setMessage("github").setAuthor("Test", "test@example.invalid").call()
+            git.checkout().setName("main").call()
+            val merge = git.merge().include(git.repository.resolve("github")).call()
+            assertEquals(MergeResult.MergeStatus.CONFLICTING, merge.mergeStatus)
+        }
+    }
+}

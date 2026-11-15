@@ -7,8 +7,9 @@ screens are `HomeScreen` (knowledge-base list), `BrowseScreen`
 (folders/notes), `NoteScreen` (rendered markdown), `EditScreen`
 (plain-text editor), `ConflictScreen` (merge resolution),
 `GraphScreen` (map of notes and their links), `DiagramListScreen` and
-`DiagramScreen` (agent-drawn diagrams, also embedded in notes as
-`DiagramCard`), plus `SettingsScreen`. Review against these, not a generic checklist.
+`DiagramScreen` (diagrams, drawn by agents and edited on the phone through
+`DiagramEditors`; also embedded in notes as `DiagramCard`), plus
+`SettingsScreen`. Review against these, not a generic checklist.
 
 ## What to Look For
 

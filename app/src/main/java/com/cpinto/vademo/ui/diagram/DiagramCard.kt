@@ -81,7 +81,7 @@ fun DiagramCard(name: String, file: DiagramFile?, onOpen: () -> Unit) {
                             },
                     ) {
                         // No note links here: the whole card is one tap target.
-                        DiagramContent(diagram, places, colours, notes = emptyMap(), onOpen = {})
+                        DiagramContent(diagram, places, colours, notes = emptyMap(), actions = null)
                     }
                 }
             }
