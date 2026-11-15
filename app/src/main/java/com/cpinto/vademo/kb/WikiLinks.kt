@@ -109,7 +109,15 @@ object WikiLinks {
     private fun link(match: MatchResult, scheme: String): String {
         val target = match.groupValues[1].trim()
         val label = match.groupValues[2].ifBlank { target }.trim()
+            .replace(DASH_INSIDE, "-$BREAK")
         val encoded = URLEncoder.encode(target, "UTF-8")
         return "[${label.replace("[", "\\[").replace("]", "\\]")}]($scheme:$encoded)"
     }
+
+    // Android does not wrap a line after a dash, so a long name such as
+    // `how-many-developers-run-many-coding-agents` was cut mid-word. A
+    // zero-width space after each dash lets it wrap there; it is only in the
+    // text drawn, never in the target or the file.
+    private const val BREAK = '​'
+    private val DASH_INSIDE = Regex("""-(?=\S)""")
 }

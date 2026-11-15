@@ -20,6 +20,13 @@ class WikiLinksTest {
     }
 
     @Test
+    fun `link text can wrap after each dash but the target is unchanged`() {
+        val markdown = WikiLinks.toMarkdown("[[run-many-agents]]")
+        assertEquals("[run-​many-​agents](vademo-note:run-many-agents)", markdown)
+        assertEquals("run-many-agents", WikiLinks.targetOf("vademo-note:run-many-agents"))
+    }
+
+    @Test
     fun `heading anchor is dropped from the target`() {
         assertEquals("[tyfold](vademo-note:tyfold)", WikiLinks.toMarkdown("[[tyfold#Scorecard]]"))
     }
@@ -80,7 +87,7 @@ class WikiLinksTest {
     @Test
     fun `an embed inside a sentence becomes a link to the diagram`() {
         val markdown = WikiLinks.toMarkdown("See ![[write-path]] and [[raft]].")
-        assertEquals("See [write-path](vademo-diagram:write-path) and [raft](vademo-note:raft).", markdown)
+        assertEquals("See [write-​path](vademo-diagram:write-path) and [raft](vademo-note:raft).", markdown)
         assertEquals("write-path", WikiLinks.diagramOf("vademo-diagram:write-path"))
         assertNull(WikiLinks.targetOf("vademo-diagram:write-path"))
     }

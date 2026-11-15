@@ -1,6 +1,20 @@
 ## Changelog - vademo
 
 
+### v0.20.1 - 15th November 2026
+
+- Fixed long link names breaking mid-word. A `[[link]]` such as
+  `how-many-developers-run-many-coding-agents` now wraps after its dashes,
+  in a paragraph and in a table cell, instead of showing "develop" on one
+  line and "ers" on the next. Android does not wrap after a dash on its
+  own, so `WikiLinks` puts an invisible break point after each dash in the
+  text shown; the link target and the file are unchanged.
+- Added tests:
+  - `WikiLinksTest`: the break points are in the text, not the target.
+  - `LinkLineBreakTest`: on a device, every line of a long link name ends
+    at a dash or a space.
+
+
 ### v0.20.0 - 15th November 2026
 
 - Back and Forward, as in a browser. Next to the back arrow on a note, a
