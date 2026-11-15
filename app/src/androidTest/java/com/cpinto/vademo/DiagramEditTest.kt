@@ -99,6 +99,22 @@ class DiagramEditTest {
     }
 
     @Test
+    fun leavingRightAfterAnEditStillSavesIt() {
+        openDiagram()
+        longPress("Client")
+        compose.onNodeWithText("Edit").performClick()
+        compose.onNode(hasSetTextAction() and hasText("Client")).performTextReplacement("Browser")
+        compose.onNodeWithText("Save").performClick()
+        // Back before the 400 ms save delay runs out: the edit is written as the screen closes.
+        compose.onNodeWithContentDescription("Back").performClick()
+        waitForFile { "\"label\": \"Browser\"" in it }
+        // Opened again, it shows the saved edit.
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Request flow")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Request flow").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Browser")).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
     fun drawAnArrowBetweenTwoBoxes() {
         openDiagram()
         longPress("Client")

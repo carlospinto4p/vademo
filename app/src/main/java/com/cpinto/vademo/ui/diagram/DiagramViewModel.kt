@@ -3,6 +3,7 @@ package com.cpinto.vademo.ui.diagram
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpinto.vademo.data.BackgroundWrites
 import com.cpinto.vademo.data.DiagramClipboard
 import com.cpinto.vademo.data.DiagramMoves
 import com.cpinto.vademo.data.KbRepository
@@ -63,6 +64,7 @@ class DiagramViewModel @Inject constructor(
     private val repository: KbRepository,
     private val placesStore: DiagramMoves,
     private val clipboard: DiagramClipboard,
+    private val writes: BackgroundWrites,
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
@@ -91,6 +93,8 @@ class DiagramViewModel @Inject constructor(
             return
         }
         viewModelScope.launch(Dispatchers.IO) {
+            // An edit made just before this diagram was last closed may still be being written.
+            writes.awaitFor(file)
             val moves = placesStore.read(kbName, name)
             _state.update { it.copy(moves = moves, canPaste = clipboard.clip != null) }
             read(message = null)
@@ -321,10 +325,11 @@ class DiagramViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        // A pending edit is written now rather than lost with the screen.
+        // A pending edit is written now rather than lost with the screen, off the main thread.
+        val file = file ?: return
         if (pendingSave?.isActive == true) {
             pendingSave?.cancel()
-            kotlinx.coroutines.runBlocking { save() }
+            writes.launch(file) { save() }
         }
     }
 

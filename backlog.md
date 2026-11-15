@@ -76,10 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] `ui/diagram/DiagramViewModel.kt:323-328`: `onCleared()` runs
-  `runBlocking { save() }` on the main thread, which reads and writes the
-  diagram file. Leaving a diagram right after an edit can freeze the
-  screen. Save from a scope that outlives the view model. MED, effort S.
 - [ ] `ui/diagram/DiagramScreen.kt:367` (`rememberPlaces`) is keyed on
   `moves`, so every drag frame re-measures every box's text and reruns
   `DiagramLayout.place`; `Edges` (:591) then reroutes every arrow.

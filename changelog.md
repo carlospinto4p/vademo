@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.20.7 - 16th November 2026
+
+- Fixed a freeze when leaving a diagram right after an edit. The last edit
+  was written on the main thread as the screen closed; it is now written in
+  the background.
+  - Added `data/BackgroundWrites.kt`: writes that outlive the screen that
+    started them, one after another per file. Opening the diagram again
+    waits for its write first, so it never shows the older version.
+- Added tests:
+  - `BackgroundWritesTest`: waiting for a write, writes kept in order.
+  - `DiagramEditTest.leavingRightAfterAnEditStillSavesIt` (device).
+
+
 ### v0.20.6 - 15th November 2026
 
 - Fixed a slow check before every save. The note editor, the diagram screen
