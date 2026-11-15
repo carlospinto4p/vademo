@@ -1,6 +1,14 @@
 ## Changelog - vademo
 
 
+### v0.20.8 - 16th November 2026
+
+- Fixed slow dragging in diagrams. Every frame of a drag measured the text
+  of every box again. `rememberPlaces` in `ui/diagram/DiagramScreen.kt` now
+  remembers the measured sizes apart from the placing, so a drag only
+  places the boxes again.
+
+
 ### v0.20.7 - 16th November 2026
 
 - Fixed a freeze when leaving a diagram right after an edit. The last edit

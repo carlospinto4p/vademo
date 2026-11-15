@@ -76,11 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] `ui/diagram/DiagramScreen.kt:367` (`rememberPlaces`) is keyed on
-  `moves`, so every drag frame re-measures every box's text and reruns
-  `DiagramLayout.place`; `Edges` (:591) then reroutes every arrow.
-  Remember sizes by diagram, density and styles only, and place in a
-  second `remember`. HIGH while dragging, effort S.
 - [ ] Every note open rebuilds `NoteIndex.of(kb)` (`ui/note/NoteScreen.kt:135`)
   just for backlinks; Browse (`ui/browse/BrowseScreen.kt:118`) and Search
   (`ui/search/SearchScreen.kt:125`) build it again, and `kb/NoteGraph.kt:16-38`

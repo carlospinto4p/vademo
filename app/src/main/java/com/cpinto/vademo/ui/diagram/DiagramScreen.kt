@@ -358,15 +358,19 @@ internal fun refText(ref: Ref): String = ref.line?.let { "${ref.path}:$it" } ?: 
 private const val LABEL_LINES = 3
 private const val NOTES_LINES = 4
 
-/** Measures every box's text, then lays the diagram out around those sizes, with the boxes [moves] dragged. */
+/**
+ * Measures every box's text, then lays the diagram out around those sizes, with the boxes [moves] dragged.
+ * The measuring is remembered apart from the placing, so a drag frame, which changes only [moves], places
+ * the boxes again without measuring any text.
+ */
 @Composable
 internal fun rememberPlaces(diagram: Diagram, moves: Map<String, Position> = emptyMap()): DiagramPlaces {
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val styles = boxStyles()
-    return remember(diagram, moves, density, styles.label, styles.notes) {
+    val sizes = remember(diagram, density, styles.label, styles.line, styles.notes) {
         with(density) {
-            val sizes = diagram.nodes.filterNot { it.isGroup }.associate { node ->
+            diagram.nodes.filterNot { it.isGroup }.associate { node ->
                 val inner = NODE_WIDTH - NODE_PADDING * 2 - (if (node.category != null) STRIPE + GAP else 0.dp)
                 val constraints = Constraints(maxWidth = inner.roundToPx())
                 fun height(text: String, style: TextStyle, lines: Int): Dp =
@@ -378,9 +382,9 @@ internal fun rememberPlaces(diagram: Diagram, moves: Map<String, Position> = emp
                 if (node.ref != null) height += GAP + height("Ag", styles.line, 1)
                 node.id to DiagramLayout.Box(NODE_WIDTH.value.toDouble(), (height + 2.dp).value.toDouble())
             }
-            DiagramLayout.place(diagram, sizes, moves)
         }
     }
+    return remember(diagram, sizes, moves) { DiagramLayout.place(diagram, sizes, moves) }
 }
 
 /** Status and legend colours, readable on the light and the dark theme. */
