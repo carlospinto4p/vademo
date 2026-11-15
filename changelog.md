@@ -1,6 +1,26 @@
 ## Changelog - vademo
 
 
+### v0.5.0 - 15th November 2026
+
+- Added a map of notes, opened from the new button at the top of a
+  knowledge base: one box per note, one line per `[[link]]`, coloured by
+  folder, with drag, pinch-zoom and tap to open a note:
+  - `kb/NoteGraph.kt`: the notes (the root `index.md` and every note in a
+    folder) and the links between them, one line per linked pair.
+  - `kb/GraphLayout.kt`: a force layout with no randomness, stretched to
+    the screen's shape, then a pass that moves overlapping boxes apart.
+  - `ui/graph/GraphScreen.kt`: the map screen and its folder legend.
+- `kb/WikiLinks.kt`: added `targets()`, which lists the notes a text links
+  to, skipping code exactly as the rendered note does.
+- Added tests:
+  - `kb/NoteGraphTest.kt`: 4 tests.
+  - `kb/GraphLayoutTest.kt`: 5 tests.
+  - `kb/WikiLinksTest.kt`: 2 tests for `targets()`.
+  - `ReadAndEditTest.kt`: opening a note from the map, on a device.
+- `README.md`: a "Map of notes" section.
+
+
 ### v0.4.2 - 7th November 2026
 
 - `CLAUDE.md`: the headless emulator command adds `-gpu host`. Without

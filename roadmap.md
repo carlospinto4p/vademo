@@ -17,6 +17,8 @@ rationale lives in the docs or ADRs it cites.
    `docs/kb-views-and-queries.md`, itemised in backlog 2026.09.20. The
    index comes first; everything else reads from it. New notes from
    templates (backlog 2026.09.16) is independent of that order.
+3. **Hand-drawn diagrams**, after the map of notes shipped in v0.5.0
+   (decided 2026-11-15; backlog 2026.11.15). Independent of step 2.
 
 ## Standing invariants (apply to every session)
 

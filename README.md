@@ -59,6 +59,14 @@ reflows to the width of the screen, so a larger size never means
 scrolling sideways, and the size is kept for every note until it is
 changed again.
 
+## Map of notes
+
+The map button at the top of a knowledge base shows every note as a box
+and every `[[link]]` between two notes as a line, with notes of the same
+folder in the same colour. Drag to move around, pinch to zoom, and tap a
+box to open that note. The picture is worked out from the notes each
+time, so nothing is saved and it always matches what is on the phone.
+
 ## Syncing
 
 Tap **Sync** to send notes edited on the phone and get changes made

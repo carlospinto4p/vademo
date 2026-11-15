@@ -88,6 +88,19 @@ class ReadAndEditTest {
         assertTrue(saved, !saved.contains("updated: 2026-01-01"))
     }
 
+    @Test
+    fun openANoteFromTheMap() {
+        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.onNodeWithContentDescription("Map of notes").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     private fun write(path: String, text: String) {
         File(kb, path).apply { parentFile!!.mkdirs() }.writeText(text)
     }

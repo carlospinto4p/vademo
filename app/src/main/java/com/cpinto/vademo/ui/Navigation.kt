@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.cpinto.vademo.ui.browse.BrowseScreen
 import com.cpinto.vademo.ui.conflict.ConflictScreen
 import com.cpinto.vademo.ui.edit.EditScreen
+import com.cpinto.vademo.ui.graph.GraphScreen
 import com.cpinto.vademo.ui.home.HomeScreen
 import com.cpinto.vademo.ui.note.NoteScreen
 import com.cpinto.vademo.ui.settings.SettingsScreen
@@ -21,8 +22,10 @@ object Routes {
     const val NOTE = "note/{kb}?path={path}"
     const val EDIT = "edit/{kb}?path={path}"
     const val CONFLICT = "conflict/{kb}"
+    const val GRAPH = "graph/{kb}"
 
     fun browse(kb: String, path: String = "") = "browse/${enc(kb)}?path=${enc(path)}"
+    fun graph(kb: String) = "graph/${enc(kb)}"
     fun note(kb: String, path: String) = "note/${enc(kb)}?path=${enc(path)}"
     fun edit(kb: String, path: String) = "edit/${enc(kb)}?path=${enc(path)}"
     fun conflict(kb: String) = "conflict/${enc(kb)}"
@@ -53,6 +56,13 @@ fun VademoNavHost() {
             BrowseScreen(
                 onBack = { nav.popBackStack() },
                 onOpenFolder = { kb, path -> nav.navigate(Routes.browse(kb, path)) },
+                onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
+                onOpenMap = { nav.navigate(Routes.graph(it)) },
+            )
+        }
+        composable(Routes.GRAPH, arguments = listOf(navArgument("kb") { type = NavType.StringType })) {
+            GraphScreen(
+                onBack = { nav.popBackStack() },
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
             )
         }

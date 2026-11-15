@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Folder
+import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -80,6 +81,7 @@ fun BrowseScreen(
     onBack: () -> Unit,
     onOpenFolder: (kb: String, path: String) -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
+    onOpenMap: (kb: String) -> Unit,
     viewModel: BrowseViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -92,6 +94,11 @@ fun BrowseScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { onOpenMap(viewModel.kbName) }) {
+                        Icon(Icons.Outlined.Hub, contentDescription = "Map of notes")
                     }
                 },
             )

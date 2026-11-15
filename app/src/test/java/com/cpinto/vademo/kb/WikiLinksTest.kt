@@ -48,6 +48,17 @@ class WikiLinksTest {
     }
 
     @Test
+    fun `targets lists linked note names without anchors or labels`() {
+        assertEquals(listOf("a", "b", "c"), WikiLinks.targets("[[a]] then [[b|shown]]\nand [[c#Heading]]"))
+    }
+
+    @Test
+    fun `targets skip links quoted as code`() {
+        val text = "Write `[[file-name]]`.\n```\n[[inside]]\n```\n[[outside]]"
+        assertEquals(listOf("outside"), WikiLinks.targets(text))
+    }
+
+    @Test
     fun `targetOf decodes the note name`() {
         assertEquals("src-some report", WikiLinks.targetOf("vademo-note:src-some+report"))
     }

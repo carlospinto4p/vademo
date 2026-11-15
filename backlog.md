@@ -1,5 +1,22 @@
 # vademo Backlog
 
+### 2026.11.15 (map of notes, v0.5.0)
+
+- [ ] **[manual]** Check the map of notes on the phone with v0.5.0
+  installed: open a knowledge base, tap the map button at the top right,
+  then drag, pinch, and tap a box. A pass is: every note visible at the
+  start, titles readable after zooming in, the tapped note opens. Device
+  tests cover the tap but not drag or pinch on real fingers.
+- [ ] **Hand-drawn diagrams**, the second half of the 2026-11-15 request
+  for a Svelte Flow-like feature: boxes, arrows and groups drawn by hand,
+  saved as a file in the knowledge base and synced with git. tyfold's
+  graph pane is the reference (its file format is in `docs/GRAPH-PANE.md`
+  in that repository). Decide the file format and where diagrams live in
+  the knowledge-base layout before building; drawing on a phone needs
+  its own design for adding boxes and connecting them. Reuses
+  `ui/graph/GraphScreen.kt`'s pan and zoom and `kb/GraphLayout.kt`.
+  Effort: Large.
+
 ### 2026.09.20 (viewing and querying)
 
 From `docs/kb-views-and-queries.md`, which has the reasoning and the

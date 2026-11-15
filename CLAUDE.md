@@ -52,7 +52,8 @@ For README screenshots, Android's demo mode gives a clean status bar:
 ## Architecture
 
 - `kb/` — pure Kotlin, no Android: frontmatter, `[[link]]` rewriting,
-  folder and note indexing. Unit-tested on the JVM.
+  folder and note indexing, and the map of notes (`NoteGraph`, and
+  `GraphLayout`, which places its boxes). Unit-tested on the JVM.
 - `git/GitSync.kt` — clone, commit, merge, push and conflict handling on
   JGit. Tested against real bare repositories in temp folders.
 - `data/` — settings (DataStore, token encrypted with the Android

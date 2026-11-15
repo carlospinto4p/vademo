@@ -17,7 +17,20 @@ object WikiLinks {
 
     private val LINK = Regex("""\[\[([^\]|#\n]+)(?:#[^\]|\n]*)?(?:\|([^\]\n]+))?]]""")
 
-    fun toMarkdown(text: String): String {
+    fun toMarkdown(text: String): String = mapProse(text, ::rewrite)
+
+    /** Note names that [text] links to, in order, without anchors; code is skipped like in [toMarkdown]. */
+    fun targets(text: String): List<String> {
+        val found = mutableListOf<String>()
+        mapProse(text) { prose ->
+            LINK.findAll(prose).forEach { found += it.groupValues[1].trim() }
+            prose
+        }
+        return found
+    }
+
+    /** Applies [transform] to every part of [text] outside fenced and inline code. */
+    private fun mapProse(text: String, transform: (String) -> String): String {
         val out = StringBuilder()
         var inFence = false
         text.lines().forEachIndexed { index, line ->
@@ -28,7 +41,7 @@ object WikiLinks {
             } else if (inFence) {
                 out.append(line)
             } else {
-                out.append(rewriteOutsideInlineCode(line))
+                out.append(mapOutsideInlineCode(line, transform))
             }
         }
         return out.toString()
@@ -40,11 +53,11 @@ object WikiLinks {
         return URLDecoder.decode(uri.removePrefix(prefix), "UTF-8")
     }
 
-    private fun rewriteOutsideInlineCode(line: String): String {
+    private fun mapOutsideInlineCode(line: String, transform: (String) -> String): String {
         // Split on backticks: even-indexed segments are prose, odd ones code.
         val segments = line.split('`')
         return segments.mapIndexed { i, segment ->
-            if (i % 2 == 1 && i < segments.lastIndex) segment else rewrite(segment)
+            if (i % 2 == 1 && i < segments.lastIndex) segment else transform(segment)
         }.joinToString("`")
     }
 

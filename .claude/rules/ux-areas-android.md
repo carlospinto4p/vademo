@@ -5,8 +5,8 @@ Project-specific UX areas to watch for when running
 vademo has no charts, no workout flows, and no REST calls — its
 screens are `HomeScreen` (knowledge-base list), `BrowseScreen`
 (folders/notes), `NoteScreen` (rendered markdown), `EditScreen`
-(plain-text editor) and `ConflictScreen` (merge resolution), plus
-`SettingsScreen`. Review against these, not a generic checklist.
+(plain-text editor), `ConflictScreen` (merge resolution) and
+`GraphScreen` (map of notes and their links), plus `SettingsScreen`. Review against these, not a generic checklist.
 
 ## What to Look For
 
