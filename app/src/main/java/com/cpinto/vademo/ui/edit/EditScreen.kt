@@ -33,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.kb.FrontmatterParser
+import com.cpinto.vademo.kb.NoteTemplate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -60,7 +61,13 @@ class EditViewModel @Inject constructor(
 
     private val kbName: String = checkNotNull(savedState["kb"])
     private val path: String = checkNotNull(savedState["path"])
-    private val file = repository.knowledgeBase(kbName).fileAt(path)
+    private val kb = repository.knowledgeBase(kbName)
+    private val file = kb.fileAt(path)
+
+    /** Set when this is a new note started from a template: the template's path and the note's title. */
+    private val template: String? = savedState.get<String>("template")?.takeIf { it.isNotEmpty() }
+    private val title: String = savedState["title"] ?: ""
+    val isNew: Boolean get() = template != null
 
     private val _state = MutableStateFlow(EditState())
     val state: StateFlow<EditState> = _state
@@ -71,8 +78,15 @@ class EditViewModel @Inject constructor(
             // Editing during an unfinished merge would write into a file git
             // is still waiting on a choice for.
             val blocked = repository.list().any { it.name == kbName && it.needsChoice }
-            val text = withContext(Dispatchers.IO) { file.readText() }
-            _state.value = EditState(loaded = true, original = text, text = text, blocked = blocked)
+            // A new note is written only when saved, so leaving the editor leaves nothing behind.
+            val (original, text) = withContext(Dispatchers.IO) {
+                if (template != null && !file.exists()) {
+                    "" to NoteTemplate.fill(kb.fileAt(template).readText(), title, kb.hubOf(file.parentFile!!), LocalDate.now())
+                } else {
+                    file.readText().let { it to it }
+                }
+            }
+            _state.value = EditState(loaded = true, original = original, text = text, blocked = blocked)
         }
     }
 
@@ -83,6 +97,7 @@ class EditViewModel @Inject constructor(
         if (!current.changed) return onSaved()
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                file.parentFile?.mkdirs()
                 file.writeText(FrontmatterParser.withUpdated(current.text, LocalDate.now()))
             }
             onSaved()
@@ -103,7 +118,7 @@ fun EditScreen(onDone: () -> Unit, viewModel: EditViewModel = hiltViewModel()) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit") },
+                title = { Text(if (viewModel.isNew) "New note" else "Edit") },
                 navigationIcon = {
                     IconButton(onClick = leave) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")

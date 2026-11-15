@@ -76,6 +76,19 @@ Under the text, "Linked from" lists the notes that link to this one. Tap
 one to open it. Tap the type, status or a tag at the top of a note to
 search for the other notes that share it.
 
+A table sizes its columns by their content: short columns keep their
+width and long ones wrap to fill the rest of the screen.
+
+## Writing a new note
+
+Inside a folder, New note starts a note from one of the knowledge base's
+`templates/`. Pick a template, type a title, and change the file name if
+it needs one (a `src-` prefix for a source, say); it starts as the title
+in kebab-case, and a name another note already has is refused. The
+editor opens with the title, today's date as `created` and `updated`, the
+`# heading` and `Hub: [[<folder>]]` filled in. The note is written when
+you tap the check mark; going back without saving leaves nothing behind.
+
 ## Search
 
 The search button on the home screen searches every knowledge base on the

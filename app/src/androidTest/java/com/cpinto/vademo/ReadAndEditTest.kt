@@ -135,6 +135,62 @@ class ReadAndEditTest {
     }
 
     @Test
+    fun startANoteFromATemplateThenSaveIt() {
+        write("templates/note.md", "---\ntitle: <Title>\ntype: concept\nstatus: draft\ntags: []\ncreated: YYYY-MM-DD\nupdated: YYYY-MM-DD\n---\n\n# <Title>\n\nHub: [[<topic-hub>]]\n\n<One idea.>\n")
+        write("templates/question.md", "---\ntitle: <The question>\ntype: question\n---\n\n# <The question>\n")
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("New note", useUnmergedTree = true).performClick()
+
+        // A name another note already has is refused, wherever that note is.
+        compose.onNode(hasSetTextAction() and hasText("Title")).performTextInput("Tyfold")
+        compose.onNode(hasSetTextAction() and hasText("tyfold")).assertIsDisplayed()
+        compose.onNodeWithText("Create").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("There is already a note named tyfold", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        compose.onNode(hasSetTextAction() and hasText("Tyfold")).performTextReplacement("Pricing: one-off or yearly")
+        compose.onNodeWithText("Create").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("New note")).fetchSemanticsNodes().isNotEmpty() &&
+                compose.onAllNodes(hasText("# Pricing: one-off or yearly", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        // Nothing is written until Save.
+        val file = File(kb, "ideas/pricing-one-off-or-yearly.md")
+        assertTrue(!file.exists())
+        compose.onNodeWithContentDescription("Save").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Pricing: one-off or yearly")).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        val saved = file.readText()
+        val today = java.time.LocalDate.now().toString()
+        assertTrue(saved, saved.contains("title: \"Pricing: one-off or yearly\""))
+        assertTrue(saved, saved.contains("created: $today") && saved.contains("updated: $today"))
+        assertTrue(saved, saved.contains("Hub: [[ideas]]"))
+    }
+
+    @Test
+    fun leavingANewNoteUnsavedWritesNothing() {
+        write("templates/note.md", "---\ntitle: <Title>\n---\n\n# <Title>\n")
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("New note", useUnmergedTree = true).performClick()
+        compose.onNode(hasSetTextAction() and hasText("Title")).performTextInput("Scratch")
+        compose.onNodeWithText("Create").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("# Scratch", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithText("Discard").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
+        }
+        assertTrue(!File(kb, "ideas/scratch.md").exists())
+    }
+
+    @Test
     fun openANoteFromTheMap() {
         compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Map of notes").performClick()

@@ -23,7 +23,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val BROWSE = "browse/{kb}?path={path}"
     const val NOTE = "note/{kb}?path={path}"
-    const val EDIT = "edit/{kb}?path={path}"
+    const val EDIT = "edit/{kb}?path={path}&template={template}&title={title}"
     const val CONFLICT = "conflict/{kb}"
     const val GRAPH = "graph/{kb}"
     const val DIAGRAMS = "diagrams/{kb}"
@@ -42,6 +42,10 @@ object Routes {
     fun diagram(kb: String, name: String) = "diagram/${enc(kb)}?name=${enc(name)}"
     fun note(kb: String, path: String) = "note/${enc(kb)}?path=${enc(path)}"
     fun edit(kb: String, path: String) = "edit/${enc(kb)}?path=${enc(path)}"
+
+    /** A new note at [path], started from the template at [template] with [title] filled in. */
+    fun newNote(kb: String, path: String, template: String, title: String) =
+        "edit/${enc(kb)}?path=${enc(path)}&template=${enc(template)}&title=${enc(title)}"
     fun conflict(kb: String) = "conflict/${enc(kb)}"
 
     private fun enc(value: String) = Uri.encode(value)
@@ -84,6 +88,7 @@ fun VademoNavHost() {
                 onOpenMap = { nav.navigate(Routes.graph(it)) },
                 onOpenDiagrams = { nav.navigate(Routes.diagrams(it)) },
                 onSearch = { kb, filters -> nav.navigate(Routes.searchIn(kb, filters)) },
+                onNewNote = { kb, path, template, title -> nav.navigate(Routes.newNote(kb, path, template, title)) },
             )
         }
         composable(Routes.DIAGRAMS, arguments = listOf(navArgument("kb") { type = NavType.StringType })) {
@@ -119,7 +124,13 @@ fun VademoNavHost() {
                 onSearch = { kb, filters -> nav.navigate(Routes.searchIn(kb, filters)) },
             )
         }
-        composable(Routes.EDIT, arguments = kbArgs) {
+        composable(
+            Routes.EDIT,
+            arguments = kbArgs + listOf(
+                navArgument("template") { type = NavType.StringType; defaultValue = "" },
+                navArgument("title") { type = NavType.StringType; defaultValue = "" },
+            ),
+        ) {
             EditScreen(onDone = { nav.popBackStack() })
         }
         composable(Routes.CONFLICT, arguments = listOf(navArgument("kb") { type = NavType.StringType })) {

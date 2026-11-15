@@ -75,6 +75,13 @@ class KnowledgeBase(val root: File) {
 
     fun fileAt(relativePath: String): File = File(root, relativePath)
 
+    /** The note templates in `templates/`, by name. */
+    fun templates(): List<File> =
+        noteFiles(File(root, NoteTemplate.FOLDER)).sortedBy { it.name }
+
+    /** The hub note's name for [dir], `<topic>/<topic>.md`, or null when it has none. */
+    fun hubOf(dir: File): String? = dir.name.takeIf { File(dir, "${dir.name}.md").isFile }
+
     private fun noteFiles(dir: File): List<File> =
         dir.listFiles().orEmpty().filter { it.isFile && it.extension == "md" }
 

@@ -1,7 +1,11 @@
 package com.cpinto.vademo.ui.browse
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -10,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -18,17 +23,22 @@ import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Sell
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,11 +60,13 @@ import com.cpinto.vademo.kb.Health
 import com.cpinto.vademo.kb.IndexedNote
 import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.NoteSummary
+import com.cpinto.vademo.kb.NoteTemplate
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class BrowseState(
@@ -63,6 +75,8 @@ data class BrowseState(
     val notes: List<NoteSummary> = emptyList(),
     /** At the top of a knowledge base only, for the Recent, Types and Tags tabs; null while it is read. */
     val index: NoteIndex? = null,
+    /** Names of the knowledge base's note templates, offered by New note inside a folder. */
+    val templates: List<String> = emptyList(),
 )
 
 /** The ways to list a knowledge base at its top level (`docs/kb-views-and-queries.md`, "Views"). */
@@ -97,6 +111,7 @@ class BrowseViewModel @Inject constructor(
                 title = if (path.isEmpty()) kbName else path,
                 folders = kb.foldersIn(dir),
                 notes = notes,
+                templates = if (path.isEmpty()) emptyList() else kb.templates().map { it.nameWithoutExtension },
             )
             // Read after the folders are on screen, since it opens every note.
             if (isTop) _state.value = _state.value.copy(index = NoteIndex.of(kb))
@@ -106,6 +121,25 @@ class BrowseViewModel @Inject constructor(
     fun pathOf(folder: Folder): String = kb.relativePath(folder.dir)
 
     fun pathOf(note: NoteSummary): String = kb.relativePath(note.file)
+
+    /**
+     * Checks [name] for a new note in this folder, then hands [onReady] its
+     * path and its template's path, or [onError] the reason it cannot be used.
+     * Names are unique across the whole knowledge base, since `[[name]]`
+     * must lead to one note.
+     */
+    fun startNote(template: String, name: String, onError: (String) -> Unit, onReady: (path: String, template: String) -> Unit) {
+        viewModelScope.launch {
+            val error = withContext(Dispatchers.IO) {
+                if (!NoteTemplate.isValidName(name)) {
+                    "Use lowercase letters, digits and dashes for the file name."
+                } else {
+                    kb.resolve(name)?.let { "There is already a note named $name: ${kb.relativePath(it)}" }
+                }
+            }
+            if (error != null) onError(error) else onReady("$path/$name.md", "${NoteTemplate.FOLDER}/$template.md")
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,15 +151,39 @@ fun BrowseScreen(
     onOpenMap: (kb: String) -> Unit,
     onOpenDiagrams: (kb: String) -> Unit,
     onSearch: (kb: String, filters: String) -> Unit,
+    onNewNote: (kb: String, path: String, template: String, title: String) -> Unit,
     viewModel: BrowseViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
     var view by rememberSaveable { mutableStateOf(View.Folders) }
+    var newNote by rememberSaveable { mutableStateOf(false) }
     val kbName = viewModel.kbName
     val openNote = { note: IndexedNote -> onOpenNote(kbName, note.path) }
 
+    if (newNote) {
+        NewNoteDialog(
+            templates = state.templates,
+            onDismiss = { newNote = false },
+            onCreate = { template, title, name, onError ->
+                viewModel.startNote(template, name, onError) { path, templatePath ->
+                    newNote = false
+                    onNewNote(kbName, path, templatePath, title)
+                }
+            },
+        )
+    }
+
     Scaffold(
+        floatingActionButton = {
+            if (state.templates.isNotEmpty()) {
+                ExtendedFloatingActionButton(
+                    onClick = { newNote = true },
+                    icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+                    text = { Text("New note") },
+                )
+            }
+        },
         topBar = {
             TopAppBar(
                 title = { Text(state.title) },
@@ -258,7 +316,9 @@ private fun FolderList(
     onOpenFolder: (kb: String, path: String) -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
 ) {
-    LazyColumn(Modifier.fillMaxSize()) {
+    // Room under the last row for the New note button.
+    val bottom = if (state.templates.isNotEmpty()) 88.dp else 0.dp
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = bottom)) {
         items(state.notes, key = { "note:" + it.file.path }) { note ->
             ListItem(
                 modifier = Modifier.clickable { onOpenNote(viewModel.kbName, viewModel.pathOf(note)) },
@@ -280,4 +340,67 @@ private fun FolderList(
             HorizontalDivider()
         }
     }
+}
+
+/**
+ * Picks a template and a title for a new note. The file name follows the
+ * title in kebab-case until it is edited by hand, for a `src-` prefix say.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun NewNoteDialog(
+    templates: List<String>,
+    onDismiss: () -> Unit,
+    onCreate: (template: String, title: String, name: String, onError: (String) -> Unit) -> Unit,
+) {
+    var template by rememberSaveable { mutableStateOf(if ("note" in templates) "note" else templates.first()) }
+    var title by rememberSaveable { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
+    var nameEdited by rememberSaveable { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("New note") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Template", style = MaterialTheme.typography.labelLarge)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    templates.forEach {
+                        FilterChip(selected = it == template, onClick = { template = it }, label = { Text(it) })
+                    }
+                }
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = {
+                        title = it
+                        if (!nameEdited) name = NoteTemplate.fileName(it)
+                        error = null
+                    },
+                    label = { Text("Title") },
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                        nameEdited = true
+                        error = null
+                    },
+                    label = { Text("File name") },
+                    suffix = { Text(".md") },
+                    singleLine = true,
+                    isError = error != null,
+                    supportingText = error?.let { { Text(it) } },
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onCreate(template, title.trim(), name, { error = it }) },
+                enabled = title.isNotBlank() && name.isNotEmpty(),
+            ) { Text("Create") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }

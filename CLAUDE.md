@@ -52,6 +52,7 @@ For README screenshots, Android's demo mode gives a clean status bar:
 ## Architecture
 
 - `kb/` — pure Kotlin, no Android: frontmatter, `[[link]]` rewriting,
+  starting a note from a template (`NoteTemplate`),
   folder and note indexing (`NoteIndex`, every note read in one pass with
   its backlinks and orphans, in memory only), the map of notes (`NoteGraph`, and
   `GraphLayout`, which places its boxes), and diagrams in tyfold's graph

@@ -1,6 +1,28 @@
 ## Changelog - vademo
 
 
+### v0.19.0 - 15th November 2026
+
+- New note. Inside a folder, a New note button starts a note from one of
+  the knowledge base's `templates/`: pick a template, type a title, and
+  change the file name if it needs one. The file name starts as the title
+  in kebab-case; a name another note in the knowledge base already has is
+  refused, since `[[name]]` must lead to one note.
+- The editor opens on the template with the title, today's date as
+  `created` and `updated`, the `# heading`, and `Hub: [[<topic-hub>]]` set
+  to the folder's hub note filled in. Every other placeholder is left as
+  it is. The file is written only when saved, so going back without saving
+  leaves nothing to sync.
+- Added `kb/NoteTemplate.kt`: `fill()`, `fileName()` and `isValidName()`.
+- `KnowledgeBase`: added `templates()` and `hubOf()`.
+- The editor route takes an optional template and title
+  (`Routes.newNote()`).
+- Added tests:
+  - `NoteTemplateTest`: 11 tests.
+  - `ReadAndEditTest.startANoteFromATemplateThenSaveIt`.
+  - `ReadAndEditTest.leavingANewNoteUnsavedWritesNothing`.
+
+
 ### v0.18.1 - 15th November 2026
 
 - A table in a note sizes its columns by their content. The renderer gave

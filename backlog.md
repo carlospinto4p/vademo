@@ -60,7 +60,5 @@ v0.9.0 (export). What is left is checking each on a phone.
 
 ### 2026.09.16 (first version)
 
-- [ ] **Create a new note from a knowledge base's `templates/`** with the
-  frontmatter filled in. Effort: Medium.
 - [ ] **Add JGit keep rules before switching on release minification.**
   `isMinifyEnabled` is false; JGit uses reflection. Effort: Small.
