@@ -19,8 +19,11 @@ rationale lives in the docs or ADRs it cites.
    templates (backlog 2026.09.16) is independent of that order.
 3. **Diagrams**: shown since v0.6.0, edited on the phone since v0.7.0, in
    tyfold's format so agents (with tyfold's graph tool) and the phone
-   write the same files. Next: v0.8.0 then v0.9.0, backlog 2026.11.15
-   (editing diagrams on the phone).
+   write the same files. By v0.9.0 the phone does what tyfold's diagram
+   pane does except two things: arrows kept off and bent round other
+   boxes (backlog 2026.11.15, diagrams), and links from a box to a
+   terminal session, which need tyfold's desktop. The phone checks are in
+   backlog 2026.11.15 (editing diagrams on the phone).
 
 ## Standing invariants (apply to every session)
 

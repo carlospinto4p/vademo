@@ -1,6 +1,25 @@
 ## Changelog - vademo
 
 
+### v0.9.0 - 15th November 2026
+
+- Export, as tyfold's Export does, through Android's share sheet:
+  - Share as image: the whole diagram as a PNG at full size, with tyfold's
+    48-unit margin and without the arrows' edit handles.
+  - Share as Mermaid: the diagram as a Mermaid chart in a fenced block, so
+    it renders where it is pasted. The text is tyfold's, ported line for
+    line from its `src-tauri/src/graph/export.rs`, which tyfold checked by
+    rendering with mermaid 12.
+  - Both work while editing is off, as tyfold's export does.
+- Added `kb/MermaidExport.kt` and `ui/diagram/DiagramShare.kt`; a
+  FileProvider limited to the app's `cache/exports/` folder, so the share
+  sheet can read the image.
+- Added tests:
+  - `kb/MermaidExportTest.kt`: tyfold's 4 export cases with its expected
+    output, plus a box whose parent is not a group, and the fenced block.
+  - `DiagramEditTest.kt`: Share as image writes a full PNG, on a device.
+
+
 ### v0.8.0 - 15th November 2026
 
 - Diagrams as files: New diagram on the Diagrams list (a title and a

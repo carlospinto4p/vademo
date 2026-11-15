@@ -67,7 +67,8 @@ class DiagramViewModel @Inject constructor(
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
-    private val name: String = checkNotNull(savedState["name"])
+    /** The diagram's file name, without `.json`. */
+    val name: String = checkNotNull(savedState["name"])
     private val kb = repository.knowledgeBase(kbName)
     private val file = File(File(kb.root, Diagram.FOLDER), "$name.json")
 

@@ -179,6 +179,20 @@ class DiagramEditTest {
         assertTrue(!diagram.exists())
     }
 
+    @Test
+    fun shareAsImageWritesAPictureOfTheWholeDiagram() {
+        openDiagram()
+        compose.onNodeWithContentDescription("More").performClick()
+        compose.onNodeWithText("Share as image").performClick()
+        val png = File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "exports/flow.png")
+        compose.waitUntil(5_000) { png.isFile && png.length() > 0 }
+        val bytes = png.readBytes()
+        // The PNG signature, then a picture as wide as two boxes side by side at least.
+        assertTrue(bytes.take(4) == listOf(0x89.toByte(), 'P'.code.toByte(), 'N'.code.toByte(), 'G'.code.toByte()))
+        val image = android.graphics.BitmapFactory.decodeFile(png.path)
+        assertTrue("${image.width} px wide", image.width > 400)
+    }
+
     /** Leaves the knowledge base in git's merging state, with a conflict in a note, so the diagram itself still reads. */
     private fun conflictInTheIndex() {
         val index = File(kb, "index.md")

@@ -91,6 +91,10 @@ selected box to move them all. Where you drag boxes is remembered on this
 phone only; Tidy in the menu puts everything back where the layout wants
 it.
 
+Share as image and Share as Mermaid, in a diagram's menu, send it through
+Android's share sheet: a PNG of the whole diagram, or a Mermaid chart that
+renders where it is pasted, such as in a GitHub issue.
+
 ## Syncing
 
 Tap **Sync** to send notes edited on the phone and get changes made

@@ -26,12 +26,16 @@
   has a step after placing each group (`settle` and `clearRays` in its
   `src/lib/graph/canvas/layout.ts`) that moves boxes out of the line of an
   arrow leaving the group. `kb/DiagramLayout.kt` does not, so such an arrow
-  can cross a box (seen on a real 18-box diagram). Effort: Medium.
+  can cross a box (seen on a real 18-box diagram). tyfold also draws an
+  arrow that would still cross a box as a curve round it
+  (`src/lib/graph/canvas/edgeRoute.ts`); vademo draws straight lines.
+  Effort: Medium.
 
 ### 2026.11.15 (editing diagrams on the phone, v0.7.0)
 
-Asked for on 2026-11-15: "everything tyfold has", in three versions.
-v0.7.0 is the first; the other two follow.
+Asked for on 2026-11-15: "everything tyfold has", in three versions:
+v0.7.0 (editing), v0.8.0 (files, selecting, dragging, clipboard) and
+v0.9.0 (export). What is left is checking each on a phone.
 
 - [ ] **[manual]** Check editing on the phone with v0.7.0 installed: long
   press a box (the actions sheet opens), edit its name, connect it to
@@ -43,8 +47,10 @@ v0.7.0 is the first; the other two follow.
   three move); Copy, open another diagram, Paste; Tidy; Delete diagram.
   Then Sync: the dragging must not show in the commit, only the pasted
   boxes.
-- [ ] **Export (v0.9.0).** A PNG image and Mermaid text of a diagram,
-  through Android's share sheet, as tyfold's Export does. Effort: Medium.
+- [ ] **[manual]** Check v0.9.0 on the phone: in a diagram's menu, Share
+  as image to a chat or Drive (the picture shows the whole diagram, with no
+  small round handles on the arrows), and Share as Mermaid into a GitHub
+  issue comment's preview (the chart renders).
 
 ### 2026.09.20 (viewing and querying)
 

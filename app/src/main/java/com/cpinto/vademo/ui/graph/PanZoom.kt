@@ -49,6 +49,8 @@ private const val MAX_SCALE = 3f
 fun PanZoom(
     contentWidth: Dp,
     contentHeight: Dp,
+    /** Applied to the content at its own size, inside the zoom, as for recording a picture of all of it. */
+    contentModifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -86,7 +88,8 @@ fun PanZoom(
                     translationY = offset.y
                     scaleX = scale
                     scaleY = scale
-                },
+                }
+                .then(contentModifier),
         ) { content() }
     }
 }

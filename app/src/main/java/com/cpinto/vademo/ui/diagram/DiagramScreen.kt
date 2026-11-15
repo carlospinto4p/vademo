@@ -6,6 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.input.pointer.pointerInput
 import com.cpinto.vademo.kb.Position
 import androidx.compose.foundation.layout.Arrangement
@@ -80,6 +87,7 @@ import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
 
+private val EXPORT_MARGIN = 48.dp
 private val NODE_WIDTH = 200.dp
 private val NODE_PADDING = 10.dp
 private val STRIPE = 4.dp
@@ -118,12 +126,33 @@ fun DiagramScreen(
     }
     var open by remember { mutableStateOf<DiagramDialog?>(null) }
     LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
+    val context = LocalContext.current
+    // Every frame of the whole drawing, at its own size, is recorded here for Share as image.
+    val picture = rememberGraphicsLayer()
+    val paper = MaterialTheme.colorScheme.surface
+    // While the picture is taken the drawing is shown once without the arrows' edit handles,
+    // which are controls and not part of the diagram.
+    var exporting by remember { mutableStateOf(false) }
+    LaunchedEffect(exporting) {
+        if (!exporting) return@LaunchedEffect
+        withFrameNanos { }
+        withFrameNanos { }
+        DiagramShare.image(context, viewModel.name, picture.toImageBitmap())
+        exporting = false
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             if (state.selected.isNotEmpty()) SelectionBar(state.selected, viewModel, onOpen = { open = it })
-            else MainBar(state, viewModel, onBack, onOpen = { open = it })
+            else MainBar(
+                state,
+                viewModel,
+                onBack,
+                onOpen = { open = it },
+                onShareImage = { exporting = true },
+                onShareMermaid = { state.diagram?.let { DiagramShare.mermaid(context, it) } },
+            )
         },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -142,13 +171,23 @@ fun DiagramScreen(
                     val actions = DiagramActions(
                         onTap = { id -> viewModel.tap(id)?.let { onOpenNote(viewModel.kbName, it) } },
                         onLongPress = if (state.editable) { id -> open = DiagramDialog.Actions(id) } else null,
-                        onEdge = if (state.editable) { id -> open = DiagramDialog.Edge(id) } else null,
+                        onEdge = if (state.editable && !exporting) { id -> open = DiagramDialog.Edge(id) } else null,
                         highlighted = state.connectingFrom,
                         selected = state.selected,
                         onDrag = viewModel::drag,
                         onDragEnd = viewModel::dragEnded,
                     )
-                    PanZoom(places.width.dp, places.height.dp) {
+                    // Recorded with tyfold's export margin round it (`PADDING` in its graphExport.ts);
+                    // the screen draws the recording back at the content's own place.
+                    val recording = Modifier.drawWithContent {
+                        val margin = EXPORT_MARGIN.toPx()
+                        picture.record(size = IntSize((size.width + 2 * margin).toInt(), (size.height + 2 * margin).toInt())) {
+                            drawRect(paper)
+                            translate(margin, margin) { this@drawWithContent.drawContent() }
+                        }
+                        translate(-margin, -margin) { drawLayer(picture) }
+                    }
+                    PanZoom(places.width.dp, places.height.dp, contentModifier = recording) {
                         DiagramContent(diagram, places, colours, state.notes, actions)
                     }
                     if (diagram.legend.isNotEmpty()) {
@@ -184,7 +223,14 @@ fun DiagramScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MainBar(state: DiagramState, viewModel: DiagramViewModel, onBack: () -> Unit, onOpen: (DiagramDialog) -> Unit) {
+private fun MainBar(
+    state: DiagramState,
+    viewModel: DiagramViewModel,
+    onBack: () -> Unit,
+    onOpen: (DiagramDialog) -> Unit,
+    onShareImage: () -> Unit,
+    onShareMermaid: () -> Unit,
+) {
     var menu by remember { mutableStateOf(false) }
     TopAppBar(
         title = { Text(state.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -194,12 +240,15 @@ private fun MainBar(state: DiagramState, viewModel: DiagramViewModel, onBack: ()
             }
         },
         actions = {
-            if (!state.editable || state.diagram == null) return@TopAppBar
-            IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
-                Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
-            }
-            IconButton(onClick = viewModel::redo, enabled = state.canRedo) {
-                Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
+            val diagram = state.diagram ?: return@TopAppBar
+            val editable = state.editable
+            if (editable) {
+                IconButton(onClick = viewModel::undo, enabled = state.canUndo) {
+                    Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo")
+                }
+                IconButton(onClick = viewModel::redo, enabled = state.canRedo) {
+                    Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo")
+                }
             }
             Box {
                 IconButton(onClick = { menu = true }) {
@@ -212,17 +261,21 @@ private fun MainBar(state: DiagramState, viewModel: DiagramViewModel, onBack: ()
                             action()
                         })
                     }
-                    item("Add box", true) {
-                        viewModel.editReturning { it.addNode(group = false) }?.let { onOpen(DiagramDialog.EditNode(it)) }
+                    if (editable) {
+                        item("Add box", true) {
+                            viewModel.editReturning { it.addNode(group = false) }?.let { onOpen(DiagramDialog.EditNode(it)) }
+                        }
+                        item("Add group", true) {
+                            viewModel.editReturning { it.addNode(group = true) }?.let { onOpen(DiagramDialog.EditNode(it)) }
+                        }
+                        item("Paste", state.canPaste, viewModel::paste)
+                        item("Legend", true) { onOpen(DiagramDialog.Legend) }
+                        item("Title and direction", true) { onOpen(DiagramDialog.Title) }
                     }
-                    item("Add group", true) {
-                        viewModel.editReturning { it.addNode(group = true) }?.let { onOpen(DiagramDialog.EditNode(it)) }
-                    }
-                    item("Paste", state.canPaste, viewModel::paste)
-                    item("Legend", true) { onOpen(DiagramDialog.Legend) }
-                    item("Title and direction", true) { onOpen(DiagramDialog.Title) }
                     item("Tidy (forget where boxes were dragged)", state.moves.isNotEmpty(), viewModel::tidy)
-                    item("Delete diagram", true) { onOpen(DiagramDialog.DeleteDiagram) }
+                    item("Share as image", diagram.nodes.isNotEmpty(), onShareImage)
+                    item("Share as Mermaid", true, onShareMermaid)
+                    if (editable) item("Delete diagram", true) { onOpen(DiagramDialog.DeleteDiagram) }
                 }
             }
         },
