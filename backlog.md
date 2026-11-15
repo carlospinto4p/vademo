@@ -57,3 +57,248 @@ v0.9.0 (export). What is left is checking each on a phone.
   tap the bookmark at the top, name it, clear the field: it is listed
   under Saved searches and runs again when tapped. Device tests ran on
   the emulator with a four-note fixture only.
+
+### 2026.11.15 (/scan: security, performance, refactoring, tests)
+
+Paths below are under `app/src/main/java/com/cpinto/vademo/` unless they
+start with `app/`, `gradle`, `.github/` or `docs/`.
+
+#### Security
+
+- [ ] **[manual]** Decide how the APK is signed. The repository is public,
+  so anyone can download `app/debug.keystore` (password `android`), sign
+  their own APK as `com.cpinto.vademo`, and Android accepts it as an
+  update that keeps the app's data and can decrypt the stored GitHub
+  token. It needs the user to sideload that APK. The fix is a private key
+  held in CI secrets (`app/build.gradle.kts:28-35`,
+  `.github/workflows/build-apk.yml:101-112`), which reverses the
+  committed-keystore decision in CLAUDE.md. MED, effort M.
+- [ ] Diagram names are used as file paths unchecked. A name from
+  `![[name]]` or a `vademo-diagram:` link is URL-decoded
+  (`kb/WikiLinks.kt:90-94`) and becomes `File(diagrams, "$name.json")`
+  (`ui/diagram/DiagramViewModel.kt:73`, also 237, 278, 311;
+  `ui/note/NoteScreen.kt:126`; `ui/diagram/DiagramShare.kt:35-37`). A note
+  from GitHub with `../` in the name can make the app read, overwrite or
+  delete app-private `.json` files, or write the drag-offsets file inside
+  the clone, which sync then pushes. Reject `/`, `\` and `..`, or reuse
+  `noteAt`'s canonical-path check. MED, effort S.
+- [ ] `ui/note/NoteScreen.kt:168`: any link that is not a wiki or diagram
+  link goes to `LocalUriHandler.openUri` with no scheme check. A relative
+  link, unknown scheme or `file://` should crash the app (Compose turns
+  `ActivityNotFoundException` into an exception; written from recall, not
+  tried on a device). Allow `http`, `https`, `mailto`; catch and show a
+  Snackbar otherwise. LOW, effort S.
+- [ ] `data/KbRepository.kt:103-110`: the GitHub token is sent as HTTPS
+  credentials to every configured remote, whatever its host. Send it only
+  to `github.com`. LOW, effort S.
+- [ ] Symlinks in a clone are followed: `kb/KnowledgeBase.kt:56-60` and
+  `:76` do not check canonical paths (only `noteAt` does), so a note that
+  is a symlink to an app-private file would be shown and written through
+  by the editor. First check with `GitOnDeviceTest` whether JGit 5.13
+  creates real symlinks on Android. LOW (MED if it does), effort S/M.
+- [ ] `gradle/libs.versions.toml:22`: JGit `5.13.3`. CVE-2025-4949 (XXE in
+  repo-manifest parsing, unused here) is fixed in 5.13.4 according to the
+  scan agent's recall, not checked online. Verify, then bump within
+  5.13.x and run `GitOnDeviceTest`. LOW, effort S.
+
+#### Performance
+
+- [ ] Five places ask "is this one knowledge base mid-merge?" by calling
+  `repository.list()`, which runs a JGit status over every knowledge base
+  and decrypts the token twice: `ui/edit/EditScreen.kt:80`,
+  `ui/diagram/DiagramViewModel.kt:97,300`,
+  `ui/diagram/DiagramListScreen.kt:74,81`. The diagram autosave pays it
+  400 ms after every edit. Add `KbRepository.needsChoice(name)` using
+  `GitSync.isMerging` (`git/GitSync.kt:85`, today only used by tests).
+  HIGH, effort S.
+- [ ] `ui/diagram/DiagramViewModel.kt:315-320`: `onCleared()` runs
+  `runBlocking { save() }` on the main thread, and `save()` includes the
+  full `list()` scan above. Leaving a diagram right after an edit can
+  freeze the screen. Use the cheap check, and save from a scope that
+  outlives the view model. HIGH, effort S.
+- [ ] `ui/diagram/DiagramScreen.kt:367` (`rememberPlaces`) is keyed on
+  `moves`, so every drag frame re-measures every box's text and reruns
+  `DiagramLayout.place`; `Edges` (:591) then reroutes every arrow.
+  Remember sizes by diagram, density and styles only, and place in a
+  second `remember`. HIGH while dragging, effort S.
+- [ ] Every note open rebuilds `NoteIndex.of(kb)` (`ui/note/NoteScreen.kt:135`)
+  just for backlinks; Browse (`ui/browse/BrowseScreen.kt:118`) and Search
+  (`ui/search/SearchScreen.kt:125`) build it again, and `kb/NoteGraph.kt:16-38`
+  re-reads every note with a copy of `NoteIndex`'s filter. Cache one index
+  per knowledge base in `KbRepository`, drop it after sync, resolve or a
+  save, and build `NoteGraph` from it. HIGH, effort M.
+- [ ] `ui/diagram/DiagramViewModel.kt:110-115` (`publish`): on every edit,
+  undo or redo, for each box with a `ref`, `kb.noteAt()` does file checks
+  and for a bare name walks the whole tree, on the main thread. Resolve
+  once per load on `Dispatchers.IO`. MED-HIGH, effort S.
+- [ ] `ui/note/NoteScreen.kt:141,169`: tapping a `[[link]]` walks the whole
+  knowledge base on the main thread (`kb.resolve`). Resolve against the
+  index already built at :135 (`NoteIndex.note(name)`). MED, effort S.
+- [ ] Search reruns in full on every keystroke with no debounce
+  (`ui/search/SearchScreen.kt:99-111`), and each run rebuilds the orphan
+  set and missing-links map (`kb/NoteSearch.kt:75-76`); `kb/Health.kt:24`
+  pays that five times. Debounce or `mapLatest`, make those lazy on
+  `NoteIndex`, store lowercased text once. MED, effort S.
+- [ ] `kb/Frontmatter.kt:62`: `Regex("""\s#""")` is compiled for every
+  frontmatter field of every note. Make it a `private val`. MED, effort S.
+- [ ] `ui/browse/BrowseScreen.kt:219,224,271`: `recent()`, `byType()` and
+  `tagCounts()` sort or group every note on each recomposition. Wrap in
+  `remember(index)`. MED, effort S.
+- [ ] `ui/diagram/DiagramScreen.kt:173-181,414-424`: a new `DiagramActions`
+  is built on every recomposition and `DiagramContent` rebuilds `byId` and
+  the depth sort, so every box recomposes on each drag frame. Remember
+  both. MED, effort S/M.
+- [ ] `gradle.properties`: configuration cache and build cache are off
+  (Gradle 9.4.1). Turn on `org.gradle.configuration-cache` and
+  `org.gradle.caching`, then check KSP and Hilt still build. MED, effort S.
+- [ ] `.github/workflows/build-apk.yml:69,72`: two `./gradlew --no-daemon`
+  calls each pay a JVM start and configuration; run
+  `testDebugUnitTest assembleDebug` in one call. Also cache the platform
+  37 SDK download (:52-66). MED, effort S.
+- [ ] `data/SettingsRepository.kt:47,86-87`: every DataStore change (text
+  size after a pinch, a saved search) decrypts the token again with the
+  Keystore. Add `distinctUntilChanged` on the ciphertext or cache the
+  plaintext; read `current()` once in `KbRepository.list()` (:49-50).
+  LOW-MED, effort S.
+- [ ] `data/KbRepository.kt:50-59,69-72`: knowledge bases are synced and
+  inspected one after another; run them concurrently. LOW-MED, effort S.
+- [ ] `kb/KnowledgeBase.kt:36-37,62-63`: `notesIn` and `summary` read whole
+  files to get the frontmatter. Read up to the closing `---`, or use the
+  cached index. LOW-MED, effort S.
+- [ ] `ui/note/NoteScreen.kt:238-249`: `markdownTypography` and
+  `markdownComponents` are rebuilt per block on every recomposition,
+  including every pinch frame. Hoist into one `remember`. LOW, effort S.
+- [ ] `git/GitSync.kt:147-158`: a sync walks the working tree three times
+  (`status`, `add .`, `add . --update`), then `list()` runs `status`
+  again. LOW, effort S.
+- [ ] `docs/kb-views-and-queries.md:28-30` says reading every note is "a
+  few hundred milliseconds on a phone". It is an undated estimate, never
+  measured, and the index is now rebuilt on every note open, not once per
+  knowledge base. Measure it on the phone and update the doc. LOW,
+  effort S.
+
+#### Refactoring
+
+- [ ] `GitSync.conflicts()` (`git/GitSync.kt:87`) is the only public sync
+  call not wrapped in `runCatching`; a broken clone throws inside
+  `viewModelScope` from `ui/conflict/ConflictScreen.kt:74-76` and crashes
+  the app. `KbRepository.resolve` (`data/KbRepository.kt:80`) uses
+  `repoUrls.first {}`, which throws if the knowledge base was removed in
+  Settings meanwhile. HIGH, effort S.
+- [ ] Note editor (`ui/edit/EditScreen.kt:82-104`): `load` and `save` do
+  unguarded `readText`/`writeText`, so a note deleted by a sync or a disk
+  error crashes the app instead of saying so. `save()` also never
+  re-checks for a conflict that appeared while the note was open (a sync
+  from Home keeps running); the diagram editor does re-check at
+  `ui/diagram/DiagramViewModel.kt:300`. HIGH, effort M.
+- [ ] Writes are not atomic: notes and diagrams use `writeText`
+  (`ui/edit/EditScreen.kt:101`, `ui/diagram/DiagramViewModel.kt:311`), so
+  a half-written file can be committed by `git add .`;
+  `data/DiagramMoves.kt:38-40` and `ui/diagram/DiagramShare.kt:35-37`
+  write-then-rename but ignore `renameTo`'s result. One
+  `File.writeAtomically` helper for all four. MED, effort S.
+- [ ] `ui/diagram/DiagramScreen.kt` (683 lines) holds both the screen and
+  the drawing code shared with `DiagramCard.kt` and `DiagramEditors.kt`
+  (`rememberPlaces`, `diagramColours`, `DiagramContent`, `NodeBox`,
+  `GroupBox`, `Edges`, `refText`). Move the drawing code to
+  `ui/diagram/DiagramDrawing.kt`. MED, effort S.
+- [ ] The diagram file path is built by hand in four places
+  (`ui/diagram/DiagramViewModel.kt:73`, `ui/note/NoteScreen.kt:126`,
+  `kb/Diagram.kt:135,144`). Add `KnowledgeBase.diagramFile(name)`, which
+  is also the natural place for the name check under Security. MED,
+  effort S.
+- [ ] View models live in their `*Screen.kt` for eight screens but in
+  their own file for Home and Diagram. Pick one convention. LOW, effort M.
+- [ ] `ui/diagram/DiagramViewModel.kt:98-99`: `parse(text!!)` inside
+  `runCatching` turns a missing file into "could not be read:
+  NullPointerException". Check null explicitly and catch only parse
+  errors; same broad catches in `kb/Diagram.kt:151` and
+  `data/DiagramMoves.kt:29`. LOW, effort S.
+- [ ] `DiagramViewModel.editSelected` (:197-202) exists for "edit, then end
+  the selection" but `DiagramEditors.kt:86-87,100-101,292` and
+  `DiagramScreen.kt:309` do it by hand. Use it. LOW, effort S.
+- [ ] `ui/search/SearchScreen.kt:149-150` repeats `SearchState.offersSaved`
+  (:83). Make it a function on `NoteSearch.Query`. LOW, effort S.
+- [ ] Stale docs: `kb/Diagram.kt:12-13` says "vademo only reads it", and
+  the "Diagram files" bullet in CLAUDE.md partly says the same; the app
+  now edits diagrams. LOW, effort S.
+- [ ] Dead in production: `KnowledgeBase.folders()` (`kb/KnowledgeBase.kt:27`),
+  used only by a test. LOW, effort S.
+- [ ] Imports: a stray `import com.cpinto.vademo.ui.BackForward` sits
+  above the sorted imports in six screens (Graph, Diagram, Browse,
+  DiagramList, Search, Note); `DiagramListScreen.kt:31-52` and
+  `NoteScreen.kt:57` are unsorted; fully qualified names inline at
+  `DiagramViewModel.kt:249,319`. LOW, effort S.
+- [ ] `data/TokenCipher.kt:26-31`: if the Keystore key is lost, `decrypt`
+  returns null and the token silently becomes empty; the user only sees
+  the general "add your token" card. Say the stored token could not be
+  read. LOW, effort S.
+- [ ] `ui/graph/GraphScreen.kt:79` reads files on `Dispatchers.Default`;
+  every other view model uses `Dispatchers.IO`. LOW, effort S.
+
+#### Test coverage
+
+- [ ] `git/GitSync.kt:148-150`: `commitLocalChanges` commits modified,
+  untracked and missing files but not already-staged ones, which
+  `inspect` (:74-75) does count. If the app is killed between `add` and
+  `commit`, those edits are never pushed and Home shows "N edits not
+  synced" for good. Regression test: stage a file, sync, expect it pushed;
+  then fix. HIGH, effort S.
+- [ ] Push retry (`git/GitSync.kt:166-208`) is untested: a rejected
+  non-fast-forward push retried, another refusal, attempts running out,
+  and "GitHub has no branch named X" (:172-173). HIGH, effort M.
+- [ ] `ui/diagram/DiagramViewModel.kt:295-321` save logic has no test: the
+  400 ms delay, the changed-on-disk check (`seen`), the 100-step undo
+  cap, saving in `onCleared`, `deleteDiagram` cancelling a pending save.
+  No view model has a JVM test because `KbRepository` needs a Context.
+  HIGH, effort M.
+- [ ] A conflict where one side deleted the file is untested:
+  `conflicts()` returning null for `mine`/`theirs`, and `resolve` with a
+  null choice (`git/GitSync.kt:87-94,107-109`). MED, effort S.
+- [ ] Clone edge cases untested: a target folder with no `.git` (rename
+  fails), a stale `<name>.downloading` left by a killed process
+  (`git/GitSync.kt:58,130,140`). `KbRepository.downloaded()` treats any
+  folder as downloaded. MED, effort S.
+- [ ] `KbRepository` has no tests. Besides `resolve` above: `dirFor` gives
+  `a/kb-x` and `b/kb-x` the same folder (:100-101), and once a clone
+  exists sync uses `origin`, so changing a URL in Settings to another
+  repository with the same name keeps syncing the old one. MED, effort M.
+- [ ] `kb/Frontmatter.kt:47,54`: `withUpdated` splits with `lines()` and
+  joins with `"\n"`, so saving a CRLF note rewrites every line ending and
+  the next sync pushes the whole file. Test, then keep the note's line
+  ending. MED, effort S.
+- [ ] Settings storage untested: token encrypt/decrypt round trip, trimming
+  on save, empty URL list vs missing value falling back to `DEFAULT_REPOS`
+  (`data/SettingsRepository.kt:77-92`). Needs a device test for the
+  Keystore. MED, effort M.
+- [ ] `app/src/test/java/com/cpinto/vademo/kb/KnowledgeBaseTest.kt:76`:
+  `noteAt("../outside.md")` passes only because the file does not exist;
+  the canonical-path guard (`kb/KnowledgeBase.kt:52`) is never reached.
+  Create the file outside the root. MED, effort S.
+- [ ] `app/src/androidTest/java/com/cpinto/vademo/DiagramEditTest.kt:52,165`:
+  `@Before` clears `filesDir/kb` but not `filesDir/diagram-moves`, so a
+  file left by an earlier run satisfies the drag test's wait before any
+  drag. MED, effort S.
+- [ ] Device tests never reset the settings store
+  (`ReadAndEditTest.kt:46-48,380-405`, `DiagramEditTest.kt:50-53`): saved
+  Settings hide the default knowledge base, and a failed saved-search test
+  leaves "Scoring notes" saved so the next run passes early. Clear it in
+  `@Before`. MED, effort S.
+- [ ] `kb/DiagramDocument.kt` `problems()` is partly tested; untested
+  messages at :311,317-319,322-323,331-332,344,364. `ungroup` (:155) uses
+  `first`, which throws on an unknown group id. LOW, effort S.
+- [ ] `kb/KnowledgeBase.kt`: no direct tests of `foldersIn` on a subfolder,
+  `fileAt` (including `../`), or two folders holding the same note name
+  (`resolve`/`allNotes`, :43,60, keep whichever the walk reaches last).
+  LOW, effort S.
+- [ ] `app/src/test/java/com/cpinto/vademo/git/GitSyncTest.kt:189`:
+  resolving a conflict checks only the `Synced` type, not the push, the
+  merge commit message or its two parents; `names()` with more than three
+  files is untested. LOW, effort S.
+- [ ] `app/src/androidTest/java/com/cpinto/vademo/ReadAndEditTest.kt:110`
+  checks the old `updated:` date is gone, not that it is today; :170-172
+  reads `LocalDate.now()` after saving, so a run across midnight fails.
+  LOW, effort S.
+- [ ] `GitOnDeviceTest` uses only a local file remote: HTTPS with
+  credentials and a conflict on a device are never tested, though the
+  comment at `ReadAndEditTest.kt:33` suggests otherwise. LOW, effort L.
