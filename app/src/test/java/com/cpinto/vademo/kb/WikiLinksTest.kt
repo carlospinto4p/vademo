@@ -1,7 +1,9 @@
 package com.cpinto.vademo.kb
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class WikiLinksTest {
@@ -105,5 +107,15 @@ class WikiLinksTest {
     @Test
     fun `targetOf ignores ordinary urls`() {
         assertNull(WikiLinks.targetOf("https://github.com"))
+    }
+
+    @Test
+    fun `only web and email links open in another app`() {
+        for (uri in listOf("https://github.com", "http://example.com/a", "HTTPS://x.org", "mailto:someone@example.com")) {
+            assertTrue(WikiLinks.opensOutside(uri), uri)
+        }
+        for (uri in listOf("other-note.md", "../notes/x.md", "file:///data/data/x", "intent:#Intent;end", "javascript:x", "")) {
+            assertFalse(WikiLinks.opensOutside(uri), uri)
+        }
     }
 }

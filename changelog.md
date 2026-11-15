@@ -1,6 +1,32 @@
 ## Changelog - vademo
 
 
+### v0.20.3 - 15th November 2026
+
+- Fixed three ways a knowledge base from GitHub, or a link in a note, could
+  reach past what it should:
+  - A diagram name containing `/` or `\`, from a `![[name]]` line or a link
+    to a diagram, could make the app read, overwrite or delete a `.json`
+    file outside `.tyfold-graphs/`. Such a name now opens a screen saying it
+    is not a diagram name, and an embed with one shows as a missing diagram.
+    The check is `KnowledgeBase.diagramFile(name)`, now the one place a
+    diagram's file is found.
+  - A link in a note that is not to a note or a diagram is opened by
+    another app only when it is `http`, `https` or `mailto`, and a link no
+    app can open shows "Can't open this link" instead of closing the app.
+    A relative link, a `file:` link or any other scheme gets the same
+    message.
+  - The GitHub token is given only to `https://github.com`. It used to go to
+    whatever host a knowledge base was cloned from. `GitHubOnlyCredentials`
+    checks the address JGit is about to talk to, so a clone whose `origin`
+    differs from Settings is covered too.
+- Added tests:
+  - `KnowledgeBaseTest`: `diagramFile` refuses names that leave the folder.
+  - `WikiLinksTest`: which links open in another app.
+  - `GitHubOnlyCredentialsTest`: GitHub over HTTPS gets the token, other
+    hosts, look-alike hosts and plain HTTP do not.
+
+
 ### v0.20.2 - 15th November 2026
 
 - Added JGit rules to `app/proguard-rules.pro`, ready for when release

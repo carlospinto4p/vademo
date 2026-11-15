@@ -87,6 +87,17 @@ object WikiLinks {
     /** The diagram name of a link made from an `![[name]]` inside a sentence. */
     fun diagramOf(uri: String): String? = decode(uri, DIAGRAM_SCHEME)
 
+    /**
+     * Whether a link that is neither to a note nor to a diagram may be handed
+     * to another app. Only web and email links: a relative link, a `file:`
+     * link or an unknown scheme has no app to open it, or opens something it
+     * should not.
+     */
+    fun opensOutside(uri: String): Boolean =
+        uri.substringBefore(':', missingDelimiterValue = "").lowercase() in OUTSIDE_SCHEMES
+
+    private val OUTSIDE_SCHEMES = setOf("http", "https", "mailto")
+
     private fun decode(uri: String, scheme: String): String? {
         val prefix = "$scheme:"
         if (!uri.startsWith(prefix)) return null

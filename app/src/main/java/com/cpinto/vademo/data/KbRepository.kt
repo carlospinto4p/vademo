@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider
 import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -101,11 +100,7 @@ class KbRepository @Inject constructor(
         File(root, url.trimEnd('/').substringAfterLast('/').removeSuffix(".git"))
 
     private fun gitSync(current: Settings) = GitSync(
-        // The token goes in as the HTTPS password. GitHub accepts any
-        // non-empty user name ("oauth2") for a personal access token;
-        // checked on a real phone against github.com, 2026-11-15.
-        credentials = current.token.takeIf { it.isNotBlank() }
-            ?.let { UsernamePasswordCredentialsProvider("oauth2", it) },
+        credentials = current.token.takeIf { it.isNotBlank() }?.let(::GitHubOnlyCredentials),
         author = Author(current.authorName, current.authorEmail),
     )
 }

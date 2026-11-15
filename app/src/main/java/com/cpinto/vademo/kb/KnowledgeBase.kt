@@ -75,6 +75,15 @@ class KnowledgeBase(val root: File) {
 
     fun fileAt(relativePath: String): File = File(root, relativePath)
 
+    /**
+     * The file of the diagram called [name] in `.tyfold-graphs/`, or null when
+     * [name] is not a plain file name. Names come from notes, which come from
+     * GitHub, so a `../` in one must not reach a file outside that folder.
+     */
+    fun diagramFile(name: String): File? =
+        if (name.isBlank() || '/' in name || '\\' in name || '\u0000' in name) null
+        else File(File(root, Diagram.FOLDER), "$name.json")
+
     /** The note templates in `templates/`, by name. */
     fun templates(): List<File> =
         noteFiles(File(root, NoteTemplate.FOLDER)).sortedBy { it.name }

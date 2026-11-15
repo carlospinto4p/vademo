@@ -45,7 +45,6 @@ import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.data.SettingsRepository
 import com.cpinto.vademo.data.TextZoom
-import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.kb.DiagramFile
 import com.cpinto.vademo.kb.Frontmatter
 import com.cpinto.vademo.kb.FrontmatterParser
@@ -54,7 +53,6 @@ import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.WikiLinks
 import com.cpinto.vademo.kb.readDiagram
 import com.cpinto.vademo.ui.diagram.DiagramCard
-import java.io.File
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.elements.MarkdownCheckBox
@@ -123,7 +121,7 @@ class NoteViewModel @Inject constructor(
                     is WikiLinks.NotePart.Markdown -> NoteBlock.Text(WikiLinks.toMarkdown(part.text))
                     is WikiLinks.NotePart.Embed -> NoteBlock.Diagram(
                         part.name,
-                        File(File(kb.root, Diagram.FOLDER), "${part.name}.json").takeIf { it.isFile }?.let(::readDiagram),
+                        kb.diagramFile(part.name)?.takeIf { it.isFile }?.let(::readDiagram),
                     )
                 }
             }
@@ -165,7 +163,11 @@ fun NoteScreen(
                 val diagram = WikiLinks.diagramOf(uri)
                 when {
                     diagram != null -> onOpenDiagram(viewModel.kbName, diagram)
-                    target == null -> external.openUri(uri)
+                    target == null -> {
+                        // openUri throws when no app takes the link, so a bad link would close the app.
+                        val opened = WikiLinks.opensOutside(uri) && runCatching { external.openUri(uri) }.isSuccess
+                        if (!opened) scope.launch { snackbar.showSnackbar("Can't open this link: $uri") }
+                    }
                     else -> viewModel.resolve(target)?.let { onOpenNote(viewModel.kbName, it) }
                         ?: scope.launch { snackbar.showSnackbar("No note named $target") }
                 }

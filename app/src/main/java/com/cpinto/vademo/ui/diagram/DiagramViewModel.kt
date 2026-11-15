@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 import javax.inject.Inject
 
 data class DiagramState(
@@ -70,7 +69,8 @@ class DiagramViewModel @Inject constructor(
     /** The diagram's file name, without `.json`. */
     val name: String = checkNotNull(savedState["name"])
     private val kb = repository.knowledgeBase(kbName)
-    private val file = File(File(kb.root, Diagram.FOLDER), "$name.json")
+    /** Null when [name] is not a plain file name; then nothing is read or written. */
+    private val file = kb.diagramFile(name)
 
     private val _state = MutableStateFlow(DiagramState(title = name))
     val state: StateFlow<DiagramState> = _state
@@ -86,6 +86,10 @@ class DiagramViewModel @Inject constructor(
     val document: DiagramDocument? get() = doc
 
     fun load() {
+        if (file == null) {
+            _state.value = DiagramState(title = name, error = "\"$name\" is not a diagram name.")
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val moves = placesStore.read(kbName, name)
             _state.update { it.copy(moves = moves, canPaste = clipboard.clip != null) }
@@ -94,6 +98,7 @@ class DiagramViewModel @Inject constructor(
     }
 
     private suspend fun read(message: String?) {
+        val file = file ?: return
         val editable = repository.list().none { it.name == kbName && it.needsChoice }
         val text = runCatching { file.readText() }.getOrNull()
         val loaded = runCatching { DiagramDocument.parse(text!!) }
@@ -233,6 +238,7 @@ class DiagramViewModel @Inject constructor(
     }
 
     private fun saveMoves() {
+        if (file == null) return
         val moves = _state.value.moves
         viewModelScope.launch(Dispatchers.IO) { placesStore.write(kbName, name, moves) }
     }
@@ -272,6 +278,7 @@ class DiagramViewModel @Inject constructor(
 
     /** Deletes the diagram's file and what this phone kept about it; the screen then closes. */
     fun deleteDiagram() {
+        val file = file ?: return
         if (!_state.value.editable) return
         pendingSave?.cancel()
         viewModelScope.launch(Dispatchers.IO) {
@@ -293,6 +300,7 @@ class DiagramViewModel @Inject constructor(
     }
 
     private suspend fun save() = withContext(Dispatchers.IO) {
+        val file = file ?: return@withContext
         val document = doc ?: return@withContext
         if (document.problems().isNotEmpty()) return@withContext
         // Checked again here, not only on opening: a sync may have stopped on a conflict since.

@@ -73,24 +73,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   held in CI secrets (`app/build.gradle.kts:28-35`,
   `.github/workflows/build-apk.yml:101-112`), which reverses the
   committed-keystore decision in CLAUDE.md. MED, effort M.
-- [ ] Diagram names are used as file paths unchecked. A name from
-  `![[name]]` or a `vademo-diagram:` link is URL-decoded
-  (`kb/WikiLinks.kt:90-94`) and becomes `File(diagrams, "$name.json")`
-  (`ui/diagram/DiagramViewModel.kt:73`, also 237, 278, 311;
-  `ui/note/NoteScreen.kt:126`; `ui/diagram/DiagramShare.kt:35-37`). A note
-  from GitHub with `../` in the name can make the app read, overwrite or
-  delete app-private `.json` files, or write the drag-offsets file inside
-  the clone, which sync then pushes. Reject `/`, `\` and `..`, or reuse
-  `noteAt`'s canonical-path check. MED, effort S.
-- [ ] `ui/note/NoteScreen.kt:168`: any link that is not a wiki or diagram
-  link goes to `LocalUriHandler.openUri` with no scheme check. A relative
-  link, unknown scheme or `file://` should crash the app (Compose turns
-  `ActivityNotFoundException` into an exception; written from recall, not
-  tried on a device). Allow `http`, `https`, `mailto`; catch and show a
-  Snackbar otherwise. LOW, effort S.
-- [ ] `data/KbRepository.kt:103-110`: the GitHub token is sent as HTTPS
-  credentials to every configured remote, whatever its host. Send it only
-  to `github.com`. LOW, effort S.
 - [ ] Symlinks in a clone are followed: `kb/KnowledgeBase.kt:56-60` and
   `:76` do not check canonical paths (only `noteAt` does), so a note that
   is a symlink to an app-private file would be shown and written through
@@ -202,11 +184,10 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   (`rememberPlaces`, `diagramColours`, `DiagramContent`, `NodeBox`,
   `GroupBox`, `Edges`, `refText`). Move the drawing code to
   `ui/diagram/DiagramDrawing.kt`. MED, effort S.
-- [ ] The diagram file path is built by hand in four places
-  (`ui/diagram/DiagramViewModel.kt:73`, `ui/note/NoteScreen.kt:126`,
-  `kb/Diagram.kt:135,144`). Add `KnowledgeBase.diagramFile(name)`, which
-  is also the natural place for the name check under Security. MED,
-  effort S.
+- [ ] `KnowledgeBase.diagramFile(name)` exists since v0.20.3 and the
+  diagram screen and note embeds use it; `createDiagram` and `diagramsIn`
+  (`kb/Diagram.kt:134-147`) still build the `.tyfold-graphs` path by hand.
+  Route them through it too. LOW, effort S.
 - [ ] View models live in their `*Screen.kt` for eight screens but in
   their own file for Home and Diagram. Pick one convention. LOW, effort M.
 - [ ] `ui/diagram/DiagramViewModel.kt:98-99`: `parse(text!!)` inside

@@ -77,6 +77,19 @@ class KnowledgeBaseTest {
     }
 
     @Test
+    fun `diagramFile is a json file in the diagrams folder`() {
+        assertEquals(File(root, ".tyfold-graphs/price-to-model.json"), KnowledgeBase(root).diagramFile("price-to-model"))
+    }
+
+    @Test
+    fun `diagramFile refuses names that would leave the diagrams folder`() {
+        val kb = KnowledgeBase(root)
+        for (name in listOf("../secret", "../../files/settings", "a/b", "..\\x", "", " ")) {
+            assertNull(kb.diagramFile(name), name)
+        }
+    }
+
+    @Test
     fun `relative paths use forward slashes`() {
         note("ideas/tyfold.md", "Tyfold")
         val kb = KnowledgeBase(root)
