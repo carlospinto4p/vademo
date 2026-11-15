@@ -52,11 +52,6 @@ v0.9.0 (export). What is left is checking each on a phone.
 From `docs/kb-views-and-queries.md`, which has the reasoning and the
 measurements behind these. In order — each needs the one before it.
 
-- [ ] **Search across the notes** on that index: free text over title,
-  headings and body, ranked in that order, with the `type:`, `status:`,
-  `tag:`, `updated:`, `kb:`, `links:` and `is:` filters. Replaces the
-  2026.09.16 search item, which said only "titles and text". Effort:
-  Medium.
 - [ ] **Show backlinks on a note** — "Linked from (N)" under the body.
   Half the link spine is unwalkable without it. Effort: Small.
 - [ ] **Recent, Types and Tags views** of a knowledge base, beside the
@@ -78,8 +73,6 @@ measurements behind these. In order — each needs the one before it.
   in the largest knowledge base) becomes tall and narrow and needs a
   sideways swipe. Needs a custom table layout in `ui/note/NoteScreen.kt`.
   Effort: Medium.
-- [ ] **Search note titles and text** across all knowledge bases. Left out
-  of the first version on purpose. Effort: Medium.
 - [ ] **Create a new note from a knowledge base's `templates/`** with the
   frontmatter filled in. Effort: Medium.
 - [ ] **Show the health counts of a knowledge base**: `(unverified)`

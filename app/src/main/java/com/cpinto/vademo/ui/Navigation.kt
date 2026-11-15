@@ -15,6 +15,7 @@ import com.cpinto.vademo.ui.edit.EditScreen
 import com.cpinto.vademo.ui.graph.GraphScreen
 import com.cpinto.vademo.ui.home.HomeScreen
 import com.cpinto.vademo.ui.note.NoteScreen
+import com.cpinto.vademo.ui.search.SearchScreen
 import com.cpinto.vademo.ui.settings.SettingsScreen
 
 object Routes {
@@ -27,6 +28,10 @@ object Routes {
     const val GRAPH = "graph/{kb}"
     const val DIAGRAMS = "diagrams/{kb}"
     const val DIAGRAM = "diagram/{kb}?name={name}"
+    const val SEARCH = "search?q={q}"
+
+    /** Search, starting with [query] in the field. */
+    fun search(query: String = "") = "search?q=${enc(query)}"
 
     fun browse(kb: String, path: String = "") = "browse/${enc(kb)}?path=${enc(path)}"
     fun graph(kb: String) = "graph/${enc(kb)}"
@@ -53,6 +58,16 @@ fun VademoNavHost() {
                 onOpenKb = { nav.navigate(Routes.browse(it)) },
                 onResolve = { nav.navigate(Routes.conflict(it)) },
                 onSettings = { nav.navigate(Routes.SETTINGS) },
+                onSearch = { nav.navigate(Routes.search()) },
+            )
+        }
+        composable(
+            Routes.SEARCH,
+            arguments = listOf(navArgument("q") { type = NavType.StringType; defaultValue = "" }),
+        ) {
+            SearchScreen(
+                onBack = { nav.popBackStack() },
+                onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
             )
         }
         composable(Routes.SETTINGS) {
@@ -65,6 +80,7 @@ fun VademoNavHost() {
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
                 onOpenMap = { nav.navigate(Routes.graph(it)) },
                 onOpenDiagrams = { nav.navigate(Routes.diagrams(it)) },
+                onSearch = { nav.navigate(Routes.search("kb:${it.removePrefix("kb-")} ")) },
             )
         }
         composable(Routes.DIAGRAMS, arguments = listOf(navArgument("kb") { type = NavType.StringType })) {

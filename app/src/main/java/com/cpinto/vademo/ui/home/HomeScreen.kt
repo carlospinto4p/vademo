@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Button
@@ -40,6 +41,7 @@ fun HomeScreen(
     onOpenKb: (String) -> Unit,
     onResolve: (String) -> Unit,
     onSettings: () -> Unit,
+    onSearch: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -50,6 +52,9 @@ fun HomeScreen(
             TopAppBar(
                 title = { Text("vademo") },
                 actions = {
+                    IconButton(onClick = onSearch) {
+                        Icon(Icons.Filled.Search, contentDescription = "Search")
+                    }
                     IconButton(onClick = viewModel::syncAll, enabled = state.canSync) {
                         Icon(Icons.Filled.Sync, contentDescription = "Sync")
                     }

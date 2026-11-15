@@ -1,0 +1,117 @@
+package com.cpinto.vademo.kb
+
+/** A note that matched a search, in the knowledge base [kb]. */
+data class SearchHit(val kb: String, val note: IndexedNote, val score: Int)
+
+/**
+ * Search over [NoteIndex]es, as `docs/kb-views-and-queries.md` ("Queries")
+ * designs it. A query is words and filters separated by spaces, all of which
+ * must hold:
+ *
+ * - `type:`, `status:`, `tag:` match the frontmatter, ignoring case.
+ * - `updated:2026-09-01`, `updated:2026-09` (a prefix), or with `>`, `>=`,
+ *   `<`, `<=` in front, compared as ISO dates. Notes without `updated:` fail.
+ * - `kb:` names a knowledge base, with or without its `kb-` prefix.
+ * - `links:quorum` keeps the notes linking to `quorum`.
+ * - `is:orphan` (nothing links to it), `is:unverified` (has the marker).
+ *
+ * Anything else is a word to find in the title, a heading or the body.
+ * Matches rank by where the words are, title first, then headings, then
+ * body; ties go to the most recently updated note, then by title.
+ */
+object NoteSearch {
+
+    sealed interface Filter {
+        data class Type(val value: String) : Filter
+        data class Status(val value: String) : Filter
+        data class Tag(val value: String) : Filter
+        data class Updated(val op: String, val date: String) : Filter
+        data class Kb(val name: String) : Filter
+        data class Links(val target: String) : Filter
+        data class Is(val what: String) : Filter
+    }
+
+    data class Query(val words: List<String>, val filters: List<Filter>) {
+        val isEmpty: Boolean get() = words.isEmpty() && filters.isEmpty()
+    }
+
+    private val UPDATED = Regex("""^(>=|<=|>|<)?(.+)$""")
+
+    fun parse(text: String): Query {
+        val words = mutableListOf<String>()
+        val filters = mutableListOf<Filter>()
+        for (token in text.split(Regex("""\s+""")).filter { it.isNotEmpty() }) {
+            val key = token.substringBefore(':', "").lowercase()
+            val value = token.substringAfter(':', "")
+            val filter = if (value.isEmpty()) null else when (key) {
+                "type" -> Filter.Type(value)
+                "status" -> Filter.Status(value)
+                "tag" -> Filter.Tag(value)
+                "updated" -> UPDATED.matchEntire(value)!!.let {
+                    Filter.Updated(it.groupValues[1], it.groupValues[2])
+                }
+                "kb" -> Filter.Kb(value)
+                "links" -> Filter.Links(value.removeSuffix(".md"))
+                "is" -> Filter.Is(value.lowercase())
+                else -> null
+            }
+            if (filter != null) filters += filter else words += token.lowercase()
+        }
+        return Query(words, filters)
+    }
+
+    /** Notes of [indexes] matching [text], best first. An empty query finds nothing. */
+    fun search(indexes: List<NoteIndex>, text: String): List<SearchHit> {
+        val query = parse(text)
+        if (query.isEmpty) return emptyList()
+        return indexes.flatMap { index ->
+            val orphans = index.orphans.mapTo(HashSet()) { it.name }
+            index.notes.mapNotNull { note ->
+                if (!query.filters.all { matches(it, index, note, orphans) }) return@mapNotNull null
+                score(note, query.words)?.let { SearchHit(index.kbName, note, it) }
+            }
+        }.sortedWith(
+            compareByDescending<SearchHit> { it.score }
+                .thenByDescending { it.note.updated.orEmpty() }
+                .thenBy { it.note.title.lowercase() },
+        )
+    }
+
+    private fun matches(filter: Filter, index: NoteIndex, note: IndexedNote, orphans: Set<String>): Boolean =
+        when (filter) {
+            is Filter.Type -> note.type.equals(filter.value, ignoreCase = true)
+            is Filter.Status -> note.status.equals(filter.value, ignoreCase = true)
+            is Filter.Tag -> note.tags.any { it.equals(filter.value, ignoreCase = true) }
+            is Filter.Updated -> note.updated?.let { updated ->
+                when (filter.op) {
+                    ">" -> updated > filter.date
+                    ">=" -> updated >= filter.date
+                    "<" -> updated < filter.date
+                    "<=" -> updated <= filter.date
+                    else -> updated.startsWith(filter.date)
+                }
+            } ?: false
+            is Filter.Kb -> index.kbName.equals(filter.name, ignoreCase = true) ||
+                index.kbName.equals("kb-" + filter.name, ignoreCase = true)
+            is Filter.Links -> filter.target in note.links
+            is Filter.Is -> when (filter.what) {
+                "orphan" -> note.name in orphans
+                "unverified" -> note.unverified > 0
+                else -> false
+            }
+        }
+
+    /** Null when a word is missing; otherwise 100 per word in the title, 10 in a heading, 1 in the body. */
+    private fun score(note: IndexedNote, words: List<String>): Int? {
+        var total = 0
+        for (word in words) {
+            var points = 0
+            if (note.title.contains(word, ignoreCase = true)) points += 100
+            if (note.headings.any { it.contains(word, ignoreCase = true) }) points += 10
+            if (note.body.contains(word, ignoreCase = true)) points += 1
+            if (points == 0) return null
+            total += points
+        }
+        return total
+    }
+}

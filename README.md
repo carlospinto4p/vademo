@@ -59,6 +59,23 @@ reflows to the width of the screen, so a larger size never means
 scrolling sideways, and the size is kept for every note until it is
 changed again.
 
+## Search
+
+The search button on the home screen searches every knowledge base on the
+phone; the one at the top of a knowledge base starts with `kb:<name>`, so
+it searches only that one. Words are found in titles, headings and text,
+and a note with the word in its title comes first. Filters narrow the
+list, and every word and filter must match:
+
+```
+type:question  status:draft  tag:consensus
+updated:>2026-09-01  updated:2026-09   (a bare date matches its start)
+kb:distributed-systems
+links:quorum     notes linking to quorum
+is:orphan        notes nothing links to
+is:unverified    notes with an (unverified) marker
+```
+
 ## Map of notes
 
 The map button at the top of a knowledge base shows every note as a box

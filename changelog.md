@@ -1,6 +1,26 @@
 ## Changelog - vademo
 
 
+### v0.13.0 - 15th November 2026
+
+- Search: a search button on the home screen searches every knowledge
+  base, and one on a knowledge base's screen starts with `kb:<name>` to
+  search only that one. Words are found in titles, headings and text,
+  ranked in that order; ties go to the most recently updated note. The
+  filters are `type:`, `status:`, `tag:`, `updated:` (with `>`, `>=`,
+  `<`, `<=`, or a bare date matching its start), `kb:`, `links:`,
+  `is:orphan` and `is:unverified`. The notes are read when the screen
+  opens, so the results always match the last sync.
+- Added `kb/NoteSearch.kt`: parses a query and ranks the notes of one or
+  more `NoteIndex`es.
+- Added `ui/search/SearchScreen.kt`, and `KbRepository.downloaded()`, the
+  knowledge bases on the phone.
+- Added tests:
+  - `kb/NoteSearchTest.kt`: 11 tests.
+  - `ReadAndEditTest`: search from the home screen and open a note;
+    search one knowledge base with a filter.
+
+
 ### v0.12.0 - 15th November 2026
 
 - Added `kb/NoteIndex.kt`: every note of a knowledge base read in one

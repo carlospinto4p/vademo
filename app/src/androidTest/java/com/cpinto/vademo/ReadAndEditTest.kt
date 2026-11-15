@@ -1,8 +1,11 @@
 package com.cpinto.vademo
 
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -146,6 +149,34 @@ class ReadAndEditTest {
         }
         compose.onNodeWithContentDescription("Back").assertIsDisplayed()
         compose.onNodeWithText("The scorecard").assertIsDisplayed()
+    }
+
+    @Test
+    fun searchFromTheHomeScreenAndOpenANote() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.onNodeWithContentDescription("Search").performClick()
+        compose.onNode(hasSetTextAction()).performTextInput("criteria")
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Business idea scorecard")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Business idea scorecard").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Seven criteria.")).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun searchAKnowledgeBaseWithAFilter() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithContentDescription("Search").performClick()
+        // The field starts with the knowledge base's own filter.
+        compose.onNode(hasSetTextAction()).assert(hasText("kb:distributed-systems ", substring = true))
+        compose.onNode(hasSetTextAction()).performTextInput("type:idea")
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Business idea scorecard").assertDoesNotExist()
     }
 
     private fun write(path: String, text: String) {
