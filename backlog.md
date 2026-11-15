@@ -32,20 +32,6 @@ measurements behind these. In order — each needs the one before it.
 
 ### 2026.09.16 (first version)
 
-- [ ] **Try the first version on the real phone against GitHub.** Install
-  the debug APK, add a GitHub personal access token with the `repo` scope
-  (classic) or `Contents: Read and write` (fine-grained), sync the
-  knowledge bases, edit a note and confirm the commit arrives on the
-  computer. Only local repositories have been tested so far. This also
-  checks the unverified assumption in `data/KbRepository.kt` that GitHub
-  accepts the token with the user name `oauth2`. Roadmap step 1. Effort:
-  Small.
-  - **Context (2026-09-20):** vademo and its knowledge bases moved from
-    GitLab to GitHub as private repos this session. `DEFAULT_REPOS`, the
-    settings/UI copy, and the
-    stored-token key/keystore alias were updated to GitHub accordingly —
-    this item's remaining job is the on-device verification, not the code
-    change.
 - [ ] **Size table columns by their content.** The markdown renderer gives
   every column the same width, so a long reasons column (a scorecard note
   in the largest knowledge base) becomes tall and narrow and needs a

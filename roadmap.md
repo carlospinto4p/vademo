@@ -10,12 +10,10 @@ rationale lives in the docs or ADRs it cites.
 
 ## Current phase: first version in daily use
 
-1. **Use it on the real phone against GitHub** (backlog 2026.09.16).
-   **Gate: no new features before a phone edit has round-tripped to the
-   computer through GitHub.**
-2. **Fix what daily use turns up**, starting with table readability
-   (backlog 2026.09.16).
-3. **Search, views and health counts** — designed in
+1. **Fix what daily use turns up**, starting with table readability
+   (backlog 2026.09.16). The phone-to-GitHub round trip works
+   (checked 2026-11-15), so the gate on new features is cleared.
+2. **Search, views and health counts** — designed in
    `docs/kb-views-and-queries.md`, itemised in backlog 2026.09.20. The
    index comes first; everything else reads from it. New notes from
    templates (backlog 2026.09.16) is independent of that order.
