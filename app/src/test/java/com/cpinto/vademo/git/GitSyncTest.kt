@@ -158,7 +158,7 @@ class GitSyncTest {
 
         val outcome = sync.sync(remoteUrl, phone)
         assertEquals(SyncOutcome.Conflict(listOf("ideas/tyfold.md")), outcome)
-        assertTrue(sync.isMerging(phone))
+        assertTrue(GitSync.isMerging(phone))
 
         val conflict = sync.conflicts(phone).single()
         assertEquals("line one\nPHONE\nline three\n", conflict.mine)
@@ -188,7 +188,7 @@ class GitSyncTest {
         val outcome = sync.resolve(remoteUrl, phone, mapOf("ideas/tyfold.md" to "PHONE and COMPUTER\n"))
 
         assertInstanceOf(SyncOutcome.Synced::class.java, outcome)
-        assertFalse(sync.isMerging(phone))
+        assertFalse(GitSync.isMerging(phone))
         assertEquals("PHONE and COMPUTER\n", computerPulls("ideas/tyfold.md"))
     }
 
@@ -202,7 +202,16 @@ class GitSyncTest {
         val outcome = sync.resolve(remoteUrl, phone, emptyMap())
 
         assertInstanceOf(SyncOutcome.Failed::class.java, outcome)
-        assertTrue(sync.isMerging(phone))
+        assertTrue(GitSync.isMerging(phone))
+    }
+
+    @Test
+    fun `isMerging is false for a clean clone, a missing one and a damaged one`() {
+        sync.sync(remoteUrl, phone)
+        assertFalse(GitSync.isMerging(phone))
+        assertFalse(GitSync.isMerging(File(tmp, "nowhere")))
+        File(tmp, "broken/.git").mkdirs()
+        assertFalse(GitSync.isMerging(File(tmp, "broken")))
     }
 
     @Test

@@ -99,7 +99,7 @@ class DiagramViewModel @Inject constructor(
 
     private suspend fun read(message: String?) {
         val file = file ?: return
-        val editable = repository.list().none { it.name == kbName && it.needsChoice }
+        val editable = !repository.needsChoice(kbName)
         val text = runCatching { file.readText() }.getOrNull()
         val loaded = runCatching { DiagramDocument.parse(text!!) }
         seen = text
@@ -305,7 +305,7 @@ class DiagramViewModel @Inject constructor(
         if (document.problems().isNotEmpty()) return@withContext
         // Checked again here, not only on opening: a sync may have stopped on a conflict since.
         // The file is read again, so the screen shows what is on disk and not the edit that was refused.
-        if (repository.list().any { it.name == kbName && it.needsChoice }) {
+        if (repository.needsChoice(kbName)) {
             read(message = "Not saved: this knowledge base has a sync conflict to resolve first.")
             return@withContext
         }

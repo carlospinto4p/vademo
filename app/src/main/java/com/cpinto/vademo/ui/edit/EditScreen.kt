@@ -77,7 +77,7 @@ class EditViewModel @Inject constructor(
         viewModelScope.launch {
             // Editing during an unfinished merge would write into a file git
             // is still waiting on a choice for.
-            val blocked = repository.list().any { it.name == kbName && it.needsChoice }
+            val blocked = repository.needsChoice(kbName)
             // A new note is written only when saved, so leaving the editor leaves nothing behind.
             val (original, text) = withContext(Dispatchers.IO) {
                 if (template != null && !file.exists()) {

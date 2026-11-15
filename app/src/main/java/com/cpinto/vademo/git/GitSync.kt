@@ -86,8 +86,6 @@ class GitSync(
     /** Files edited on this device and not yet synced. */
     fun localChanges(dir: File): List<String> = (inspect(dir) as? LocalState.Ready)?.changes.orEmpty()
 
-    fun isMerging(dir: File): Boolean = (inspect(dir) as? LocalState.Ready)?.merging == true
-
     fun conflicts(dir: File): List<ConflictFile> = Git.open(dir).use { git ->
         val repo = git.repository
         val mergeHead = repo.readMergeHeads()?.firstOrNull() ?: return emptyList()
@@ -269,8 +267,17 @@ class GitSync(
         return causes.joinToString(": ").ifBlank { error::class.java.simpleName }
     }
 
-    private companion object {
-        const val TIMEOUT_SECONDS = 60
-        const val PUSH_ATTEMPTS = 3
+    companion object {
+        private const val TIMEOUT_SECONDS = 60
+        private const val PUSH_ATTEMPTS = 3
+
+        /**
+         * Whether the clone in [dir] stopped on a conflict that waits for a
+         * choice. Reads git's merge state only, without the status scan of
+         * [inspect], so it is cheap enough to ask before every save.
+         */
+        fun isMerging(dir: File): Boolean = runCatching {
+            Git.open(dir).use { it.repository.repositoryState == RepositoryState.MERGING }
+        }.getOrDefault(false)
     }
 }

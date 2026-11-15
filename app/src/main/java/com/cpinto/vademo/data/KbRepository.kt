@@ -60,6 +60,11 @@ class KbRepository @Inject constructor(
 
     fun knowledgeBase(name: String): KnowledgeBase = KnowledgeBase(File(root, name))
 
+    /** Whether [name] stopped on a conflict, so editing waits for a choice. Cheaper than [list]. */
+    suspend fun needsChoice(name: String): Boolean = withContext(Dispatchers.IO) {
+        GitSync.isMerging(File(root, name))
+    }
+
     /** The knowledge bases downloaded to this phone, in the order of the settings. */
     suspend fun downloaded(): List<KnowledgeBase> = withContext(Dispatchers.IO) {
         settings.current().repoUrls.map(::dirFor).filter { it.isDirectory }.map(::KnowledgeBase)

@@ -71,14 +71,14 @@ class DiagramListViewModel @Inject constructor(
     fun load() {
         viewModelScope.launch(Dispatchers.IO) {
             _diagrams.value = diagramsIn(kb.root)
-            _editable.value = repository.list().none { it.name == kbName && it.needsChoice }
+            _editable.value = !repository.needsChoice(kbName)
         }
     }
 
     /** Writes a new, empty diagram, then [onCreated] with its name so the screen can open it. */
     fun create(title: String, direction: Diagram.Direction, onCreated: (String) -> Unit) {
         viewModelScope.launch(Dispatchers.IO) {
-            if (repository.list().any { it.name == kbName && it.needsChoice }) return@launch
+            if (repository.needsChoice(kbName)) return@launch
             val name = runCatching { createDiagram(kb.root, title, direction) }.getOrNull() ?: return@launch
             withContext(Dispatchers.Main) { onCreated(name) }
         }

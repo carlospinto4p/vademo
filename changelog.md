@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.20.6 - 15th November 2026
+
+- Fixed a slow check before every save. The note editor, the diagram screen
+  and the diagram list asked whether a knowledge base had a conflict by
+  listing every knowledge base: a full git status of each, plus decrypting
+  the token twice. The diagram autosave paid that 400 ms after every edit.
+  - Added `KbRepository.needsChoice(name)`, which reads only that clone's
+    merge state.
+  - `GitSync.isMerging` moved to its companion object and no longer runs a
+    status; it is false for a missing or damaged clone.
+- Added `GitSyncTest`: `isMerging` on a clean, missing and damaged clone.
+
+
 ### v0.20.5 - 15th November 2026
 
 - Updated JGit from 5.13.3 to 5.13.5, the newest release of the 5.13 line.

@@ -76,19 +76,10 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] Five places ask "is this one knowledge base mid-merge?" by calling
-  `repository.list()`, which runs a JGit status over every knowledge base
-  and decrypts the token twice: `ui/edit/EditScreen.kt:80`,
-  `ui/diagram/DiagramViewModel.kt:97,300`,
-  `ui/diagram/DiagramListScreen.kt:74,81`. The diagram autosave pays it
-  400 ms after every edit. Add `KbRepository.needsChoice(name)` using
-  `GitSync.isMerging` (`git/GitSync.kt:85`, today only used by tests).
-  HIGH, effort S.
-- [ ] `ui/diagram/DiagramViewModel.kt:315-320`: `onCleared()` runs
-  `runBlocking { save() }` on the main thread, and `save()` includes the
-  full `list()` scan above. Leaving a diagram right after an edit can
-  freeze the screen. Use the cheap check, and save from a scope that
-  outlives the view model. HIGH, effort S.
+- [ ] `ui/diagram/DiagramViewModel.kt:323-328`: `onCleared()` runs
+  `runBlocking { save() }` on the main thread, which reads and writes the
+  diagram file. Leaving a diagram right after an edit can freeze the
+  screen. Save from a scope that outlives the view model. MED, effort S.
 - [ ] `ui/diagram/DiagramScreen.kt:367` (`rememberPlaces`) is keyed on
   `moves`, so every drag frame re-measures every box's text and reruns
   `DiagramLayout.place`; `Edges` (:591) then reroutes every arrow.
