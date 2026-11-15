@@ -57,8 +57,3 @@ v0.9.0 (export). What is left is checking each on a phone.
   tap the bookmark at the top, name it, clear the field: it is listed
   under Saved searches and runs again when tapped. Device tests ran on
   the emulator with a four-note fixture only.
-
-### 2026.09.16 (first version)
-
-- [ ] **Add JGit keep rules before switching on release minification.**
-  `isMinifyEnabled` is false; JGit uses reflection. Effort: Small.

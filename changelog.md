@@ -1,6 +1,16 @@
 ## Changelog - vademo
 
 
+### v0.20.2 - 15th November 2026
+
+- Added JGit rules to `app/proguard-rules.pro`, ready for when release
+  builds are shrunk (`isMinifyEnabled` is still false). JGit is kept whole,
+  since it fills its message texts by reflection, and R8 is told not to stop
+  on the desktop Java classes JGit refers to but Android lacks (JMX,
+  Kerberos, slf4j's binder). Checked by running `GitOnDeviceTest` on a
+  temporarily shrunk build: clone, edit and push pass.
+
+
 ### v0.20.1 - 15th November 2026
 
 - Fixed long link names breaking mid-word. A `[[link]]` such as
