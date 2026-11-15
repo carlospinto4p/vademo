@@ -64,6 +64,28 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
     fun linkedFrom(path: String): List<IndexedNote> =
         backlinks[path.substringAfterLast('/').removeSuffix(".md")].orEmpty().mapNotNull(byName::get)
 
+    /** Newest `updated:` first; notes without one last, by title. */
+    fun recent(): List<IndexedNote> = notes.sortedWith(
+        compareBy<IndexedNote> { it.updated == null }
+            .thenByDescending { it.updated.orEmpty() }
+            .thenBy { it.title.lowercase() },
+    )
+
+    /** Notes grouped by `type:`, largest group first; untyped notes last, under `null`. */
+    fun byType(): List<Pair<String?, List<IndexedNote>>> = notes
+        .groupBy { it.type }
+        .map { (type, group) -> type to group.sortedBy { it.title.lowercase() } }
+        .sortedWith(compareBy<Pair<String?, List<IndexedNote>>> { it.first == null }
+            .thenByDescending { it.second.size }
+            .thenBy { it.first })
+
+    /** Every tag with the number of notes carrying it, most used first. */
+    fun tagCounts(): List<Pair<String, Int>> = notes
+        .flatMap { it.tags.distinct() }
+        .groupingBy { it }.eachCount()
+        .toList()
+        .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first })
+
     private fun isHub(note: IndexedNote): Boolean =
         note.type == "hub" || note.path.substringBeforeLast('/', "").substringAfterLast('/') == note.name
 

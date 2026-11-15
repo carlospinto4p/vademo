@@ -117,6 +117,48 @@ class NoteIndexTest {
         assertEquals(listOf("alone", "self"), index().orphans.map { it.name })
     }
 
+    private fun front(title: String, type: String? = null, updated: String? = null, tags: String = "[]") =
+        "---\ntitle: $title\n" + (type?.let { "type: $it\n" } ?: "") +
+            (updated?.let { "updated: $it\n" } ?: "") + "tags: $tags\n---\n"
+
+    @Test
+    fun `recent puts the newest updated first and undated notes last`() {
+        write("ideas/a.md", front("Alpha", updated = "2026-09-01"))
+        write("ideas/b.md", front("Beta", updated = "2026-11-08"))
+        write("ideas/c.md", front("Gamma"))
+        write("ideas/d.md", front("Delta", updated = "2026-10-15"))
+        assertEquals(listOf("Beta", "Delta", "Alpha", "Gamma"), index().recent().map { it.title })
+    }
+
+    @Test
+    fun `byType groups by type, largest first, untyped last`() {
+        write("sources/s1.md", front("Source one", "source"))
+        write("sources/s2.md", front("Source two", "source"))
+        write("ideas/q.md", front("Why", "question"))
+        write("ideas/c.md", front("Quorum", "concept"))
+        write("ideas/loose.md", "No frontmatter.")
+        assertEquals(
+            listOf(
+                "source" to listOf("Source one", "Source two"),
+                "concept" to listOf("Quorum"),
+                "question" to listOf("Why"),
+                null to listOf("loose"),
+            ),
+            index().byType().map { (type, notes) -> type to notes.map { it.title } },
+        )
+    }
+
+    @Test
+    fun `tagCounts counts each note once per tag, most used first`() {
+        write("ideas/a.md", front("A", tags = "[raft, consensus, raft]"))
+        write("ideas/b.md", front("B", tags = "[consensus]"))
+        write("ideas/c.md", front("C", tags = "[paxos]"))
+        assertEquals(
+            listOf("consensus" to 2, "paxos" to 1, "raft" to 1),
+            index().tagCounts(),
+        )
+    }
+
     @Test
     fun `finds a note by name, with or without md`() {
         write("ideas/a.md", "---\ntitle: A note\n---\n")

@@ -55,7 +55,10 @@ class ReadAndEditTest {
                 "Scored with the method below.\n\n[[business-idea-scorecard|the scorecard]]\n\n![[scoring]]\n",
             ),
         )
-        write("ideas/business-idea-scorecard.md", note("Business idea scorecard", "concept", "Seven criteria."))
+        write(
+            "ideas/business-idea-scorecard.md",
+            note("Business idea scorecard", "concept", "Seven criteria.", tags = "[scoring]"),
+        )
         write(
             ".tyfold-graphs/scoring.json",
             """{ "title": "How an idea is scored", "direction": "LR",
@@ -166,6 +169,34 @@ class ReadAndEditTest {
     }
 
     @Test
+    fun openANoteFromTheTypesTab() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("Types").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("idea (1)")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun aTagInTheTagsTabListsItsNotes() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("Tags").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("scoring")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("scoring").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Business idea scorecard")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(hasSetTextAction()).assert(hasText("kb:distributed-systems tag:scoring"))
+        compose.onNodeWithText("Tyfold desktop app").assertDoesNotExist()
+    }
+
+    @Test
     fun searchFromTheHomeScreenAndOpenANote() {
         compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Back").performClick()
@@ -197,6 +228,6 @@ class ReadAndEditTest {
         File(kb, path).apply { parentFile!!.mkdirs() }.writeText(text)
     }
 
-    private fun note(title: String, type: String, body: String) =
-        "---\ntitle: $title\ntype: $type\nstatus: draft\ntags: []\ncreated: 2026-01-01\nupdated: 2026-01-01\n---\n\n$body\n"
+    private fun note(title: String, type: String, body: String, tags: String = "[]") =
+        "---\ntitle: $title\ntype: $type\nstatus: draft\ntags: $tags\ncreated: 2026-01-01\nupdated: 2026-01-01\n---\n\n$body\n"
 }

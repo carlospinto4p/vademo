@@ -1,6 +1,24 @@
 ## Changelog - vademo
 
 
+### v0.15.0 - 15th November 2026
+
+- A knowledge base's top screen has four tabs: Folders (as before),
+  Recent, Types and Tags. Recent lists the notes by their `updated:`
+  date, newest first. Types groups them by `type:`, largest group first,
+  with all sources as one row that opens them in search. Tags lists every
+  tag with how many notes carry it; tapping one searches for it. The
+  notes are read once the folders are on screen.
+- A search opened with a filter already in it (from a tag or the sources
+  row) no longer raises the keyboard.
+- `kb/NoteIndex.kt`: added `recent()`, `byType()` and `tagCounts()`.
+- Added `Routes.searchIn(kb, filters)`.
+- Added tests:
+  - `NoteIndexTest`: one test each for `recent`, `byType` and `tagCounts`.
+  - `ReadAndEditTest`: open a note from the Types tab; open a tag from
+    the Tags tab.
+
+
 ### v0.14.0 - 15th November 2026
 
 - A note now ends with "Linked from (N)": the notes that link to it, each

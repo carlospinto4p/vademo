@@ -108,7 +108,12 @@ fun SearchScreen(
         mutableStateOf(TextFieldValue(viewModel.initialQuery, TextRange(viewModel.initialQuery.length)))
     }
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    // Opened from a tag or a type, the results are what was asked for, so
+    // the keyboard stays down; with nothing but `kb:` there is only typing to do.
+    LaunchedEffect(Unit) {
+        val start = NoteSearch.parse(viewModel.initialQuery)
+        if (start.words.isEmpty() && start.filters.all { it is NoteSearch.Filter.Kb }) focus.requestFocus()
+    }
 
     Scaffold(
         topBar = {

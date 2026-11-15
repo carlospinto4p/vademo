@@ -33,6 +33,9 @@ object Routes {
     /** Search, starting with [query] in the field. */
     fun search(query: String = "") = "search?q=${enc(query)}"
 
+    /** Search in the knowledge base [kb] only, with [filters] already typed. */
+    fun searchIn(kb: String, filters: String = "") = search("kb:${kb.removePrefix("kb-")} $filters")
+
     fun browse(kb: String, path: String = "") = "browse/${enc(kb)}?path=${enc(path)}"
     fun graph(kb: String) = "graph/${enc(kb)}"
     fun diagrams(kb: String) = "diagrams/${enc(kb)}"
@@ -80,7 +83,7 @@ fun VademoNavHost() {
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
                 onOpenMap = { nav.navigate(Routes.graph(it)) },
                 onOpenDiagrams = { nav.navigate(Routes.diagrams(it)) },
-                onSearch = { nav.navigate(Routes.search("kb:${it.removePrefix("kb-")} ")) },
+                onSearch = { kb, filters -> nav.navigate(Routes.searchIn(kb, filters)) },
             )
         }
         composable(Routes.DIAGRAMS, arguments = listOf(navArgument("kb") { type = NavType.StringType })) {

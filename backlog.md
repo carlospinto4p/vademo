@@ -52,9 +52,6 @@ v0.9.0 (export). What is left is checking each on a phone.
 From `docs/kb-views-and-queries.md`, which has the reasoning and the
 measurements behind these. In order — each needs the one before it.
 
-- [ ] **Recent, Types and Tags views** of a knowledge base, beside the
-  folder list. Sources are 47 of the largest knowledge base's 86 notes, so grouping
-  by type is what makes a list readable. Effort: Medium.
 - [ ] **Make the note's chips run a query** instead of `onClick = {}`,
   which also closes the decorative-chips item in
   `.claude/rules/ux-areas-android.md`. Effort: Small.

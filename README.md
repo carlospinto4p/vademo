@@ -52,6 +52,14 @@ one of those needs the app uninstalled once first.
    to put on commits. Without a name and email, an edit stays on the
    phone and sync tells you what is missing.
 
+## Folders, Recent, Types and Tags
+
+A knowledge base opens on its folders. The tabs above them list the same
+notes other ways: Recent by the date each was last updated, Types grouped
+by type (all sources in one row), and Tags with every tag and how many
+notes carry it. Tap a tag, or the sources row, to see those notes in
+search.
+
 ## Reading a note
 
 Pinch with two fingers to make the text bigger or smaller. The text
