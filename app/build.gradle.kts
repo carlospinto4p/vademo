@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
@@ -15,8 +16,8 @@ android {
         applicationId = "com.cpinto.vademo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "0.5.0"
+        versionCode = 17
+        versionName = "0.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -99,6 +100,7 @@ dependencies {
     implementation(libs.hilt.lifecycle.viewmodel.compose)
 
     implementation(libs.jgit)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.markdown.renderer.m3)
 
     testImplementation(libs.junit5)

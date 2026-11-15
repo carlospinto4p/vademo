@@ -1,6 +1,39 @@
 ## Changelog - vademo
 
 
+### v0.6.0 - 15th November 2026
+
+- Added diagrams: the files agents draw with tyfold's graph tool into a
+  knowledge base's `.tyfold-graphs/` folder, in tyfold's format. A new
+  Diagrams button at the top of a knowledge base lists them; each opens on
+  its own screen with drag and pinch-zoom, groups, labelled and dashed
+  arrows, statuses and the legend's colours. A box whose `ref` names a note
+  opens that note when tapped.
+- A note line holding only `![[name]]` shows that diagram inside the note,
+  shrunk to fit; a tap opens it. `![[name]]` inside a sentence becomes a
+  link to it. This follows the "Diagrams" section the knowledge bases'
+  `.claude/rules/knowledge-base.md` is gaining.
+- Added to `kb/`:
+  - `Diagram.kt`: reads the format; unknown keys and words are skipped.
+  - `DiagramLayout.kt`: the file's positions when every box has one,
+    otherwise tyfold's layout (each group laid out from the inside out)
+    with a small layered layout in place of dagre.
+  - `KnowledgeBase.noteAt()`: the note a `ref` path names.
+  - `WikiLinks.parts()` and `diagramOf()`; `[[links]]` no longer match the
+    inside of an `![[embed]]`.
+- Added `ui/diagram/` (`DiagramListScreen`, `DiagramScreen`, `DiagramCard`);
+  moved the pan and zoom and the legend to `ui/graph/PanZoom.kt`, where the
+  legend now folds away with a tap.
+- Added dependency `kotlinx-serialization-json` 1.13.0 and its Gradle plugin.
+- Added tests:
+  - `kb/DiagramTest.kt`: 6 tests.
+  - `kb/DiagramLayoutTest.kt`: 8 tests.
+  - `kb/WikiLinksTest.kt`: 4 tests for embeds.
+  - `kb/KnowledgeBaseTest.kt`: 2 tests for `noteAt()`.
+  - `ReadAndEditTest.kt`: opening a note from a diagram, and a note showing
+    the diagram it embeds, on a device.
+
+
 ### v0.5.0 - 15th November 2026
 
 - Added a map of notes, opened from the new button at the top of a

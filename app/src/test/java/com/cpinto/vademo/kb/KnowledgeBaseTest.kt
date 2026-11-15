@@ -55,6 +55,28 @@ class KnowledgeBaseTest {
     }
 
     @Test
+    fun `noteAt takes a path from the root or a bare note name`() {
+        note("consensus/raft.md", "Raft")
+        val kb = KnowledgeBase(root)
+        val raft = File(root, "consensus/raft.md")
+        assertEquals(raft, kb.noteAt("consensus/raft.md"))
+        assertEquals(raft, kb.noteAt("./consensus/raft.md"))
+        assertEquals(raft, kb.noteAt("raft.md"))
+        assertEquals(raft, kb.noteAt("raft"))
+    }
+
+    @Test
+    fun `noteAt names nothing for other files, missing notes or paths outside`() {
+        note("consensus/raft.md", "Raft")
+        File(root, "scripts").mkdirs()
+        File(root, "scripts/run.py").writeText("")
+        val kb = KnowledgeBase(root)
+        assertNull(kb.noteAt("scripts/run.py"))
+        assertNull(kb.noteAt("other/raft.md"))
+        assertNull(kb.noteAt("../outside.md"))
+    }
+
+    @Test
     fun `relative paths use forward slashes`() {
         note("ideas/tyfold.md", "Tyfold")
         val kb = KnowledgeBase(root)

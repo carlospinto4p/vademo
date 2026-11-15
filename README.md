@@ -67,6 +67,15 @@ folder in the same colour. Drag to move around, pinch to zoom, and tap a
 box to open that note. The picture is worked out from the notes each
 time, so nothing is saved and it always matches what is on the phone.
 
+## Diagrams
+
+Agents working on a knowledge base can draw diagrams with tyfold's graph
+tool; each one is a file in the knowledge base's `.tyfold-graphs/` folder
+and syncs like a note. The Diagrams button at the top of a knowledge base
+lists them. A diagram opens with drag and pinch-zoom, and tapping a box
+that stands for a note opens that note. A note shows a diagram in place
+where it has a line `![[name]]`; tap it to open the diagram.
+
 ## Syncing
 
 Tap **Sync** to send notes edited on the phone and get changes made

@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Hub
@@ -82,6 +83,7 @@ fun BrowseScreen(
     onOpenFolder: (kb: String, path: String) -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
     onOpenMap: (kb: String) -> Unit,
+    onOpenDiagrams: (kb: String) -> Unit,
     viewModel: BrowseViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -97,6 +99,9 @@ fun BrowseScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { onOpenDiagrams(viewModel.kbName) }) {
+                        Icon(Icons.Outlined.AccountTree, contentDescription = "Diagrams")
+                    }
                     IconButton(onClick = { onOpenMap(viewModel.kbName) }) {
                         Icon(Icons.Outlined.Hub, contentDescription = "Map of notes")
                     }

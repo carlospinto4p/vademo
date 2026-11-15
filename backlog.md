@@ -7,15 +7,26 @@
   then drag, pinch, and tap a box. A pass is: every note visible at the
   start, titles readable after zooming in, the tapped note opens. Device
   tests cover the tap but not drag or pinch on real fingers.
-- [ ] **Hand-drawn diagrams**, the second half of the 2026-11-15 request
-  for a Svelte Flow-like feature: boxes, arrows and groups drawn by hand,
-  saved as a file in the knowledge base and synced with git. tyfold's
-  graph pane is the reference (its file format is in `docs/GRAPH-PANE.md`
-  in that repository). Decide the file format and where diagrams live in
-  the knowledge-base layout before building; drawing on a phone needs
-  its own design for adding boxes and connecting them. Reuses
-  `ui/graph/GraphScreen.kt`'s pan and zoom and `kb/GraphLayout.kt`.
-  Effort: Large.
+
+### 2026.11.15 (diagrams, v0.6.0)
+
+- [ ] **[manual]** Check diagrams on the phone with v0.6.0 installed, once
+  a knowledge base has one: open a knowledge base, tap the Diagrams button
+  (the tree icon at the top right), open a diagram, drag and pinch, tap a
+  box linked to a note. Then open a note with a `![[name]]` line: the
+  diagram shows in the note, the note still scrolls over it, and a tap
+  opens it. Device tests cover the taps, not real fingers.
+- [ ] **Check the knowledge-base "Diagrams" rule once it is committed.** On
+  2026-11-15 it was an uncommitted draft in
+  `kb-distributed-systems/.claude/rules/knowledge-base.md`: files in `.tyfold-graphs/`,
+  `ref` paths from the repository root, `![[name]]` to show one in a note.
+  v0.6.0 follows that draft; if the committed rule differs, follow it.
+  Effort: Small.
+- [ ] **Keep arrows that leave a group off other boxes.** tyfold's layout
+  has a step after placing each group (`settle` and `clearRays` in its
+  `src/lib/graph/canvas/layout.ts`) that moves boxes out of the line of an
+  arrow leaving the group. `kb/DiagramLayout.kt` does not, so such an arrow
+  can cross a box (seen on a real 18-box diagram). Effort: Medium.
 
 ### 2026.09.20 (viewing and querying)
 

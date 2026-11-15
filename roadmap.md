@@ -17,8 +17,10 @@ rationale lives in the docs or ADRs it cites.
    `docs/kb-views-and-queries.md`, itemised in backlog 2026.09.20. The
    index comes first; everything else reads from it. New notes from
    templates (backlog 2026.09.16) is independent of that order.
-3. **Hand-drawn diagrams**, after the map of notes shipped in v0.5.0
-   (decided 2026-11-15; backlog 2026.11.15). Independent of step 2.
+3. **Diagrams**: done in v0.6.0. Agents draw them with tyfold's graph
+   tool into the knowledge base; vademo shows
+   them (drawing on the phone is not built). Follow-ups are in backlog 2026.11.15
+   (diagrams).
 
 ## Standing invariants (apply to every session)
 

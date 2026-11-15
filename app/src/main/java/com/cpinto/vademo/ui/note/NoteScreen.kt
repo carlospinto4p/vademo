@@ -41,9 +41,14 @@ import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.data.SettingsRepository
 import com.cpinto.vademo.data.TextZoom
+import com.cpinto.vademo.kb.Diagram
+import com.cpinto.vademo.kb.DiagramFile
 import com.cpinto.vademo.kb.Frontmatter
 import com.cpinto.vademo.kb.FrontmatterParser
 import com.cpinto.vademo.kb.WikiLinks
+import com.cpinto.vademo.kb.readDiagram
+import com.cpinto.vademo.ui.diagram.DiagramCard
+import java.io.File
 import com.mikepenz.markdown.compose.components.MarkdownComponentModel
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.compose.elements.MarkdownTable
@@ -60,10 +65,17 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/** A run of the note's text ready to render, or a diagram it embeds with `![[name]]`. */
+sealed interface NoteBlock {
+    data class Text(val markdown: String) : NoteBlock
+    /** [file] is null when the knowledge base has no diagram named [name]. */
+    data class Diagram(val name: String, val file: DiagramFile?) : NoteBlock
+}
+
 data class NoteState(
     val title: String = "",
     val frontmatter: Frontmatter? = null,
-    val markdown: String = "",
+    val blocks: List<NoteBlock> = emptyList(),
     val missing: Boolean = false,
 )
 
@@ -103,10 +115,19 @@ class NoteViewModel @Inject constructor(
                 return@launch
             }
             val parsed = FrontmatterParser.parse(file.readText())
+            val blocks = WikiLinks.parts(parsed.body).map { part ->
+                when (part) {
+                    is WikiLinks.NotePart.Markdown -> NoteBlock.Text(WikiLinks.toMarkdown(part.text))
+                    is WikiLinks.NotePart.Embed -> NoteBlock.Diagram(
+                        part.name,
+                        File(File(kb.root, Diagram.FOLDER), "${part.name}.json").takeIf { it.isFile }?.let(::readDiagram),
+                    )
+                }
+            }
             _state.value = NoteState(
                 title = parsed.frontmatter?.title ?: file.nameWithoutExtension,
                 frontmatter = parsed.frontmatter,
-                markdown = WikiLinks.toMarkdown(parsed.body),
+                blocks = blocks,
             )
         }
     }
@@ -140,6 +161,7 @@ fun NoteScreen(
     onBack: () -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
     onEdit: (kb: String, path: String) -> Unit,
+    onOpenDiagram: (kb: String, name: String) -> Unit,
     viewModel: NoteViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -153,7 +175,9 @@ fun NoteScreen(
         object : UriHandler {
             override fun openUri(uri: String) {
                 val target = WikiLinks.targetOf(uri)
+                val diagram = WikiLinks.diagramOf(uri)
                 when {
+                    diagram != null -> onOpenDiagram(viewModel.kbName, diagram)
                     target == null -> external.openUri(uri)
                     else -> viewModel.resolve(target)?.let { onOpenNote(viewModel.kbName, it) }
                         ?: scope.launch { snackbar.showSnackbar("No note named $target") }
@@ -217,22 +241,28 @@ fun NoteScreen(
                     // The renderer's default headings use Material's display sizes,
                     // which put a note title across most of a phone screen.
                     val type = MaterialTheme.typography
-                    Markdown(
-                        content = state.markdown,
-                        typography = markdownTypography(
-                            h1 = type.headlineSmall,
-                            h2 = type.titleLarge,
-                            h3 = type.titleMedium,
-                            h4 = type.titleSmall,
-                            h5 = type.titleSmall,
-                            h6 = type.titleSmall,
-                        ),
-                        components = markdownComponents(
-                            checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
-                            table = { WrappingTable(it) },
-                        ),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                    for (block in state.blocks) {
+                        when (block) {
+                            is NoteBlock.Diagram ->
+                                DiagramCard(block.name, block.file) { onOpenDiagram(viewModel.kbName, block.name) }
+                            is NoteBlock.Text -> Markdown(
+                                content = block.markdown,
+                                typography = markdownTypography(
+                                    h1 = type.headlineSmall,
+                                    h2 = type.titleLarge,
+                                    h3 = type.titleMedium,
+                                    h4 = type.titleSmall,
+                                    h5 = type.titleSmall,
+                                    h6 = type.titleSmall,
+                                ),
+                                components = markdownComponents(
+                                    checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
+                                    table = { WrappingTable(it) },
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
+                    }
                 }
             }
         }

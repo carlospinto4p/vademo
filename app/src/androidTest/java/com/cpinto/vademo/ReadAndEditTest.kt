@@ -1,11 +1,13 @@
 package com.cpinto.vademo
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -44,9 +46,20 @@ class ReadAndEditTest {
         write("ideas/ideas.md", note("Ideas", "hub", "- [[tyfold]]"))
         write(
             "ideas/tyfold.md",
-            note("Tyfold desktop app", "idea", "Scored with the method below.\n\n[[business-idea-scorecard|the scorecard]]\n"),
+            note(
+                "Tyfold desktop app",
+                "idea",
+                "Scored with the method below.\n\n[[business-idea-scorecard|the scorecard]]\n\n![[scoring]]\n",
+            ),
         )
         write("ideas/business-idea-scorecard.md", note("Business idea scorecard", "concept", "Seven criteria."))
+        write(
+            ".tyfold-graphs/scoring.json",
+            """{ "title": "How an idea is scored", "direction": "LR",
+                 "nodes": [ { "id": "idea", "label": "An idea" },
+                            { "id": "card", "label": "The scorecard", "ref": { "path": "business-idea-scorecard.md" } } ],
+                 "edges": [ { "source": "idea", "target": "card", "label": "scored by" } ] }""",
+        )
         Git.init().setInitialBranch("main").setDirectory(kb).call().use { git ->
             git.add().addFilepattern(".").call()
             git.commit().setMessage("fixture").setAuthor("Test", "test@example.invalid").call()
@@ -99,6 +112,40 @@ class ReadAndEditTest {
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    @Test
+    fun openANoteFromADiagram() {
+        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.onNodeWithContentDescription("Diagrams").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("How an idea is scored")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("How an idea is scored").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("The scorecard")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("scored by").assertIsDisplayed()
+        compose.onNodeWithText("The scorecard").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Seven criteria.")).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
+    fun aNoteShowsTheDiagramItEmbeds() {
+        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasContentDescription("Diagram: How an idea is scored")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(hasContentDescription("Diagram: How an idea is scored")).performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("scored by")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Back").assertIsDisplayed()
+        compose.onNodeWithText("The scorecard").assertIsDisplayed()
     }
 
     private fun write(path: String, text: String) {

@@ -59,6 +59,38 @@ class WikiLinksTest {
     }
 
     @Test
+    fun `an embed on its own line cuts the note into parts`() {
+        val parts = WikiLinks.parts("Intro [[a]].\n\n  ![[write-path]]  \n\nAfter.")
+        assertEquals(
+            listOf(
+                WikiLinks.NotePart.Markdown("Intro [[a]].\n"),
+                WikiLinks.NotePart.Embed("write-path"),
+                WikiLinks.NotePart.Markdown("\nAfter."),
+            ),
+            parts,
+        )
+    }
+
+    @Test
+    fun `an embed inside a code block stays text`() {
+        val text = "```\n![[write-path]]\n```"
+        assertEquals(listOf(WikiLinks.NotePart.Markdown(text)), WikiLinks.parts(text))
+    }
+
+    @Test
+    fun `an embed inside a sentence becomes a link to the diagram`() {
+        val markdown = WikiLinks.toMarkdown("See ![[write-path]] and [[raft]].")
+        assertEquals("See [write-path](vademo-diagram:write-path) and [raft](vademo-note:raft).", markdown)
+        assertEquals("write-path", WikiLinks.diagramOf("vademo-diagram:write-path"))
+        assertNull(WikiLinks.targetOf("vademo-diagram:write-path"))
+    }
+
+    @Test
+    fun `an embed is not a link to a note`() {
+        assertEquals(listOf("raft"), WikiLinks.targets("![[write-path]] [[raft]]"))
+    }
+
+    @Test
     fun `targetOf decodes the note name`() {
         assertEquals("src-some report", WikiLinks.targetOf("vademo-note:src-some+report"))
     }

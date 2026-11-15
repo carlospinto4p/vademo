@@ -52,8 +52,9 @@ For README screenshots, Android's demo mode gives a clean status bar:
 ## Architecture
 
 - `kb/` — pure Kotlin, no Android: frontmatter, `[[link]]` rewriting,
-  folder and note indexing, and the map of notes (`NoteGraph`, and
-  `GraphLayout`, which places its boxes). Unit-tested on the JVM.
+  folder and note indexing, the map of notes (`NoteGraph`, and
+  `GraphLayout`, which places its boxes), and diagrams in tyfold's graph
+  format (`Diagram`, `DiagramLayout`). Unit-tested on the JVM.
 - `git/GitSync.kt` — clone, commit, merge, push and conflict handling on
   JGit. Tested against real bare repositories in temp folders.
 - `data/` — settings (DataStore, token encrypted with the Android
@@ -71,6 +72,12 @@ For README screenshots, Android's demo mode gives a clean status bar:
   blocked for that knowledge base until the user chooses.
 - **First download goes to `<name>.downloading` and is renamed when
   complete**, so an interrupted clone never looks like a finished one.
+- **Diagram files are tyfold's format, read leniently.** tyfold owns the
+  format (its `docs/GRAPH-PANE.md`, "The file") and refuses unknown keys
+  when writing; vademo only reads, so it skips unknown keys and words
+  instead of failing. `DiagramLayout` follows tyfold's
+  `src/lib/graph/canvas/layout.ts`; keep the two drawing the same file
+  alike.
 - **`app/debug.keystore` is committed and `signingConfigs` points at
   it.** AGP otherwise signs with `~/.android/debug.keystore`, which a CI
   runner generates fresh every time, so each build came out with a
