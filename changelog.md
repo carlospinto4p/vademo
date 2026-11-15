@@ -1,6 +1,16 @@
 ## Changelog - vademo
 
 
+### v0.10.1 - 15th November 2026
+
+- Fixed a flaky device test: `DiagramEditTest.createADiagramFromTheList`
+  failed once in three runs, because it tapped the knowledge base on the
+  home screen before its row could be tapped (the row turns tappable once
+  the app has found the download, after launch). Added
+  `androidTest/HomeScreenSteps.kt` with `openKnowledgeBase()`, which waits
+  for that, and used it in the 6 tests that opened the row straight away.
+
+
 ### v0.10.0 - 15th November 2026
 
 - Arrows are kept off boxes, with tyfold's two rules (its

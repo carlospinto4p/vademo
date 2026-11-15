@@ -66,7 +66,7 @@ class DiagramEditTest {
 
     private fun openDiagram() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Diagrams").performClick()
         compose.waitUntil(5_000) { compose.onAllNodes(hasText("Request flow")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Request flow").performClick()
@@ -127,7 +127,7 @@ class DiagramEditTest {
     @Test
     fun createADiagramFromTheList() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
-        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Diagrams").performClick()
         // The button appears once the list has checked that no sync conflict waits.
         compose.waitUntil(5_000) {

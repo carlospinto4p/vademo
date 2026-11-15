@@ -74,7 +74,7 @@ class ReadAndEditTest {
 
     @Test
     fun browseReadFollowALinkThenEdit() {
-        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.openKnowledgeBase()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.onNodeWithText("Scored with the method below.").assertIsDisplayed()
@@ -103,7 +103,7 @@ class ReadAndEditTest {
 
     @Test
     fun openANoteFromTheMap() {
-        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Map of notes").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
@@ -116,7 +116,7 @@ class ReadAndEditTest {
 
     @Test
     fun openANoteFromADiagram() {
-        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.openKnowledgeBase()
         compose.onNodeWithContentDescription("Diagrams").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("How an idea is scored")).fetchSemanticsNodes().isNotEmpty()
@@ -134,7 +134,7 @@ class ReadAndEditTest {
 
     @Test
     fun aNoteShowsTheDiagramItEmbeds() {
-        compose.onNodeWithText("kb-distributed-systems").performClick()
+        compose.openKnowledgeBase()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.waitUntil(5_000) {
