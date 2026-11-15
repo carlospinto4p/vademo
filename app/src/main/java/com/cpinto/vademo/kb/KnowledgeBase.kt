@@ -46,11 +46,14 @@ class KnowledgeBase(val root: File) {
      * The note a diagram box's `ref` path names: a path from the repository
      * root, or a bare note name found in any folder, as tyfold finds a bare
      * file name anywhere in the project. Null when it names no note.
+     *
+     * A bare name is looked up in [notes], so resolving many refs can walk
+     * the repository once and pass the result in.
      */
-    fun noteAt(path: String): File? {
+    fun noteAt(path: String, notes: () -> Map<String, File> = ::allNotes): File? {
         val direct = File(root, path.removePrefix("./"))
         if (direct.isFile && direct.extension == "md" && isInside(root, direct)) return direct
-        return if ('/' in path) null else resolve(path)
+        return if ('/' in path) null else notes()[path.removeSuffix(".md")]
     }
 
     fun allNotes(): Map<String, File> =

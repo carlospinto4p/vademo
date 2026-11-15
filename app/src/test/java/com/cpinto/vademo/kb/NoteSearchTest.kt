@@ -54,6 +54,14 @@ class NoteSearchTest {
     }
 
     @Test
+    fun `a query with only kb filters asks nothing`() {
+        assertEquals(true, NoteSearch.parse("").asksNothing)
+        assertEquals(true, NoteSearch.parse("kb:distributed-systems ").asksNothing)
+        assertEquals(false, NoteSearch.parse("kb:distributed-systems type:idea").asksNothing)
+        assertEquals(false, NoteSearch.parse("kb:distributed-systems raft").asksNothing)
+    }
+
+    @Test
     fun `every word must be found, ignoring case`() {
         assertEquals(listOf("raft", "quorum"), names("MAJORITY"))
         assertEquals(listOf("raft"), names("majority vote"))

@@ -22,6 +22,7 @@ data class ParsedNote(val frontmatter: Frontmatter?, val body: String)
 object FrontmatterParser {
 
     private val FIELD = Regex("""^([A-Za-z_][\w-]*):\s*(.*)$""")
+    private val COMMENT = Regex("""\s#""")
 
     fun parse(text: String): ParsedNote {
         val lines = text.lines()
@@ -59,7 +60,7 @@ object FrontmatterParser {
 
     /** Drops a trailing `# comment`, which YAML only treats as one after whitespace. */
     private fun String.stripComment(): String {
-        val hash = Regex("""\s#""").find(this) ?: return trim()
+        val hash = COMMENT.find(this) ?: return trim()
         return substring(0, hash.range.first).trim()
     }
 }

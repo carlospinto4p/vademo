@@ -49,6 +49,7 @@ import com.cpinto.vademo.kb.DiagramFile
 import com.cpinto.vademo.kb.Frontmatter
 import com.cpinto.vademo.kb.FrontmatterParser
 import com.cpinto.vademo.kb.IndexedNote
+import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.WikiLinks
 import com.cpinto.vademo.kb.readDiagram
 import com.cpinto.vademo.ui.diagram.DiagramCard
@@ -61,6 +62,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /** A run of the note's text ready to render, or a diagram it embeds with `![[name]]`. */
@@ -129,13 +131,24 @@ class NoteViewModel @Inject constructor(
                 frontmatter = parsed.frontmatter,
                 blocks = blocks,
             )
-            val linkedFrom = repository.index(kbName).linkedFrom(path)
-            _state.value = _state.value.copy(linkedFrom = linkedFrom)
+            val noteIndex = repository.index(kbName)
+            index = noteIndex
+            _state.value = _state.value.copy(linkedFrom = noteIndex.linkedFrom(path))
         }
     }
 
-    /** Path of the note a `[[target]]` link points at, or `null` when no such note exists. */
-    fun resolve(target: String): String? = kb.resolve(target)?.let(kb::relativePath)
+    /** The knowledge base's notes, once [load] has read them; links are resolved from it. */
+    @Volatile private var index: NoteIndex? = null
+
+    /**
+     * Path of the note a `[[target]]` link points at, or `null` when no such
+     * note exists. Looked up in the index; only a note it does not hold (one
+     * at the repository's root, or a tap before the index is ready) is
+     * searched for on disk, off the main thread.
+     */
+    suspend fun resolve(target: String): String? =
+        index?.note(target)?.path
+            ?: withContext(Dispatchers.IO) { kb.resolve(target)?.let(kb::relativePath) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
@@ -167,8 +180,11 @@ fun NoteScreen(
                         val opened = WikiLinks.opensOutside(uri) && runCatching { external.openUri(uri) }.isSuccess
                         if (!opened) scope.launch { snackbar.showSnackbar("Can't open this link: $uri") }
                     }
-                    else -> viewModel.resolve(target)?.let { onOpenNote(viewModel.kbName, it) }
-                        ?: scope.launch { snackbar.showSnackbar("No note named $target") }
+                    else -> scope.launch {
+                        val found = viewModel.resolve(target)
+                        if (found != null) onOpenNote(viewModel.kbName, found)
+                        else snackbar.showSnackbar("No note named $target")
+                    }
                 }
             }
         }

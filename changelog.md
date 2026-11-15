@@ -1,6 +1,34 @@
 ## Changelog - vademo
 
 
+### v0.20.10 - 16th November 2026
+
+- Fixed work done on the main thread or repeated on every keystroke or edit:
+  - `DiagramViewModel`: the note each box's `ref` names is found once when
+    the diagram is read, off the main thread, walking the repository at
+    most once. Before, every edit, undo and redo checked the files, and a
+    bare note name walked the whole repository, on the main thread. A ref
+    typed in an edit is looked up off the main thread.
+  - `NoteViewModel.resolve`: a tapped `[[link]]` is found in the note
+    index the screen already loads. Only a note the index does not hold
+    is looked for on disk, off the main thread.
+  - Search runs 150 ms after typing pauses instead of on every keystroke.
+    The text the screen opens with is searched at once, and the Save
+    button follows the field without waiting.
+  - `NoteIndex`: added `orphanNames` and `missingFrom`, built once, so a
+    search and the five Health counts no longer rebuild them each time.
+  - `IndexedNote`: added `titleLower`, `headingsLower` and `bodyLower`,
+    lowercased once, for search's word matching.
+  - `FrontmatterParser`: the comment regex is compiled once, not for every
+    frontmatter field of every note. Same for the space regex in
+    `NoteSearch.parse`.
+- `KnowledgeBase.noteAt` takes the notes to look a bare name up in, so
+  many refs share one walk.
+- Added `NoteSearch.Query.asksNothing` and used it for the three copies of
+  "only `kb:` filters" in the search screen.
+- Added tests: `noteAt` with given notes, and `asksNothing`.
+
+
 ### v0.20.9 - 16th November 2026
 
 - Fixed every note, folder, search and map opening reading every note of

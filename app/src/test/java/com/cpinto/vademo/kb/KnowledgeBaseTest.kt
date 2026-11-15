@@ -68,6 +68,20 @@ class KnowledgeBaseTest {
     }
 
     @Test
+    fun `noteAt looks a bare name up in the notes it is given, and only a bare name`() {
+        note("consensus/raft.md", "Raft")
+        val kb = KnowledgeBase(root)
+        val raft = File(root, "consensus/raft.md")
+        var walks = 0
+        val notes = { walks++; mapOf("paxos" to raft) }
+        assertEquals(raft, kb.noteAt("paxos", notes))
+        assertEquals(raft, kb.noteAt("paxos.md", notes))
+        assertEquals(raft, kb.noteAt("consensus/raft.md", notes))
+        assertNull(kb.noteAt("other/paxos.md", notes))
+        assertEquals(2, walks)
+    }
+
+    @Test
     fun `noteAt names nothing for other files, missing notes or paths outside`() {
         note("consensus/raft.md", "Raft")
         File(root, "scripts").mkdirs()

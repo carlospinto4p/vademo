@@ -109,25 +109,54 @@ class DiagramViewModel @Inject constructor(
         seen = text
         undo.clear()
         redo.clear()
-        loaded.onSuccess { doc = it; publish(it, editable, message) }
+        // Read again after a sync too, which may have added or removed the notes boxes link to.
+        refNotes = emptyMap()
+        loaded.onSuccess { resolveRefs(refsOf(it.diagram)); doc = it; publish(it, editable, message) }
             .onFailure { e ->
                 doc = null
                 _state.value = DiagramState(title = name, error = e.message ?: e.javaClass.simpleName, message = message)
             }
     }
 
+    /**
+     * Ref path → path of the note it names, or null when it names none. Filled
+     * off the main thread when the file is read, and for a ref an edit brings
+     * in, so an edit never looks for notes on disk.
+     */
+    @Volatile private var refNotes: Map<String, String?> = emptyMap()
+
+    private fun refsOf(diagram: Diagram): List<String> = diagram.nodes.mapNotNull { it.ref?.path }
+
+    /** Looks up the refs not yet known, walking the repository at most once. Call off the main thread. */
+    private fun resolveRefs(paths: List<String>) {
+        val unknown = paths.filter { it !in refNotes }.distinct()
+        if (unknown.isEmpty()) return
+        val all by lazy { kb.allNotes() }
+        refNotes = refNotes + unknown.associateWith { path -> kb.noteAt(path) { all }?.let(kb::relativePath) }
+    }
+
+    private fun notesOf(diagram: Diagram): Map<String, String> = diagram.nodes.mapNotNull { node ->
+        val note = node.ref?.path?.let { refNotes[it] } ?: return@mapNotNull null
+        node.id to note
+    }.toMap()
+
     private fun publish(document: DiagramDocument, editable: Boolean = _state.value.editable, message: String? = null) {
         val diagram = document.diagram
-        val notes = diagram.nodes.mapNotNull { node ->
-            val note = node.ref?.let { kb.noteAt(it.path) } ?: return@mapNotNull null
-            node.id to kb.relativePath(note)
-        }.toMap()
+        val refs = refsOf(diagram)
+        if (refs.any { it !in refNotes }) {
+            // A ref typed in an edit: its note is found off the main thread and the links follow.
+            viewModelScope.launch(Dispatchers.IO) {
+                resolveRefs(refs)
+                val current = doc ?: return@launch
+                _state.update { it.copy(notes = notesOf(current.diagram)) }
+            }
+        }
         _state.update {
             it.copy(
                 title = diagram.title.ifBlank { name },
                 diagram = diagram,
                 error = null,
-                notes = notes,
+                notes = notesOf(diagram),
                 editable = editable,
                 canUndo = undo.isNotEmpty(),
                 canRedo = redo.isNotEmpty(),

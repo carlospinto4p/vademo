@@ -60,10 +60,15 @@ import com.cpinto.vademo.kb.NoteSearch
 import com.cpinto.vademo.kb.SearchHit
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -80,7 +85,7 @@ data class SearchState(
 ) {
     /** Nothing asked yet beyond which knowledge base: the saved searches are offered instead of results. */
     val offersSaved: Boolean
-        get() = NoteSearch.parse(query).let { q -> q.words.isEmpty() && q.filters.all { it is NoteSearch.Filter.Kb } }
+        get() = NoteSearch.parse(query).asksNothing
 }
 
 @HiltViewModel
@@ -96,19 +101,28 @@ class SearchViewModel @Inject constructor(
     private val indexes = MutableStateFlow<List<NoteIndex>?>(null)
     private val query = MutableStateFlow(initialQuery)
 
-    val state: StateFlow<SearchState> = combine(indexes, query, settings.savedQueries) { all, text, saved ->
+    // Searched once typing pauses, not on every keystroke: each search reads every note's text.
+    // The text the screen opens with is searched at once. The rest of the state, such as the
+    // Save button, follows the field at once. A query that asks nothing finds nothing, so the
+    // notes it would match never flash up while the first word is typed.
+    @OptIn(FlowPreview::class)
+    private val hits = combine(indexes, merge(query.take(1), query.drop(1).debounce(TYPING_PAUSE_MS))) { all, text ->
+        if (all == null || NoteSearch.parse(text).asksNothing) emptyList() else NoteSearch.search(all, text)
+    }.flowOn(Dispatchers.Default)
+
+    val state: StateFlow<SearchState> = combine(indexes, query, hits, settings.savedQueries) { all, text, found, saved ->
         if (all == null) {
             SearchState(loading = true, query = text, saved = saved)
         } else {
             SearchState(
                 loading = false,
                 query = text,
-                hits = NoteSearch.search(all, text),
+                hits = found,
                 showKb = all.size > 1,
                 saved = saved,
             )
         }
-    }.flowOn(Dispatchers.Default).stateIn(viewModelScope, SharingStarted.Eagerly, SearchState(query = initialQuery))
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, SearchState(query = initialQuery))
 
     fun saveQuery(name: String) {
         val text = query.value
@@ -129,6 +143,10 @@ class SearchViewModel @Inject constructor(
     fun setQuery(text: String) {
         query.value = text
     }
+
+    private companion object {
+        const val TYPING_PAUSE_MS = 150L
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -146,8 +164,7 @@ fun SearchScreen(
     // Opened from a tag or a type, the results are what was asked for, so
     // the keyboard stays down; with nothing but `kb:` there is only typing to do.
     LaunchedEffect(Unit) {
-        val start = NoteSearch.parse(viewModel.initialQuery)
-        if (start.words.isEmpty() && start.filters.all { it is NoteSearch.Filter.Kb }) focus.requestFocus()
+        if (NoteSearch.parse(viewModel.initialQuery).asksNothing) focus.requestFocus()
     }
     val search = { text: String ->
         field = TextFieldValue(text, TextRange(text.length))

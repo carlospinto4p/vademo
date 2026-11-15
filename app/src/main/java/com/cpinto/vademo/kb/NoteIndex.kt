@@ -20,7 +20,12 @@ data class IndexedNote(
     val links: List<String>,
     val unverified: Int,
     val body: String,
-)
+) {
+    /** Lowercased once, the first time a search reads them, rather than on every keystroke. */
+    val titleLower: String by lazy { title.lowercase() }
+    val headingsLower: List<String> by lazy { headings.map { it.lowercase() } }
+    val bodyLower: String by lazy { body.lowercase() }
+}
 
 /** A `[[target]]` in the note [from] that names no note. */
 data class UnresolvedLink(val from: String, val target: String)
@@ -59,6 +64,12 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
     val orphans: List<IndexedNote> = notes.filter { note ->
         note.name != "index" && !isHub(note) && backlinks[note.name].isNullOrEmpty()
     }
+
+    /** Names of the [orphans], built once for search's `is:orphan`. */
+    val orphanNames: Set<String> by lazy { orphans.mapTo(HashSet()) { it.name } }
+
+    /** Note name → the notes it links to that do not exist, built once for search. */
+    val missingFrom: Map<String, List<String>> by lazy { unresolved.groupBy({ it.from }, { it.target }) }
 
     fun note(name: String): IndexedNote? = byName[name.removeSuffix(".md")]
 

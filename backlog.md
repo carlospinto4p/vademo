@@ -76,20 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] `ui/diagram/DiagramViewModel.kt:110-115` (`publish`): on every edit,
-  undo or redo, for each box with a `ref`, `kb.noteAt()` does file checks
-  and for a bare name walks the whole tree, on the main thread. Resolve
-  once per load on `Dispatchers.IO`. MED-HIGH, effort S.
-- [ ] `ui/note/NoteScreen.kt:141,169`: tapping a `[[link]]` walks the whole
-  knowledge base on the main thread (`kb.resolve`). Resolve against the
-  index already built at :135 (`NoteIndex.note(name)`). MED, effort S.
-- [ ] Search reruns in full on every keystroke with no debounce
-  (`ui/search/SearchScreen.kt:99-111`), and each run rebuilds the orphan
-  set and missing-links map (`kb/NoteSearch.kt:75-76`); `kb/Health.kt:24`
-  pays that five times. Debounce or `mapLatest`, make those lazy on
-  `NoteIndex`, store lowercased text once. MED, effort S.
-- [ ] `kb/Frontmatter.kt:62`: `Regex("""\s#""")` is compiled for every
-  frontmatter field of every note. Make it a `private val`. MED, effort S.
 - [ ] `ui/browse/BrowseScreen.kt:219,224,271`: `recent()`, `byType()` and
   `tagCounts()` sort or group every note on each recomposition. Wrap in
   `remember(index)`. MED, effort S.
@@ -165,8 +151,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 - [ ] `DiagramViewModel.editSelected` (:197-202) exists for "edit, then end
   the selection" but `DiagramEditors.kt:86-87,100-101,292` and
   `DiagramScreen.kt:309` do it by hand. Use it. LOW, effort S.
-- [ ] `ui/search/SearchScreen.kt:149-150` repeats `SearchState.offersSaved`
-  (:83). Make it a function on `NoteSearch.Query`. LOW, effort S.
 - [ ] Stale docs: `kb/Diagram.kt:12-13` says "vademo only reads it", and
   the "Diagram files" bullet in CLAUDE.md partly says the same; the app
   now edits diagrams. LOW, effort S.

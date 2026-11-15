@@ -39,14 +39,18 @@ object NoteSearch {
 
     data class Query(val words: List<String>, val filters: List<Filter>) {
         val isEmpty: Boolean get() = words.isEmpty() && filters.isEmpty()
+
+        /** Nothing asked beyond which knowledge base, so the search screen offers saved searches instead. */
+        val asksNothing: Boolean get() = words.isEmpty() && filters.all { it is Filter.Kb }
     }
 
     private val UPDATED = Regex("""^(>=|<=|>|<)?(.+)$""")
+    private val SPACES = Regex("""\s+""")
 
     fun parse(text: String): Query {
         val words = mutableListOf<String>()
         val filters = mutableListOf<Filter>()
-        for (token in text.split(Regex("""\s+""")).filter { it.isNotEmpty() }) {
+        for (token in text.split(SPACES).filter { it.isNotEmpty() }) {
             val key = token.substringBefore(':', "").lowercase()
             val value = token.substringAfter(':', "")
             val filter = if (value.isEmpty()) null else when (key) {
@@ -72,11 +76,9 @@ object NoteSearch {
         val query = parse(text)
         if (query.isEmpty) return emptyList()
         return indexes.flatMap { index ->
-            val orphans = index.orphans.mapTo(HashSet()) { it.name }
-            val missing = index.unresolved.groupBy({ it.from }, { it.target })
             index.notes.mapNotNull { note ->
-                val noteMissing = missing[note.name].orEmpty()
-                if (!query.filters.all { matches(it, index, note, orphans, noteMissing) }) return@mapNotNull null
+                val noteMissing = index.missingFrom[note.name].orEmpty()
+                if (!query.filters.all { matches(it, index, note, noteMissing) }) return@mapNotNull null
                 score(note, query.words)?.let { SearchHit(index.kbName, note, it, noteMissing) }
             }
         }.sortedWith(
@@ -90,7 +92,6 @@ object NoteSearch {
         filter: Filter,
         index: NoteIndex,
         note: IndexedNote,
-        orphans: Set<String>,
         missing: List<String>,
     ): Boolean =
         when (filter) {
@@ -111,21 +112,25 @@ object NoteSearch {
             is Filter.Links -> filter.target in note.links
             is Filter.InFolder -> note.path.startsWith(filter.path + "/", ignoreCase = true)
             is Filter.Is -> when (filter.what) {
-                "orphan" -> note.name in orphans
+                "orphan" -> note.name in index.orphanNames
                 "unverified" -> note.unverified > 0
                 "broken" -> missing.isNotEmpty()
                 else -> false
             }
         }
 
-    /** Null when a word is missing; otherwise 100 per word in the title, 10 in a heading, 1 in the body. */
+    /**
+     * Null when a word is missing; otherwise 100 per word in the title, 10 in
+     * a heading, 1 in the body. [parse] lowercases the words, so they are
+     * looked for in the note's lowercased text.
+     */
     private fun score(note: IndexedNote, words: List<String>): Int? {
         var total = 0
         for (word in words) {
             var points = 0
-            if (note.title.contains(word, ignoreCase = true)) points += 100
-            if (note.headings.any { it.contains(word, ignoreCase = true) }) points += 10
-            if (note.body.contains(word, ignoreCase = true)) points += 1
+            if (word in note.titleLower) points += 100
+            if (note.headingsLower.any { word in it }) points += 10
+            if (word in note.bodyLower) points += 1
             if (points == 0) return null
             total += points
         }
