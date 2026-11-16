@@ -76,6 +76,11 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
+- [ ] `.github/workflows/build-apk.yml`: CI run 43779009289 (2026-11-16)
+  warns "The SDK Manager CLI tool (sdkmanager) is deprecated. Use Android
+  CLI instead.", from `android-actions/setup-android@v4` and the "Install
+  the compileSdk platform" step. Find what replaces it and move both.
+  LOW, effort S.
 - [ ] `ui/note/NoteScreen.kt:238-249`: `markdownTypography` and
   `markdownComponents` are rebuilt per block on every recomposition,
   including every pinch frame. Hoist into one `remember`. LOW, effort S.
