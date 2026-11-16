@@ -46,21 +46,19 @@ sealed interface SyncState {
 @Singleton
 class KbRepository internal constructor(
     private val root: File,
-    // Lazy, so a JVM test of a screen that never reads the settings needs no Context for them.
-    private val settingsStore: Lazy<SettingsRepository>,
+    // A function rather than the store, so a JVM test needs no Context for the settings.
+    private val currentSettings: suspend () -> Settings,
 ) {
     @Inject constructor(
         @ApplicationContext context: Context,
         settings: Lazy<SettingsRepository>,
-    ) : this(File(context.filesDir, "kb"), settings)
-
-    private val settings: SettingsRepository get() = settingsStore.get()
+    ) : this(File(context.filesDir, "kb"), { settings.get().current() })
 
     private val _syncStates = MutableStateFlow<Map<String, SyncState>>(emptyMap())
     val syncStates: StateFlow<Map<String, SyncState>> = _syncStates
 
     suspend fun list(): List<KbInfo> = withContext(Dispatchers.IO) {
-        val current = settings.current()
+        val current = currentSettings()
         val git = gitSync(current)
         current.repoUrls.map { url ->
             async {
@@ -97,7 +95,8 @@ class KbRepository internal constructor(
 
     /** The knowledge bases downloaded to this phone, in the order of the settings. */
     suspend fun downloaded(): List<KnowledgeBase> = withContext(Dispatchers.IO) {
-        settings.current().repoUrls.map(::dirFor).filter { it.isDirectory }.map(::KnowledgeBase)
+        // Only finished downloads, as list() counts them: a folder without .git is not one.
+        currentSettings().repoUrls.map(::dirFor).filter { File(it, ".git").exists() }.map(::KnowledgeBase)
     }
 
     /**
@@ -105,16 +104,16 @@ class KbRepository internal constructor(
      * folder are synced once, by the first, so no two syncs touch one clone.
      */
     suspend fun syncAll() = coroutineScope {
-        val current = settings.current()
+        val current = currentSettings()
         current.repoUrls.distinctBy(::dirFor).map { url -> launch { sync(url, current) } }.joinAll()
     }
 
     suspend fun conflicts(name: String): Result<List<ConflictFile>> = withContext(Dispatchers.IO) {
-        gitSync(settings.current()).conflicts(File(root, name))
+        gitSync(currentSettings()).conflicts(File(root, name))
     }
 
     suspend fun resolve(name: String, chosen: Map<String, String?>): SyncOutcome {
-        val current = settings.current()
+        val current = currentSettings()
         val url = current.repoUrls.firstOrNull { dirFor(it).name == name }
             ?: return SyncOutcome.Failed("$name is no longer in Settings")
         setState(name, SyncState.Running)

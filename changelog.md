@@ -1,6 +1,31 @@
 ## Changelog - vademo
 
 
+### v0.20.34 - 17th November 2026
+
+- Fixed sync carrying on with the old repository after an address in
+  Settings was changed to another repository with the same name. A
+  knowledge base's folder is named after the last part of its address
+  only, so the new address landed on the old copy. `GitSync.sync` now
+  compares the copy's `origin` with the address and stops with a message
+  naming the repository the copy came from. Nothing is committed, pulled
+  or pushed.
+- `GitSync.sameRepository` treats `https://`, `git@github.com:` and
+  `file:` forms of one address alike, and ignores a final `/`, `.git`
+  and letter case.
+- `KbRepository`:
+  - Its internal constructor takes the settings as a `suspend` function,
+    so a JVM test needs no `Context`.
+  - `downloaded()` lists only folders with `.git`, as `list()` already
+    did; a leftover folder without one no longer counts as downloaded.
+- Added `KbRepositoryTest`, its first tests: listing before and after a
+  download, `downloaded()`, two addresses ending in the same name synced
+  once, the regression test for a changed address, and resolving a
+  knowledge base no longer in Settings.
+- Added to `GitSyncTest`: the changed-address regression test, the same
+  address written another way still syncs, and the address comparison.
+
+
 ### v0.20.33 - 17th November 2026
 
 - `GitSync` now refuses a first download into a folder that already holds

@@ -14,6 +14,7 @@ import org.eclipse.jgit.lib.RepositoryState
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.RemoteRefUpdate
+import org.eclipse.jgit.transport.URIish
 import org.eclipse.jgit.treewalk.TreeWalk
 import java.io.File
 
@@ -60,6 +61,15 @@ class GitSync(
     fun sync(remoteUrl: String, dir: File): SyncOutcome = runCatching {
         if (!File(dir, ".git").isDirectory) return clone(remoteUrl, dir)
         Git.open(dir).use { git ->
+            // The folder is named after the address's last part only, so a
+            // new address can land on another repository's copy. Syncing
+            // would quietly carry on with the old one.
+            val origin = git.repository.config.getString("remote", "origin", "url")
+            if (origin != null && !sameRepository(origin, remoteUrl)) {
+                return SyncOutcome.Failed(
+                    "This copy was downloaded from $origin, not $remoteUrl. Put that address back in Settings to sync it",
+                )
+            }
             turnOffSymlinks(git)
             if (git.repository.repositoryState == RepositoryState.MERGING) {
                 return SyncOutcome.Conflict(conflictingPaths(git))
@@ -294,5 +304,19 @@ class GitSync(
         fun isMerging(dir: File): Boolean = runCatching {
             Git.open(dir).use { it.repository.repositoryState == RepositoryState.MERGING }
         }.getOrDefault(false)
+
+        /**
+         * Whether two addresses name one repository: same host and path,
+         * whatever the scheme (`https://`, `git@host:`, `file:` or `file:///`),
+         * and ignoring a final `/` or `.git` and letter case. That GitHub
+         * treats those alike is written from recall, unchecked.
+         */
+        internal fun sameRepository(a: String, b: String): Boolean {
+            fun key(url: String): String = runCatching {
+                val uri = URIish(url.trim())
+                "${uri.host.orEmpty()}:${uri.port}/${uri.path.orEmpty().trim('/').removeSuffix(".git")}"
+            }.getOrDefault(url.trim().trimEnd('/').removeSuffix(".git"))
+            return key(a).equals(key(b), ignoreCase = true)
+        }
     }
 }

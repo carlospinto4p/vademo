@@ -100,14 +100,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Test coverage
 
-- [ ] `KbRepository` has no tests. `downloaded()` treats any folder as
-  downloaded, though `list()` calls one without `.git` missing. Besides `resolve` above: `dirFor` gives
-  `a/kb-x` and `b/kb-x` the same folder (:100-101), and once a clone
-  exists sync uses `origin`, so changing a URL in Settings to another
-  repository with the same name keeps syncing the old one. MED, effort M.
-  Since v0.20.31 its internal constructor takes a folder and a lazy
-  `SettingsRepository`, so a JVM test needs no Context for the folder
-  part; the settings part still needs one.
 - [ ] Settings storage untested: token encrypt/decrypt round trip, trimming
   on save, empty URL list vs missing value falling back to `DEFAULT_REPOS`
   (`data/SettingsRepository.kt:77-92`). Needs a device test for the
@@ -143,3 +135,13 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 - [ ] `GitOnDeviceTest` uses only a local file remote: HTTPS with
   credentials and a conflict on a device are never tested, though the
   comment at `ReadAndEditTest.kt:33` suggests otherwise. LOW, effort L.
+
+### 2026.11.17 (found while adding KbRepositoryTest, v0.20.34)
+
+- [ ] Two addresses in Settings that end in the same name (`a/kb-x` and
+  `b/kb-x`) share one folder: `KbRepository.syncAll` syncs the first only
+  and the second never syncs, with no message. Home shows two rows with
+  the same name and the first one's state. Decide: refuse such a pair in
+  Settings, or say so on the second row. Covered as it works today by
+  `KbRepositoryTest` "two addresses ending in the same name are synced
+  once". MED, effort S.

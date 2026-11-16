@@ -298,6 +298,53 @@ class GitSyncTest {
     }
 
     @Test
+    fun `an address of another repository with the same name is refused, naming the one downloaded`() {
+        sync.sync(remoteUrl, phone)
+        val other = File(tmp, "someone-else/kb-distributed-systems.git")
+        Git.init().setBare(true).setInitialBranch("main").setDirectory(other).call().close()
+        File(phone, "ideas/tyfold.md").writeText("edited on phone\n")
+
+        val outcome = sync.sync(other.toURI().toString(), phone)
+
+        assertInstanceOf(SyncOutcome.Failed::class.java, outcome)
+        assertTrue((outcome as SyncOutcome.Failed).message.contains("/github.git"), outcome.message)
+        // Nothing was committed or sent anywhere.
+        assertEquals(listOf("ideas/tyfold.md"), sync.localChanges(phone))
+        assertEquals("line one\nline two\nline three\n", computerPulls("ideas/tyfold.md"))
+    }
+
+    @Test
+    fun `the same address written with or without slash and dot git still syncs`() {
+        sync.sync(remoteUrl, phone)
+        computerEdits("ideas/tyfold.md", "changed on computer\n")
+
+        val outcome = sync.sync(remoteUrl.trimEnd('/').removeSuffix(".git") + "/", phone)
+
+        assertEquals(SyncOutcome.Synced(pulled = 1), outcome)
+    }
+
+    @Test
+    fun `addresses of one GitHub repository match whatever form they take`() {
+        val canonical = "https://github.com/owner/kb-notes.git"
+        for (same in listOf(
+            "https://github.com/owner/kb-notes",
+            "https://github.com/owner/kb-notes/",
+            "https://GitHub.com/Owner/KB-Notes.git",
+            "git@github.com:owner/kb-notes.git",
+            " https://github.com/owner/kb-notes.git ",
+        )) {
+            assertTrue(GitSync.sameRepository(canonical, same), same)
+        }
+        for (other in listOf(
+            "https://github.com/someone-else/kb-notes.git",
+            "https://gitlab.com/owner/kb-notes.git",
+            "https://github.com/owner/kb-notes-2.git",
+        )) {
+            assertFalse(GitSync.sameRepository(canonical, other), other)
+        }
+    }
+
+    @Test
     fun `inspect reports a ready clone with its edits`() {
         sync.sync(remoteUrl, phone)
         File(phone, "ideas/tyfold.md").writeText("edited\n")
