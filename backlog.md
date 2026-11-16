@@ -113,3 +113,11 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   Settings, or say so on the second row. Covered as it works today by
   `KbRepositoryTest` "two addresses ending in the same name are synced
   once". MED, effort S.
+- [ ] Two notes with the same file name in different folders: a
+  `[[name]]` link opens whichever `KnowledgeBase.allNotes` walks to last,
+  which depends on the order the file system lists folders, and nothing
+  says so. The knowledge-base layout keeps names unique, so this is a
+  broken repository, but the phone could show it, for example as a row in
+  the Health tab. Found while adding `KnowledgeBaseTest` "two folders
+  holding the same note name resolve to one of them" (v0.20.36). LOW,
+  effort S.
