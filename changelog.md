@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.20.17 - 16th November 2026
+
+- Fixed folder listings reading every note to the end only to get its
+  title:
+  - `kb/Frontmatter.kt`: added `FrontmatterParser.read(file)`, which stops
+    at the frontmatter's closing `---`.
+  - `kb/KnowledgeBase.kt`: `summary`, and so `notesIn`, use it.
+- Added a `FrontmatterTest` case: reading a file gives the same
+  frontmatter as parsing all of it, for CRLF, missing, unclosed and empty
+  frontmatter.
+
+
 ### v0.20.16 - 16th November 2026
 
 - Updated `data/KbRepository.kt` so knowledge bases are synced and

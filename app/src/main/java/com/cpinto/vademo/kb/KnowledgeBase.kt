@@ -63,7 +63,7 @@ class KnowledgeBase(val root: File) {
             .associateBy { it.nameWithoutExtension }
 
     fun summary(file: File): NoteSummary {
-        val front = FrontmatterParser.parse(file.readText()).frontmatter
+        val front = FrontmatterParser.read(file)
         return NoteSummary(
             file = file,
             name = file.nameWithoutExtension,

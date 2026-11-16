@@ -3,6 +3,8 @@ package com.cpinto.vademo.kb
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
 import java.time.LocalDate
 
 class FrontmatterTest {
@@ -71,5 +73,21 @@ class FrontmatterTest {
     fun `withUpdated ignores an updated line in the body`() {
         val text = "---\ntitle: x\n---\nupdated: yesterday"
         assertEquals(text, FrontmatterParser.withUpdated(text, LocalDate.of(2026, 9, 16)))
+    }
+
+    @Test
+    fun `reading a file gives the same frontmatter as parsing all of it`(@TempDir dir: File) {
+        val texts = listOf(
+            note,
+            note.replace("\n", "\r\n"),
+            "# No frontmatter\n\ntitle: not a field",
+            "---\ntitle: never closed\n\nbody",
+            "---\n---\nempty block",
+            "",
+        )
+        for (text in texts) {
+            val file = File(dir, "note.md").apply { writeText(text) }
+            assertEquals(FrontmatterParser.parse(text).frontmatter, FrontmatterParser.read(file), text)
+        }
     }
 }

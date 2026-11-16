@@ -1,5 +1,6 @@
 package com.cpinto.vademo.kb
 
+import java.io.File
 import java.time.LocalDate
 
 /** The YAML block at the top of a note, reduced to the flat keys the knowledge bases use. */
@@ -37,6 +38,21 @@ object FrontmatterParser {
         }
         val body = lines.drop(end + 2).joinToString("\n").trimStart('\n')
         return ParsedNote(Frontmatter(fields), body)
+    }
+
+    /**
+     * The frontmatter of [file], read only as far as its closing `---`, for
+     * listings that need a title and not the body. Same result as [parse].
+     */
+    fun read(file: File): Frontmatter? = file.bufferedReader().useLines { lines ->
+        val iterator = lines.iterator()
+        if (!iterator.hasNext() || iterator.next().trimEnd() != "---") return null
+        val head = StringBuilder("---\n")
+        for (line in iterator) {
+            head.append(line).append('\n')
+            if (line.trimEnd() == "---") return parse(head.toString()).frontmatter
+        }
+        null
     }
 
     /**

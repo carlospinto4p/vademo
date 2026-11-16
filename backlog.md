@@ -76,9 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] `kb/KnowledgeBase.kt:36-37,62-63`: `notesIn` and `summary` read whole
-  files to get the frontmatter. Read up to the closing `---`, or use the
-  cached index. LOW-MED, effort S.
 - [ ] `ui/note/NoteScreen.kt:238-249`: `markdownTypography` and
   `markdownComponents` are rebuilt per block on every recomposition,
   including every pinch frame. Hoist into one `remember`. LOW, effort S.
