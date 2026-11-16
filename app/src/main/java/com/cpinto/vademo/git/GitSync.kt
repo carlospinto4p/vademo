@@ -154,7 +154,9 @@ class GitSync(
     private fun commitLocalChanges(git: Git): List<String> {
         val status = git.status().call()
         val written = status.modified + status.untracked
-        val changed = (written + status.missing).sorted()
+        // Already staged, e.g. by a sync killed between staging and committing.
+        val staged = status.added + status.changed + status.removed
+        val changed = (written + status.missing + staged).distinct().sorted()
         if (changed.isEmpty()) return emptyList()
         // Never commit under a made-up identity: stop before anything is staged.
         check(author.name.isNotBlank() && author.email.isNotBlank()) {

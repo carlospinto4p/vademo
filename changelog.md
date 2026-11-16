@@ -1,6 +1,16 @@
 ## Changelog - vademo
 
 
+### v0.20.29 - 16th November 2026
+
+- Fixed edits that were already staged never reaching GitHub. If the app
+  was killed between staging and committing, sync committed only files
+  modified, new or deleted since, so the staged ones stayed behind and
+  Home showed "N edits not synced" for good. `GitSync` now commits staged
+  files too. Regression tests in `GitSyncTest`: a staged edit and a staged
+  new file, and a staged deletion.
+
+
 ### v0.20.28 - 16th November 2026
 
 - Removed an unused Compose import from `GraphViewModel`.

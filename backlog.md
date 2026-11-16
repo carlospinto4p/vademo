@@ -100,12 +100,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Test coverage
 
-- [ ] `git/GitSync.kt:148-150`: `commitLocalChanges` commits modified,
-  untracked and missing files but not already-staged ones, which
-  `inspect` (:74-75) does count. If the app is killed between `add` and
-  `commit`, those edits are never pushed and Home shows "N edits not
-  synced" for good. Regression test: stage a file, sync, expect it pushed;
-  then fix. HIGH, effort S.
 - [ ] Push retry (`git/GitSync.kt:166-208`) is untested: a rejected
   non-fast-forward push retried, another refusal, attempts running out,
   and "GitHub has no branch named X" (:172-173). HIGH, effort M.

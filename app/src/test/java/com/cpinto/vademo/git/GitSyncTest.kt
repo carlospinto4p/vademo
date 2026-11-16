@@ -94,6 +94,37 @@ class GitSyncTest {
     }
 
     @Test
+    fun `edits already staged when the app was killed before committing are still pushed`() {
+        sync.sync(remoteUrl, phone)
+        File(phone, "ideas/tyfold.md").writeText("edited on phone\n")
+        File(phone, "ideas/new.md").writeText("new on phone\n")
+        Git.open(phone).use { git ->
+            git.add().addFilepattern("ideas/tyfold.md").addFilepattern("ideas/new.md").call()
+        }
+
+        val outcome = sync.sync(remoteUrl, phone) as SyncOutcome.Synced
+
+        assertEquals(listOf("ideas/new.md", "ideas/tyfold.md"), outcome.committed)
+        assertEquals(1, outcome.pushed)
+        assertEquals(emptyList<String>(), sync.localChanges(phone))
+        assertEquals("edited on phone\n", computerPulls("ideas/tyfold.md"))
+        assertEquals("new on phone\n", File(computer, "ideas/new.md").readText())
+    }
+
+    @Test
+    fun `a deletion already staged is still pushed`() {
+        sync.sync(remoteUrl, phone)
+        Git.open(phone).use { git -> git.rm().addFilepattern("ideas/tyfold.md").call() }
+
+        val outcome = sync.sync(remoteUrl, phone) as SyncOutcome.Synced
+
+        assertEquals(listOf("ideas/tyfold.md"), outcome.committed)
+        assertEquals(emptyList<String>(), sync.localChanges(phone))
+        Git.open(computer).use { it.pull().call() }
+        assertFalse(File(computer, "ideas/tyfold.md").exists())
+    }
+
+    @Test
     fun `an edit without a name and email is refused, not committed under a made-up identity`() {
         val reader = GitSync(credentials = null, author = Author("", ""))
         reader.sync(remoteUrl, phone)
