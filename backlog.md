@@ -97,11 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] `ui/diagram/DiagramScreen.kt` (683 lines) holds both the screen and
-  the drawing code shared with `DiagramCard.kt` and `DiagramEditors.kt`
-  (`rememberPlaces`, `diagramColours`, `DiagramContent`, `NodeBox`,
-  `GroupBox`, `Edges`, `refText`). Move the drawing code to
-  `ui/diagram/DiagramDrawing.kt`. MED, effort S.
 - [ ] `KnowledgeBase.diagramFile(name)` exists since v0.20.3 and the
   diagram screen and note embeds use it; `createDiagram` and `diagramsIn`
   (`kb/Diagram.kt:134-147`) still build the `.tyfold-graphs` path by hand.
@@ -115,15 +110,15 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   `data/DiagramMoves.kt:29`. LOW, effort S.
 - [ ] `DiagramViewModel.editSelected` (:197-202) exists for "edit, then end
   the selection" but `DiagramEditors.kt:86-87,100-101,292` and
-  `DiagramScreen.kt:309` do it by hand. Use it. LOW, effort S.
+  `DiagramScreen.kt` (`SelectionBar`'s Group) do it by hand. Use it. LOW, effort S.
 - [ ] Stale docs: `kb/Diagram.kt:12-13` says "vademo only reads it", and
   the "Diagram files" bullet in CLAUDE.md partly says the same; the app
   now edits diagrams. LOW, effort S.
 - [ ] Dead in production: `KnowledgeBase.folders()` (`kb/KnowledgeBase.kt:27`),
   used only by a test. LOW, effort S.
 - [ ] Imports: a stray `import com.cpinto.vademo.ui.BackForward` sits
-  above the sorted imports in six screens (Graph, Diagram, Browse,
-  DiagramList, Search, Note); `DiagramListScreen.kt:31-52` and
+  above the sorted imports in five screens (Graph, Browse, DiagramList,
+  Search, Note); `DiagramListScreen.kt:31-52` and
   `NoteScreen.kt:57` are unsorted; fully qualified names inline at
   `DiagramViewModel.kt:249,319`. LOW, effort S.
 - [ ] `data/TokenCipher.kt:26-31`: if the Keystore key is lost, `decrypt`

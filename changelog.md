@@ -1,6 +1,16 @@
 ## Changelog - vademo
 
 
+### v0.20.23 - 16th November 2026
+
+- Moved the diagram drawing shared by the diagram screen, diagrams in
+  notes and the diagram editors out of `ui/diagram/DiagramScreen.kt`
+  (697 lines, now 275) into `ui/diagram/DiagramDrawing.kt`:
+  `DiagramActions`, `rememberPlaces`, `diagramColours`, `DiagramContent`,
+  the boxes, groups and arrows, and `refText`. No change in behaviour.
+  Both files keep only the imports they use, sorted.
+
+
 ### v0.20.22 - 16th November 2026
 
 - Fixed `LinkLineBreakTest` failing now and then with "found 0": the
