@@ -11,9 +11,14 @@ import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.NoteIndexCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import javax.inject.Inject
@@ -50,15 +55,17 @@ class KbRepository @Inject constructor(
         val current = settings.current()
         val git = gitSync(current)
         current.repoUrls.map { url ->
-            val dir = dirFor(url)
-            when (val local = git.inspect(dir)) {
-                LocalState.Missing -> KbInfo(dir.name, url, cloned = false, unsyncedEdits = 0, needsChoice = false)
-                is LocalState.Ready -> KbInfo(dir.name, url, cloned = true, local.changes.size, local.merging)
-                is LocalState.Broken -> KbInfo(
-                    dir.name, url, cloned = false, unsyncedEdits = 0, needsChoice = false, problem = local.message,
-                )
+            async {
+                val dir = dirFor(url)
+                when (val local = git.inspect(dir)) {
+                    LocalState.Missing -> KbInfo(dir.name, url, cloned = false, unsyncedEdits = 0, needsChoice = false)
+                    is LocalState.Ready -> KbInfo(dir.name, url, cloned = true, local.changes.size, local.merging)
+                    is LocalState.Broken -> KbInfo(
+                        dir.name, url, cloned = false, unsyncedEdits = 0, needsChoice = false, problem = local.message,
+                    )
+                }
             }
-        }
+        }.awaitAll()
     }
 
     fun knowledgeBase(name: String): KnowledgeBase = KnowledgeBase(File(root, name))
@@ -81,9 +88,13 @@ class KbRepository @Inject constructor(
         settings.current().repoUrls.map(::dirFor).filter { it.isDirectory }.map(::KnowledgeBase)
     }
 
-    suspend fun syncAll() {
+    /**
+     * Syncs every knowledge base at once. Two addresses that end in the same
+     * folder are synced once, by the first, so no two syncs touch one clone.
+     */
+    suspend fun syncAll() = coroutineScope {
         val current = settings.current()
-        for (url in current.repoUrls) sync(url, current)
+        current.repoUrls.distinctBy(::dirFor).map { url -> launch { sync(url, current) } }.joinAll()
     }
 
     suspend fun conflicts(name: String): List<ConflictFile> = withContext(Dispatchers.IO) {

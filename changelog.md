@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.20.16 - 16th November 2026
+
+- Updated `data/KbRepository.kt` so knowledge bases are synced and
+  checked at the same time instead of one after another: `syncAll()`
+  and `list()` run one coroutine per knowledge base. Two addresses that
+  end in the same folder are synced once, so two syncs never work on
+  one clone at the same time.
+
+
 ### v0.20.15 - 16th November 2026
 
 - Fixed the GitHub token being decrypted with the Android Keystore on

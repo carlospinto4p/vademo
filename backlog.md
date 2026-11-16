@@ -76,8 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] `data/KbRepository.kt:50-59,69-72`: knowledge bases are synced and
-  inspected one after another; run them concurrently. LOW-MED, effort S.
 - [ ] `kb/KnowledgeBase.kt:36-37,62-63`: `notesIn` and `summary` read whole
   files to get the frontmatter. Read up to the closing `---`, or use the
   cached index. LOW-MED, effort S.
