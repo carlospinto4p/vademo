@@ -1,6 +1,5 @@
 package com.cpinto.vademo.ui.graph
 
-import androidx.compose.foundation.layout.size
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

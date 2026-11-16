@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.20.28 - 16th November 2026
+
+- Removed an unused Compose import from `GraphViewModel`.
+- Dropped the backlog item asking the map of notes to read files on
+  `Dispatchers.IO`: it already does, inside `KbRepository.index`. What
+  runs on `Dispatchers.Default` is building and laying out the map, which
+  is computation.
+
+
 ### v0.20.27 - 16th November 2026
 
 - A saved GitHub token that the phone can no longer decrypt is now

@@ -97,8 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] `ui/graph/GraphScreen.kt:79` reads files on `Dispatchers.Default`;
-  every other view model uses `Dispatchers.IO`. LOW, effort S.
 
 #### Test coverage
 
