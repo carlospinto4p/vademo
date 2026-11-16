@@ -1,6 +1,20 @@
 ## Changelog - vademo
 
 
+### v0.20.27 - 16th November 2026
+
+- A saved GitHub token that the phone can no longer decrypt is now
+  reported instead of silently read as empty:
+  - `Settings.tokenUnreadable`: set when a token is stored but cannot be
+    decrypted.
+  - Home's setup card says the saved token can no longer be read and asks
+    for it again, instead of the general "add a GitHub token" text.
+  - Settings marks the token field as an error with the same message
+    until a new token is typed.
+- Moved reading `Settings` from storage into `settingsFrom`, which JVM
+  tests can call; added `StoredSettingsTest` (3 tests).
+
+
 ### v0.20.26 - 16th November 2026
 
 - Sorted the import blocks of every Kotlin file into one order (other

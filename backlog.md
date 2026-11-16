@@ -97,10 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] `data/TokenCipher.kt:26-31`: if the Keystore key is lost, `decrypt`
-  returns null and the token silently becomes empty; the user only sees
-  the general "add your token" card. Say the stored token could not be
-  read. LOW, effort S.
 - [ ] `ui/graph/GraphScreen.kt:79` reads files on `Dispatchers.Default`;
   every other view model uses `Dispatchers.IO`. LOW, effort S.
 

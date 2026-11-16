@@ -57,10 +57,15 @@ fun SettingsScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
                 value = form.token,
                 onValueChange = { v -> viewModel.update { it.copy(token = v) } },
                 label = { Text("GitHub access token") },
+                isError = form.tokenUnreadable && form.token.isEmpty(),
                 supportingText = {
                     Text(
-                        "Only for private repositories and for sending edits. Needs the repo scope " +
-                            "(classic) or Contents: Read and write (fine-grained).",
+                        if (form.tokenUnreadable && form.token.isEmpty()) {
+                            "The saved token can no longer be read on this phone. Enter it again."
+                        } else {
+                            "Only for private repositories and for sending edits. Needs the repo scope " +
+                                "(classic) or Contents: Read and write (fine-grained)."
+                        },
                     )
                 },
                 visualTransformation = PasswordVisualTransformation(),

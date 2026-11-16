@@ -17,6 +17,7 @@ data class SettingsForm(
     val authorName: String = "",
     val authorEmail: String = "",
     val repos: String = "",
+    val tokenUnreadable: Boolean = false,
 )
 
 @HiltViewModel
@@ -37,6 +38,7 @@ class SettingsViewModel @Inject constructor(
                 authorName = current.authorName,
                 authorEmail = current.authorEmail,
                 repos = current.repoUrls.joinToString("\n"),
+                tokenUnreadable = current.tokenUnreadable,
             )
         }
     }

@@ -20,6 +20,7 @@ data class HomeState(
     val syncStates: Map<String, SyncState> = emptyMap(),
     val hasRepos: Boolean = true,
     val canWrite: Boolean = true,
+    val tokenUnreadable: Boolean = false,
 ) {
     val canSync: Boolean
         get() = hasRepos && syncStates.values.none { it == SyncState.Running }
@@ -35,7 +36,7 @@ class HomeViewModel @Inject constructor(
 
     val state: StateFlow<HomeState> =
         combine(kbs, repository.syncStates, settings.settings) { kbs, syncStates, current ->
-            HomeState(kbs, syncStates, current.canSync, current.canWrite)
+            HomeState(kbs, syncStates, current.canSync, current.canWrite, current.tokenUnreadable)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
 
     fun refresh() {

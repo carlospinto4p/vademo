@@ -20,6 +20,11 @@ data class Settings(
     val authorName: String,
     val authorEmail: String,
     val repoUrls: List<String>,
+    /**
+     * A token is stored but this phone can no longer decrypt it, for example
+     * after its Keystore key was reset. [token] is then empty.
+     */
+    val tokenUnreadable: Boolean = false,
 ) {
     /** Downloading a public knowledge base needs only an address to clone. */
     val canSync: Boolean
@@ -47,7 +52,7 @@ class SettingsRepository @Inject constructor(
     private val token = DecryptOnce(cipher::decrypt)
 
     /** Emits only when a field of [Settings] changed, not on a text size or saved search. */
-    val settings: Flow<Settings> = context.dataStore.data.map(::toSettings).distinctUntilChanged()
+    val settings: Flow<Settings> = context.dataStore.data.map { settingsFrom(it, token::plain) }.distinctUntilChanged()
 
     suspend fun current(): Settings = settings.first()
 
@@ -86,15 +91,7 @@ class SettingsRepository @Inject constructor(
         }
     }
 
-    private fun toSettings(prefs: Preferences) = Settings(
-        token = prefs[TOKEN]?.takeIf { it.isNotEmpty() }?.let(token::plain).orEmpty(),
-        authorName = prefs[AUTHOR_NAME].orEmpty(),
-        authorEmail = prefs[AUTHOR_EMAIL].orEmpty(),
-        repoUrls = prefs[REPOS]?.lines()?.map { it.trim() }?.filter { it.isNotEmpty() }
-            ?: Settings.DEFAULT_REPOS,
-    )
-
-    private companion object {
+    internal companion object {
         val TOKEN = stringPreferencesKey("github_token")
         val AUTHOR_NAME = stringPreferencesKey("author_name")
         val AUTHOR_EMAIL = stringPreferencesKey("author_email")
@@ -102,6 +99,20 @@ class SettingsRepository @Inject constructor(
         val TEXT_SCALE = floatPreferencesKey("note_text_scale")
         val SAVED_QUERIES = stringPreferencesKey("saved_queries")
     }
+}
+
+/** Reads [Settings] from what is stored; [decrypt] returns `null` for a token it cannot read. */
+internal fun settingsFrom(prefs: Preferences, decrypt: (String) -> String?): Settings {
+    val stored = prefs[SettingsRepository.TOKEN]?.takeIf { it.isNotEmpty() }
+    val token = stored?.let(decrypt)
+    return Settings(
+        token = token.orEmpty(),
+        authorName = prefs[SettingsRepository.AUTHOR_NAME].orEmpty(),
+        authorEmail = prefs[SettingsRepository.AUTHOR_EMAIL].orEmpty(),
+        repoUrls = prefs[SettingsRepository.REPOS]?.lines()?.map { it.trim() }?.filter { it.isNotEmpty() }
+            ?: Settings.DEFAULT_REPOS,
+        tokenUnreadable = stored != null && token == null,
+    )
 }
 
 /**

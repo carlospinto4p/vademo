@@ -71,8 +71,13 @@ fun HomeScreen(
                     Card(Modifier.fillMaxWidth().padding(16.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
-                                "Public knowledge bases sync without setup. To sync a private one, " +
-                                    "or to send your edits to GitHub, add a GitHub token, name and email.",
+                                if (state.tokenUnreadable) {
+                                    "The saved GitHub token can no longer be read on this phone. " +
+                                        "Enter it again in Settings to sync private knowledge bases and send edits."
+                                } else {
+                                    "Public knowledge bases sync without setup. To sync a private one, " +
+                                        "or to send your edits to GitHub, add a GitHub token, name and email."
+                                },
                             )
                             Button(onClick = onSettings) { Text("Open settings") }
                         }
