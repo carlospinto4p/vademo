@@ -1,6 +1,25 @@
 ## Changelog - vademo
 
 
+### v0.20.36 - 17th November 2026
+
+- Added tests where the 2026-11-15 scan found coverage missing:
+  - `DiagramDocumentTest`: the check's other eight messages (an empty
+    node or legend id, a ref to line 0, an empty folder, a legend longer
+    than eight colours, a repeated legend or edge id, a parent that is
+    not a node), and ungrouping something that is not a group, which
+    leaves the diagram as it was.
+  - `KnowledgeBaseTest`: `fileAt` on a path inside, `foldersIn` on a
+    topic folder, and two folders holding the same note name, of which
+    one is found.
+  - `GitSyncTest`: resolving a conflict now checks the merge commit's
+    message, author and both parents; a commit of more than three notes
+    is named by how many.
+- `ReadAndEditTest` checks that saving sets `updated:` (and a new note's
+  `created:`) to today, and accepts the next day so a run across
+  midnight passes.
+
+
 ### v0.20.35 - 17th November 2026
 
 - Added `SettingsStorageTest`, device tests of the settings store with

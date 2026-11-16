@@ -265,4 +265,35 @@ class DiagramDocumentTest {
         ).forEach { assertTrue(it in problems, "missing: $it in $problems") }
         assertEquals(emptyList<String>(), doc.problems())
     }
+
+    @Test
+    fun `the check finds empty ids, line 0, empty folders, a long legend and repeated ids`() {
+        val legend = (1..9).joinToString(", ") { """{ "id": "c$it", "label": "C$it" }""" }
+        val broken = DiagramDocument.parse(
+            """{ "legend": [$legend, { "id": "", "label": "Blank" }, { "id": "c1", "label": "Again" }],
+                 "nodes": [
+                   { "id": "" },
+                   { "id": "a", "ref": { "path": "src/a.kt", "line": 0 }, "folder": " " },
+                   { "id": "b", "parent": "gone" }
+                 ],
+                 "edges": [{ "id": "e", "source": "a", "target": "b" }, { "id": "e", "source": "b", "target": "a" }] }""",
+        )
+        val problems = broken.problems()
+        listOf(
+            "a node has an empty id",
+            "node \"a\" has a ref to line 0, and lines are counted from 1",
+            "node \"a\" has an empty folder",
+            "the legend has 11 entries, and there are only 8 colours",
+            "a legend entry has an empty id",
+            "legend id \"c1\" is used twice",
+            "node \"b\" names parent \"gone\", which is not a node",
+            "edge id \"e\" is used twice",
+        ).forEach { assertTrue(it in problems, "missing: $it in $problems") }
+    }
+
+    @Test
+    fun `ungrouping something that is not a group changes nothing`() {
+        assertEquals(doc, doc.ungroup("nowhere"))
+        assertEquals(doc, doc.ungroup("api"))
+    }
 }

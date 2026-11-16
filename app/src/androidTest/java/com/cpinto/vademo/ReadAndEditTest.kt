@@ -28,6 +28,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
+import java.time.LocalDate
 
 /**
  * The reading and editing workflow on a real device, from the home screen:
@@ -105,6 +106,7 @@ class ReadAndEditTest {
         }
         compose.onNode(hasText("Seven criteria.", substring = true))
             .performTextReplacement(note("Business idea scorecard", "concept", "Eight criteria now."))
+        val before = LocalDate.now()
         compose.onNodeWithContentDescription("Save").performClick()
 
         compose.waitUntil(5_000) {
@@ -112,9 +114,13 @@ class ReadAndEditTest {
         }
         val saved = File(kb, "ideas/business-idea-scorecard.md").readText()
         assertTrue(saved, saved.contains("Eight criteria now."))
-        // Saving refreshes the note's updated date, per the knowledge-base convention.
-        assertTrue(saved, !saved.contains("updated: 2026-01-01"))
+        // Saving sets the note's updated date to today, per the knowledge-base convention.
+        assertTrue(saved, savedOn(saved, "updated", before))
     }
+
+    /** Whether [field] in [text] holds the date the save ran: [before] or a later day, if it ran past midnight. */
+    private fun savedOn(text: String, field: String, before: LocalDate): Boolean =
+        listOf(before, LocalDate.now()).any { text.contains("$field: $it") }
 
     @Test
     fun aTableGivesItsLongColumnTheWidth() {
@@ -159,6 +165,8 @@ class ReadAndEditTest {
         }
 
         compose.onNode(hasSetTextAction() and hasText("Tyfold")).performTextReplacement("Pricing: one-off or yearly")
+        // The dates are filled in from here, when the note is made, to Save.
+        val before = LocalDate.now()
         compose.onNodeWithText("Create").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("New note")).fetchSemanticsNodes().isNotEmpty() &&
@@ -173,9 +181,8 @@ class ReadAndEditTest {
         }
 
         val saved = file.readText()
-        val today = java.time.LocalDate.now().toString()
         assertTrue(saved, saved.contains("title: \"Pricing: one-off or yearly\""))
-        assertTrue(saved, saved.contains("created: $today") && saved.contains("updated: $today"))
+        assertTrue(saved, savedOn(saved, "created", before) && savedOn(saved, "updated", before))
         assertTrue(saved, saved.contains("Hub: [[ideas]]"))
     }
 

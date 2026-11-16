@@ -100,21 +100,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Test coverage
 
-- [ ] `kb/DiagramDocument.kt` `problems()` is partly tested; untested
-  messages at :311,317-319,322-323,331-332,344,364. `ungroup` (:155) uses
-  `first`, which throws on an unknown group id. LOW, effort S.
-- [ ] `kb/KnowledgeBase.kt`: no direct tests of `foldersIn` on a subfolder,
-  `fileAt` (including `../`), or two folders holding the same note name
-  (`resolve`/`allNotes`, :43,60, keep whichever the walk reaches last).
-  LOW, effort S.
-- [ ] `app/src/test/java/com/cpinto/vademo/git/GitSyncTest.kt:189`:
-  resolving a conflict checks only the `Synced` type, not the push, the
-  merge commit message or its two parents; `names()` with more than three
-  files is untested. LOW, effort S.
-- [ ] `app/src/androidTest/java/com/cpinto/vademo/ReadAndEditTest.kt:110`
-  checks the old `updated:` date is gone, not that it is today; :170-172
-  reads `LocalDate.now()` after saving, so a run across midnight fails.
-  LOW, effort S.
 - [ ] `GitOnDeviceTest` uses only a local file remote: HTTPS with
   credentials and a conflict on a device are never tested, though the
   comment at `ReadAndEditTest.kt:33` suggests otherwise. LOW, effort L.

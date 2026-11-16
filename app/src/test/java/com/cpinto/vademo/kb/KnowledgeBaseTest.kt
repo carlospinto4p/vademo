@@ -2,6 +2,7 @@ package com.cpinto.vademo.kb
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
@@ -169,6 +170,38 @@ class KnowledgeBaseTest {
         note("ideas/ideas.md", "Ideas")
         link("ideas/alias.md", File(root, "ideas/ideas.md"))
         assertEquals(listOf("ideas", "alias"), KnowledgeBase(root).notesIn(File(root, "ideas")).map { it.name })
+    }
+
+    @Test
+    fun `fileAt gives the file at a path inside the knowledge base`() {
+        note("ideas/tyfold.md", "Tyfold")
+        val kb = KnowledgeBase(root)
+        assertEquals(File(root, "ideas/tyfold.md"), kb.fileAt("ideas/tyfold.md"))
+        // A ../ that comes back inside is still inside.
+        assertEquals(File(root, "ideas/../ideas/tyfold.md"), kb.fileAt("ideas/../ideas/tyfold.md"))
+    }
+
+    @Test
+    fun `folders inside a topic folder are listed with their note counts`() {
+        note("ideas/ideas.md", "Ideas")
+        note("ideas/markets/a.md", "A")
+        note("ideas/markets/b.md", "B")
+        note("ideas/archive/old.md", "Old")
+        note("ideas/.hidden/x.md", "Hidden")
+        val folders = KnowledgeBase(root).foldersIn(File(root, "ideas"))
+        assertEquals(listOf("archive" to 1, "markets" to 2), folders.map { it.name to it.noteCount })
+    }
+
+    @Test
+    fun `two folders holding the same note name resolve to one of them`() {
+        // The layout keeps names unique; when a repository breaks that, one is found, not an error.
+        note("ideas/raft.md", "Raft idea")
+        note("consensus/raft.md", "Raft")
+        val kb = KnowledgeBase(root)
+        val both = setOf(File(root, "ideas/raft.md"), File(root, "consensus/raft.md"))
+        assertTrue(kb.resolve("raft") in both)
+        assertEquals(kb.resolve("raft"), kb.allNotes().getValue("raft"))
+        assertEquals(setOf("raft"), kb.allNotes().keys)
     }
 
     @Test

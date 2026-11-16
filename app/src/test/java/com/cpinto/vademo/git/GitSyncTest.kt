@@ -226,6 +226,28 @@ class GitSyncTest {
         assertInstanceOf(SyncOutcome.Synced::class.java, outcome)
         assertFalse(GitSync.isMerging(phone))
         assertEquals("PHONE and COMPUTER\n", computerPulls("ideas/tyfold.md"))
+
+        Git.open(computer).use { git ->
+            val merge = git.log().setMaxCount(1).call().single()
+            assertEquals("note: merge phone and GitHub edits to tyfold", merge.fullMessage)
+            assertEquals("Phone", merge.authorIdent.name)
+            // Both sides' commits are its parents, so neither edit is lost from history.
+            val parents = merge.parents.map { git.repository.parseCommit(it).fullMessage }.toSet()
+            assertEquals(setOf("note: edit tyfold from phone", "note: computer edit"), parents)
+        }
+    }
+
+    @Test
+    fun `a commit of more than three notes is named by how many`() {
+        sync.sync(remoteUrl, phone)
+        for (name in listOf("a", "b", "c", "d")) File(phone, "ideas/$name.md").writeText("$name\n")
+
+        sync.sync(remoteUrl, phone)
+
+        Git.open(computer).use { git ->
+            git.pull().call()
+            assertEquals("note: edit 4 notes from phone", git.log().setMaxCount(1).call().single().fullMessage)
+        }
     }
 
     @Test
