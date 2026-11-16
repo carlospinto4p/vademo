@@ -100,23 +100,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Test coverage
 
-- [ ] Settings storage untested: token encrypt/decrypt round trip, trimming
-  on save, empty URL list vs missing value falling back to `DEFAULT_REPOS`
-  (`data/SettingsRepository.kt:77-92`). Needs a device test for the
-  Keystore. MED, effort M.
-- [ ] `app/src/test/java/com/cpinto/vademo/kb/KnowledgeBaseTest.kt:76`:
-  `noteAt("../outside.md")` passes only because the file does not exist;
-  the canonical-path guard (`kb/KnowledgeBase.kt:52`) is never reached.
-  Create the file outside the root. MED, effort S.
-- [ ] `app/src/androidTest/java/com/cpinto/vademo/DiagramEditTest.kt:52,165`:
-  `@Before` clears `filesDir/kb` but not `filesDir/diagram-moves`, so a
-  file left by an earlier run satisfies the drag test's wait before any
-  drag. MED, effort S.
-- [ ] Device tests never reset the settings store
-  (`ReadAndEditTest.kt:46-48,380-405`, `DiagramEditTest.kt:50-53`): saved
-  Settings hide the default knowledge base, and a failed saved-search test
-  leaves "Scoring notes" saved so the next run passes early. Clear it in
-  `@Before`. MED, effort S.
 - [ ] `kb/DiagramDocument.kt` `problems()` is partly tested; untested
   messages at :311,317-319,322-323,331-332,344,364. `ungroup` (:155) uses
   `first`, which throws on an unknown group id. LOW, effort S.

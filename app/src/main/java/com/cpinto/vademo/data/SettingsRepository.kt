@@ -91,6 +91,14 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    /**
+     * Forgets everything stored, as a fresh install has it. For device tests,
+     * which share one settings store across a run.
+     */
+    internal suspend fun clear() {
+        context.dataStore.edit { it.clear() }
+    }
+
     internal companion object {
         val TOKEN = stringPreferencesKey("github_token")
         val AUTHOR_NAME = stringPreferencesKey("author_name")

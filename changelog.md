@@ -1,6 +1,27 @@
 ## Changelog - vademo
 
 
+### v0.20.35 - 17th November 2026
+
+- Added `SettingsStorageTest`, device tests of the settings store with
+  the real Keystore: the token read back and not stored as typed,
+  trimming on save, a blank token stored as none, and an empty list of
+  addresses kept empty while nothing saved gives the public example.
+- Added `SettingsRepository.clear()`, internal, so device tests start
+  from an empty settings store.
+- Device tests now reset what an earlier run left behind:
+  - `ReadAndEditTest` and `DiagramEditTest` clear the settings store, so
+    saved Settings no longer hide the default knowledge base and a saved
+    search left by a failed run no longer lets the next run pass early.
+  - `DiagramEditTest` clears `diagram-moves/`, so the drag test waits
+    for this run's drag.
+- `StoredSettingsTest`: added reading addresses, with no stored value,
+  an empty one, and lines with spaces and blanks.
+- `KnowledgeBaseTest`: `noteAt("../outside.md")` now runs with that file
+  present, so the check that refuses paths outside the knowledge base is
+  what returns nothing.
+
+
 ### v0.20.34 - 17th November 2026
 
 - Fixed sync carrying on with the old repository after an address in

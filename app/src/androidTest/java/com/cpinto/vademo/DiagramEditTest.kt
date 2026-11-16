@@ -15,6 +15,8 @@ import androidx.compose.ui.test.swipe
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.cpinto.vademo.data.SettingsRepository
+import kotlinx.coroutines.runBlocking
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult
 import org.junit.After
@@ -48,8 +50,13 @@ class DiagramEditTest {
 
     @Before
     fun writeKnowledgeBase() {
-        val filesDir = InstrumentationRegistry.getInstrumentation().targetContext.filesDir
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val filesDir = context.filesDir
         File(filesDir, "kb").deleteRecursively()
+        // A place dragged in an earlier run would satisfy the drag test before any drag.
+        File(filesDir, "diagram-moves").deleteRecursively()
+        // Saved Settings could name other knowledge bases and hide this one.
+        runBlocking { SettingsRepository(context).clear() }
         kb = File(filesDir, "kb/kb-distributed-systems")
         File(kb, "index.md").apply { parentFile!!.mkdirs() }.writeText("---\ntitle: Index\n---\n\nHome.\n")
         diagram.apply { parentFile!!.mkdirs() }.writeText(flow("Client"))

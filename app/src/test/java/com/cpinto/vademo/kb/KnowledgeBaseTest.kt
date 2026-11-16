@@ -89,6 +89,12 @@ class KnowledgeBaseTest {
         val kb = KnowledgeBase(root)
         assertNull(kb.noteAt("scripts/run.py"))
         assertNull(kb.noteAt("other/raft.md"))
+    }
+
+    @Test
+    fun `noteAt names nothing outside the knowledge base, even a note that exists there`() {
+        val kb = KnowledgeBase(File(root, "kb").apply { mkdirs() })
+        File(root, "outside.md").writeText("---\ntitle: Outside\n---\nbody")
         assertNull(kb.noteAt("../outside.md"))
     }
 

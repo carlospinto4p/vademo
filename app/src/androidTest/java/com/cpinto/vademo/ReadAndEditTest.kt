@@ -18,6 +18,8 @@ import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.cpinto.vademo.data.SettingsRepository
+import kotlinx.coroutines.runBlocking
 import org.eclipse.jgit.api.Git
 import org.junit.After
 import org.junit.Assert.assertTrue
@@ -44,8 +46,12 @@ class ReadAndEditTest {
 
     @Before
     fun writeKnowledgeBase() {
-        val filesDir = InstrumentationRegistry.getInstrumentation().targetContext.filesDir
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val filesDir = context.filesDir
         File(filesDir, "kb").deleteRecursively()
+        // Saved Settings could hide the default knowledge base, and a search
+        // saved by an earlier failed run would let the saved-search test pass early.
+        runBlocking { SettingsRepository(context).clear() }
         // Named like one of the default repositories, so the home screen lists it.
         kb = File(filesDir, "kb/kb-distributed-systems")
         write("index.md", note("Business", "hub", "- [[ideas]]"))
