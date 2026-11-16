@@ -97,11 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] Imports: a stray `import com.cpinto.vademo.ui.BackForward` sits
-  above the sorted imports in five screens (Graph, Browse, DiagramList,
-  Search, Note); `DiagramListScreen.kt:31-52` and
-  `NoteScreen.kt:57` are unsorted; fully qualified names inline at
-  `DiagramViewModel.kt:249,319`. LOW, effort S.
 - [ ] `data/TokenCipher.kt:26-31`: if the Keystore key is lost, `decrypt`
   returns null and the token silently becomes empty; the user only sees
   the general "add your token" card. Say the stored token could not be

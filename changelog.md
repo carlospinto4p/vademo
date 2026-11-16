@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.20.26 - 16th November 2026
+
+- Sorted the import blocks of every Kotlin file into one order (other
+  packages, then `java`, `javax`, `kotlin`). Ten files had imports out of
+  place, among them the `BackForward` import at the top of five screens.
+- `DiagramViewModel` imports `DiagramClip` instead of naming its package
+  inline.
+
+
 ### v0.20.25 - 16th November 2026
 
 - Fixed the two "Java type mismatch: inferred type is 'Int?'" compiler

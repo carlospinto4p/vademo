@@ -8,6 +8,7 @@ import com.cpinto.vademo.data.DiagramClipboard
 import com.cpinto.vademo.data.DiagramMoves
 import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.kb.Diagram
+import com.cpinto.vademo.kb.DiagramClip
 import com.cpinto.vademo.kb.DiagramDocument
 import com.cpinto.vademo.kb.Position
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -305,7 +306,7 @@ class DiagramViewModel @Inject constructor(
     }
 
     fun cut(ids: Set<String>) {
-        var clip: com.cpinto.vademo.kb.DiagramClip? = null
+        var clip: DiagramClip? = null
         edit { d -> d.cut(ids)?.also { clip = it.second }?.first ?: d }
         clip?.let { c ->
             clipboard.clip = c

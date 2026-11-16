@@ -1,6 +1,5 @@
 package com.cpinto.vademo.ui.browse
 
-import com.cpinto.vademo.ui.BackForward
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -55,6 +54,7 @@ import com.cpinto.vademo.kb.Folder
 import com.cpinto.vademo.kb.Health
 import com.cpinto.vademo.kb.IndexedNote
 import com.cpinto.vademo.kb.NoteTemplate
+import com.cpinto.vademo.ui.BackForward
 
 /** The ways to list a knowledge base at its top level (`docs/kb-views-and-queries.md`, "Views"). */
 private enum class View(val label: String) {

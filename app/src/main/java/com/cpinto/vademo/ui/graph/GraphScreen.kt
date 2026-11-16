@@ -1,6 +1,5 @@
 package com.cpinto.vademo.ui.graph
 
-import com.cpinto.vademo.ui.BackForward
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +30,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.kb.Layout
 import com.cpinto.vademo.kb.NoteGraph
+import com.cpinto.vademo.ui.BackForward
 
 /** One layout unit (the preferred gap between linked notes) on screen. */
 internal val UNIT = 180.dp

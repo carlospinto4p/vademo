@@ -11,8 +11,8 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.cpinto.vademo.kb.WikiLinks
 import com.cpinto.vademo.ui.note.NoteTable
-import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.compose.components.markdownComponents
+import com.mikepenz.markdown.m3.Markdown
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test

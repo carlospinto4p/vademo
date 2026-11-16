@@ -1,6 +1,5 @@
 package com.cpinto.vademo.ui.note
 
-import com.cpinto.vademo.ui.BackForward
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.kb.WikiLinks
+import com.cpinto.vademo.ui.BackForward
 import com.cpinto.vademo.ui.diagram.DiagramCard
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.Markdown
