@@ -45,9 +45,7 @@ class LinkLineBreakTest {
                 modifier = Modifier.width(200.dp),
             )
         }
-        compose.waitForIdle()
-
-        val layouts = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult))
+        fun layouts() = compose.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult))
             .fetchSemanticsNodes()
             .mapNotNull { node ->
                 val results = mutableListOf<TextLayoutResult>()
@@ -55,7 +53,11 @@ class LinkLineBreakTest {
                 results.firstOrNull()
             }
             .filter { name in it.layoutInput.text.text.replace("​", "") }
-        assertTrue("expected the paragraph and the table cell, found ${layouts.size}", layouts.size >= 2)
+
+        // The markdown is parsed off the main thread, so waiting for idle can
+        // still find nothing drawn: wait for the text itself.
+        compose.waitUntil(5_000) { layouts().size >= 2 }
+        val layouts = layouts()
 
         for (layout in layouts) {
             val text = layout.layoutInput.text.text

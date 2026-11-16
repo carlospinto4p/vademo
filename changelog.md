@@ -1,6 +1,14 @@
 ## Changelog - vademo
 
 
+### v0.20.22 - 16th November 2026
+
+- Fixed `LinkLineBreakTest` failing now and then with "found 0": the
+  markdown renderer (0.45.0) parses on `Dispatchers.Default`, which the
+  Compose test's idle wait does not cover, so it now waits for the text
+  to be drawn.
+
+
 ### v0.20.21 - 16th November 2026
 
 - Fixed half-written files: every file the app writes is now written
