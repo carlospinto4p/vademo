@@ -83,8 +83,7 @@ internal fun DiagramDialogs(dialog: DiagramDialog, viewModel: DiagramViewModel, 
             selected = dialog.ids.map { doc.fieldsOf(it)?.status }.distinct().singleOrNull(),
             onDismiss = close,
         ) { status ->
-            viewModel.edit { it.setStatus(dialog.ids, status) }
-            viewModel.clearSelection()
+            viewModel.editBoxes(dialog.ids) { d, ids -> d.setStatus(ids, status) }
             close()
         }
         is DiagramDialog.Category -> CategoryChooser(dialog.ids, doc, viewModel, close)
@@ -97,8 +96,7 @@ internal fun DiagramDialogs(dialog: DiagramDialog, viewModel: DiagramViewModel, 
                 selected = parents.singleOrNull()?.let { p -> doc.diagram.nodes.firstOrNull { it.id == p } },
                 onDismiss = close,
             ) { group ->
-                viewModel.edit { it.moveToGroup(dialog.ids, group?.id) }
-                viewModel.clearSelection()
+                viewModel.editBoxes(dialog.ids) { d, ids -> d.moveToGroup(ids, group?.id) }
                 close()
             }
         }
@@ -288,10 +286,6 @@ private fun CategoryChooser(ids: Set<String>, doc: DiagramDocument, viewModel: D
     val colours = diagramColours()
     var fresh by remember { mutableStateOf("") }
     val full = diagram.legend.size >= Diagram.LEGEND_HUES.size
-    val done = {
-        viewModel.clearSelection()
-        close()
-    }
     Choice(
         title = "Category",
         options = listOf<String?>(null) + diagram.legend.map { it.id },
@@ -310,14 +304,16 @@ private fun CategoryChooser(ids: Set<String>, doc: DiagramDocument, viewModel: D
                     modifier = Modifier.weight(1f),
                 )
                 TextButton(enabled = !full && fresh.isNotBlank(), onClick = {
-                    viewModel.edit { d -> d.addLegendEntry(fresh)?.let { (added, entry) -> added.setCategory(ids, entry) } ?: d }
-                    done()
+                    viewModel.editBoxes(ids) { d, boxes ->
+                        d.addLegendEntry(fresh)?.let { (added, entry) -> added.setCategory(boxes, entry) } ?: d
+                    }
+                    close()
                 }) { Text("Add") }
             }
         },
     ) { entry ->
-        viewModel.edit { it.setCategory(ids, entry) }
-        done()
+        viewModel.editBoxes(ids) { d, boxes -> d.setCategory(boxes, entry) }
+        close()
     }
 }
 

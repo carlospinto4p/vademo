@@ -84,14 +84,17 @@ class KnowledgeBase(val root: File) {
         require(isInside(root, it)) { "$relativePath is outside ${root.name}" }
     }
 
+    /** The folder diagrams live in, `.tyfold-graphs/`. It may not exist yet. */
+    val diagramFolder: File get() = File(root, Diagram.FOLDER)
+
     /**
-     * The file of the diagram called [name] in `.tyfold-graphs/`, or null when
+     * The file of the diagram called [name] in [diagramFolder], or null when
      * [name] is not a plain file name. Names come from notes, which come from
      * GitHub, so a `../` in one must not reach a file outside that folder.
      */
     fun diagramFile(name: String): File? =
         if (name.isBlank() || '/' in name || '\\' in name || '\u0000' in name) null
-        else File(File(root, Diagram.FOLDER), "$name.json").takeIf { isInside(root, it) }
+        else File(diagramFolder, "$name.json").takeIf { isInside(root, it) }
 
     /**
      * Writes [text] to [file] whole (see [writeAtomically]). The temporary

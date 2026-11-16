@@ -8,6 +8,7 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,8 +27,15 @@ class DiagramMoves internal constructor(private val root: File) {
 
     private fun fileFor(kb: String, diagram: String) = File(File(root, kb), "$diagram.json")
 
-    fun read(kb: String, diagram: String): Map<String, Position> =
-        runCatching { Json.decodeFromString(serializer, fileFor(kb, diagram).readText()) }.getOrDefault(emptyMap())
+    /** The saved places, or none when nothing was dragged or the file cannot be read. */
+    fun read(kb: String, diagram: String): Map<String, Position> = try {
+        Json.decodeFromString(serializer, fileFor(kb, diagram).readText())
+    } catch (e: IOException) {
+        emptyMap()
+    } catch (e: IllegalArgumentException) {
+        // What kotlinx.serialization throws for a file that is not a map of places.
+        emptyMap()
+    }
 
     fun write(kb: String, diagram: String, moves: Map<String, Position>) {
         val file = fileFor(kb, diagram)

@@ -3,6 +3,7 @@ package com.cpinto.vademo.kb
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -74,6 +75,14 @@ class DiagramDocumentTest {
     @Test
     fun `a file tyfold wrote is written back byte for byte`() {
         assertEquals(tyfoldText, doc.toText())
+    }
+
+    @Test
+    fun `a file of the wrong shape fails when parsed, not when first drawn`() {
+        // Valid JSON, but not a diagram: the screen must get an error, not crash later.
+        for (text in listOf("""{ "nodes": 5 }""", """{ "edges": [{ "source": 1 }] }""", "[]", "{ not json")) {
+            assertThrows(IllegalArgumentException::class.java, { DiagramDocument.parse(text) }, text)
+        }
     }
 
     @Test

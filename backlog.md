@@ -97,20 +97,10 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] `KnowledgeBase.diagramFile(name)` exists since v0.20.3 and the
-  diagram screen and note embeds use it; `createDiagram` and `diagramsIn`
-  (`kb/Diagram.kt:134-147`) still build the `.tyfold-graphs` path by hand.
-  Route them through it too. LOW, effort S.
-- [ ] View models live in their `*Screen.kt` for eight screens but in
-  their own file for Home and Diagram. Pick one convention. LOW, effort M.
-- [ ] `ui/diagram/DiagramViewModel.kt:98-99`: `parse(text!!)` inside
-  `runCatching` turns a missing file into "could not be read:
-  NullPointerException". Check null explicitly and catch only parse
-  errors; same broad catches in `kb/Diagram.kt:151` and
-  `data/DiagramMoves.kt:29`. LOW, effort S.
-- [ ] `DiagramViewModel.editSelected` (:197-202) exists for "edit, then end
-  the selection" but `DiagramEditors.kt:86-87,100-101,292` and
-  `DiagramScreen.kt` (`SelectionBar`'s Group) do it by hand. Use it. LOW, effort S.
+- [ ] `kb/DiagramLayout.kt:424-425`: the compiler warns "Java type
+  mismatch: inferred type is 'Int?', but 'Int' was expected" twice
+  (seen 2026-11-16 building v0.20.24). Find which Java call returns a
+  nullable `Int` there and handle the null. LOW, effort S.
 - [ ] Stale docs: `kb/Diagram.kt:12-13` says "vademo only reads it", and
   the "Diagram files" bullet in CLAUDE.md partly says the same; the app
   now edits diagrams. LOW, effort S.

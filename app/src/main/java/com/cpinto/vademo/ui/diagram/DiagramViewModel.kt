@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
 import javax.inject.Inject
 
 data class DiagramState(
@@ -104,18 +106,33 @@ class DiagramViewModel @Inject constructor(
     private suspend fun read(message: String?) {
         val file = file ?: return
         val editable = !repository.needsChoice(kbName)
-        val text = runCatching { file.readText() }.getOrNull()
-        val loaded = runCatching { DiagramDocument.parse(text!!) }
+        val text = readOrNull(file)
+        val (loaded, error) = when (text) {
+            null -> null to "the file is missing or could not be opened."
+            else -> try {
+                DiagramDocument.parse(text) to null
+            } catch (e: IllegalArgumentException) {
+                null to (e.message ?: e.javaClass.simpleName)
+            }
+        }
         seen = text
         undo.clear()
         redo.clear()
         // Read again after a sync too, which may have added or removed the notes boxes link to.
         refNotes = emptyMap()
-        loaded.onSuccess { resolveRefs(refsOf(it.diagram)); doc = it; publish(it, editable, message) }
-            .onFailure { e ->
-                doc = null
-                _state.value = DiagramState(title = name, error = e.message ?: e.javaClass.simpleName, message = message)
-            }
+        doc = loaded
+        if (loaded != null) {
+            resolveRefs(refsOf(loaded.diagram))
+            publish(loaded, editable, message)
+        } else {
+            _state.value = DiagramState(title = name, error = error, message = message)
+        }
+    }
+
+    private fun readOrNull(file: File): String? = try {
+        file.readText()
+    } catch (e: IOException) {
+        null
     }
 
     /**
@@ -231,9 +248,12 @@ class DiagramViewModel @Inject constructor(
 
     fun clearSelection() = _state.update { it.copy(selected = emptySet()) }
 
-    /** Applies [change] to the selected boxes as one undo step, then ends the selection. */
-    fun editSelected(change: (DiagramDocument, Set<String>) -> DiagramDocument) {
-        val ids = _state.value.selected
+    /**
+     * Applies [change] to the boxes [ids] as one undo step, then ends any
+     * selection. [ids] is passed, not read from the selection, because the
+     * same editors also open for one box from its long-press menu.
+     */
+    fun editBoxes(ids: Set<String>, change: (DiagramDocument, Set<String>) -> DiagramDocument) {
         if (ids.isEmpty()) return
         edit { change(it, ids) }
         clearSelection()
@@ -342,7 +362,7 @@ class DiagramViewModel @Inject constructor(
             read(message = "Not saved: this knowledge base has a sync conflict to resolve first.")
             return@withContext
         }
-        val onDisk = runCatching { file.readText() }.getOrNull()
+        val onDisk = readOrNull(file)
         if (onDisk != seen) {
             read(message = "The diagram changed on disk, so your last edit was not saved. It now shows the new version.")
             return@withContext

@@ -257,7 +257,7 @@ private fun SelectionBar(selected: Set<String>, viewModel: DiagramViewModel, onO
                     item("Copy") { viewModel.copy(selected) }
                     item("Cut") { viewModel.cut(selected) }
                     item("Duplicate") { viewModel.duplicate(selected) }
-                    item("Delete") { viewModel.editSelected { d, ids -> d.removeNodes(ids) } }
+                    item("Delete") { viewModel.editBoxes(selected) { d, ids -> d.removeNodes(ids) } }
                 }
             }
         },

@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import java.io.File
+import java.io.IOException
 
 /**
  * A diagram in tyfold's graph format: `.tyfold-graphs/<name>.json` at the root
@@ -132,23 +133,28 @@ fun diagramFileName(title: String, taken: Set<String>): String {
 
 /** Writes a new, empty diagram into the knowledge base at [root] and returns its name. */
 fun createDiagram(root: File, title: String, direction: Diagram.Direction): String {
-    val folder = File(root, Diagram.FOLDER).apply { mkdirs() }
-    require(isInside(root, folder)) { "${Diagram.FOLDER} leads outside the knowledge base" }
+    val kb = KnowledgeBase(root)
+    val folder = kb.diagramFolder.apply { mkdirs() }
     val taken = folder.listFiles().orEmpty().map { it.nameWithoutExtension }.toSet()
     val name = diagramFileName(title, taken)
-    KnowledgeBase(root).write(File(folder, "$name.json"), DiagramDocument.new(title.trim(), direction).toText())
+    val file = requireNotNull(kb.diagramFile(name)) { "${Diagram.FOLDER} leads outside the knowledge base" }
+    kb.write(file, DiagramDocument.new(title.trim(), direction).toText())
     return name
 }
 
 /** The diagrams of the knowledge base at [root], by title. */
 fun diagramsIn(root: File): List<DiagramFile> =
-    File(root, Diagram.FOLDER).listFiles().orEmpty()
+    KnowledgeBase(root).diagramFolder.listFiles().orEmpty()
         .filter { it.isFile && it.extension == "json" && isInside(root, it) }
         .map(::readDiagram)
         .sortedBy { it.title.lowercase() }
 
+/** Reads [file]; a file that cannot be opened or is not a diagram comes back with an error, not an exception. */
 fun readDiagram(file: File): DiagramFile = try {
     DiagramFile(file.nameWithoutExtension, Diagram.parse(file.readText()), null)
-} catch (e: Exception) {
+} catch (e: IOException) {
+    DiagramFile(file.nameWithoutExtension, null, "the file could not be opened.")
+} catch (e: IllegalArgumentException) {
+    // What kotlinx.serialization throws for text that is not a diagram.
     DiagramFile(file.nameWithoutExtension, null, e.message ?: e.javaClass.simpleName)
 }

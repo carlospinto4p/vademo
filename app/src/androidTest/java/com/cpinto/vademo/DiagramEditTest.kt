@@ -171,6 +171,31 @@ class DiagramEditTest {
     }
 
     @Test
+    fun setTheStatusOfOneBoxFromItsMenu() {
+        // Nothing is selected here: the editor must act on the box it was opened for.
+        openDiagram()
+        longPress("Server")
+        compose.onNodeWithText("Status…").performClick()
+        compose.onNodeWithText("changed").performClick()
+        waitForFile { "\"status\": \"changed\"" in it }
+        assertEquals(1, Regex("\"status\"").findAll(diagram.readText()).count())
+    }
+
+    @Test
+    fun setTheStatusOfSelectedBoxesThenTheSelectionEnds() {
+        openDiagram()
+        longPress("Server")
+        compose.onNodeWithText("Select (to act on several, or drag)").performClick()
+        compose.onNodeWithText("Client").performClick()
+        compose.onNodeWithText("2 selected").fetchSemanticsNode()
+        compose.onNodeWithContentDescription("Actions on selected").performClick()
+        compose.onNodeWithText("Status…").performClick()
+        compose.onNodeWithText("added").performClick()
+        waitForFile { Regex("\"status\": \"added\"").findAll(it).count() == 2 }
+        assertTrue(compose.onAllNodes(hasText("2 selected")).fetchSemanticsNodes().isEmpty())
+    }
+
+    @Test
     fun draggingKeepsThePlaceOnThePhoneAndOutOfTheFile() {
         openDiagram()
         val before = diagram.readText()

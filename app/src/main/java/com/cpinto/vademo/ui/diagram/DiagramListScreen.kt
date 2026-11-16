@@ -1,7 +1,6 @@
 package com.cpinto.vademo.ui.diagram
 
 import com.cpinto.vademo.ui.BackForward
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -13,7 +12,6 @@ import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -24,11 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import com.cpinto.vademo.data.KbRepository
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.filled.Add
@@ -40,50 +34,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.cpinto.vademo.kb.Diagram
-import com.cpinto.vademo.kb.DiagramFile
-import com.cpinto.vademo.kb.createDiagram
-import com.cpinto.vademo.kb.diagramsIn
-import kotlinx.coroutines.withContext
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import javax.inject.Inject
-
-@HiltViewModel
-class DiagramListViewModel @Inject constructor(
-    savedState: SavedStateHandle,
-    private val repository: KbRepository,
-) : ViewModel() {
-
-    val kbName: String = checkNotNull(savedState["kb"])
-    private val kb = repository.knowledgeBase(kbName)
-
-    /** Null until read. */
-    private val _diagrams = MutableStateFlow<List<DiagramFile>?>(null)
-    val diagrams: StateFlow<List<DiagramFile>?> = _diagrams
-
-    /** False while a sync conflict waits in this knowledge base, as for editing notes. */
-    private val _editable = MutableStateFlow(false)
-    val editable: StateFlow<Boolean> = _editable
-
-    fun load() {
-        viewModelScope.launch(Dispatchers.IO) {
-            _diagrams.value = diagramsIn(kb.root)
-            _editable.value = !repository.needsChoice(kbName)
-        }
-    }
-
-    /** Writes a new, empty diagram, then [onCreated] with its name so the screen can open it. */
-    fun create(title: String, direction: Diagram.Direction, onCreated: (String) -> Unit) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (repository.needsChoice(kbName)) return@launch
-            val name = runCatching { createDiagram(kb.root, title, direction) }.getOrNull() ?: return@launch
-            withContext(Dispatchers.Main) { onCreated(name) }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

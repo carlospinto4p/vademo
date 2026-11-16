@@ -428,7 +428,13 @@ class DiagramDocument private constructor(val json: JsonObject) {
             prettyPrintIndent = "  "
         }
 
-        fun parse(text: String) = DiagramDocument(Json.parseToJsonElement(text).jsonObject)
+        /**
+         * Reads a diagram file's text. Throws [IllegalArgumentException] (which
+         * kotlinx.serialization's errors are) when it is not a diagram; its
+         * [diagram] is read here too, so a file of the wrong shape fails now
+         * rather than wherever the diagram is first used.
+         */
+        fun parse(text: String) = DiagramDocument(Json.parseToJsonElement(text).jsonObject).also { it.diagram }
 
         /** A new, empty diagram, as tyfold's New ▸ Graph makes one. */
         fun new(title: String, direction: Diagram.Direction = Diagram.Direction.LR) = DiagramDocument(

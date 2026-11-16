@@ -1,6 +1,33 @@
 ## Changelog - vademo
 
 
+### v0.20.24 - 16th November 2026
+
+- Fixed a crash on opening a diagram file that is valid JSON but not a
+  diagram (for example `"nodes": 5`): `DiagramDocument.parse` now reads
+  the diagram too, so the screen shows "could not be read" instead.
+  Regression test in `DiagramDocumentTest`.
+- Narrowed the broad catches when reading diagrams to file errors
+  (`IOException`) and parse errors (`IllegalArgumentException`):
+  - `DiagramViewModel`: a missing file now says "the file is missing or
+    could not be opened" instead of "NullPointerException".
+  - `readDiagram` in `kb/Diagram.kt`.
+  - `DiagramMoves.read`.
+- Added `KnowledgeBase.diagramFolder`; `createDiagram`, `diagramsIn` and
+  `diagramFile` all build the `.tyfold-graphs` path from it.
+- Replaced `DiagramViewModel.editSelected` with `editBoxes(ids, change)`,
+  which edits and then ends the selection. The Status, Category and Move
+  to group editors and the selection's Delete now use it. It takes the
+  boxes as an argument because those editors also open for one box from
+  its long-press menu, with nothing selected. Added two device tests in
+  `DiagramEditTest` for both ways in.
+- Moved every screen's view model into its own `*ViewModel.kt`, as Home
+  and Diagram already had: Browse, Conflict, DiagramList, Edit, Graph,
+  Note, Search and Settings, each with its state classes. No change in
+  behaviour. The graph's box sizes are now `internal`, shared by
+  `GraphScreen.kt` and `GraphViewModel.kt`.
+
+
 ### v0.20.23 - 16th November 2026
 
 - Moved the diagram drawing shared by the diagram screen, diagrams in
