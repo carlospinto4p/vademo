@@ -97,12 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] Note editor (`ui/edit/EditScreen.kt:82-104`): `load` and `save` do
-  unguarded `readText`/`writeText`, so a note deleted by a sync or a disk
-  error crashes the app instead of saying so. `save()` also never
-  re-checks for a conflict that appeared while the note was open (a sync
-  from Home keeps running); the diagram editor does re-check at
-  `ui/diagram/DiagramViewModel.kt:300`. HIGH, effort M.
 - [ ] Writes are not atomic: notes and diagrams use `writeText`
   (`ui/edit/EditScreen.kt:101`, `ui/diagram/DiagramViewModel.kt:311`), so
   a half-written file can be committed by `git add .`;

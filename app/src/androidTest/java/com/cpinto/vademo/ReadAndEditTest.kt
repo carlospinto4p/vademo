@@ -405,6 +405,62 @@ class ReadAndEditTest {
         }
     }
 
+    @Test
+    fun editingANoteDeletedMeanwhileSaysSoInsteadOfCrashing() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+        // A sync removed it while it was on screen.
+        File(kb, "ideas/tyfold.md").delete()
+        compose.onNodeWithContentDescription("Edit").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("This note no longer exists", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Save").assertIsNotEnabled()
+    }
+
+    @Test
+    fun aConflictThatAppearsWhileEditingStopsTheSave() {
+        compose.openKnowledgeBase()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.onNodeWithContentDescription("Edit").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(hasText("Scored with the method below.", substring = true))
+            .performTextReplacement(note("Tyfold desktop app", "idea", "Edited while a sync ran."))
+        // A sync from Home stopped on a conflict in another note meanwhile.
+        conflictInTheIndex()
+        compose.onNodeWithContentDescription("Save").performClick()
+
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Not saved", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        val onDisk = File(kb, "ideas/tyfold.md").readText()
+        assertTrue(onDisk, !onDisk.contains("Edited while a sync ran."))
+        // The edit stays on screen, so it is not lost.
+        compose.onNode(hasText("Edited while a sync ran.", substring = true)).assertIsDisplayed()
+    }
+
+    /** Leaves the knowledge base in git's merging state, with a conflict in `index.md`. */
+    private fun conflictInTheIndex() {
+        val index = File(kb, "index.md")
+        Git.open(kb).use { git ->
+            git.branchCreate().setName("github").call()
+            index.writeText(note("Business", "hub", "Phone."))
+            git.commit().setAll(true).setMessage("phone").setAuthor("Test", "test@example.invalid").call()
+            git.checkout().setName("github").call()
+            index.writeText(note("Business", "hub", "GitHub."))
+            git.commit().setAll(true).setMessage("github").setAuthor("Test", "test@example.invalid").call()
+            git.checkout().setName("main").call()
+            git.merge().include(git.repository.resolve("github")).call()
+        }
+    }
+
     private fun write(path: String, text: String) {
         File(kb, path).apply { parentFile!!.mkdirs() }.writeText(text)
     }

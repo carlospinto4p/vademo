@@ -44,9 +44,9 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
   rather than a genuinely empty folder.
 - **Edit has no save confirmation**: `EditScreen`'s check-mark
   save pops back to the previous screen with no snackbar or
-  transient confirmation that the write succeeded — worth adding
-  given a failed write (disk, permissions) would look identical to
-  a successful one from the user's side. The discard-changes
+  transient confirmation that the write succeeded. A failed write
+  or a conflict found at save time keeps the editor open with an
+  error line, so only success lacks feedback. The discard-changes
   `AlertDialog` on back is a good pattern already in place; saving
   deserves the same closure.
 - **Conflict screen's long diffs have no scroll affordance**: each

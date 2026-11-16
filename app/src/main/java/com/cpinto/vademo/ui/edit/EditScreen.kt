@@ -1,6 +1,7 @@
 package com.cpinto.vademo.ui.edit
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -11,6 +12,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -49,6 +51,8 @@ data class EditState(
     val original: String = "",
     val text: String = "",
     val blocked: Boolean = false,
+    /** Why the note could not be read or saved; the text being edited stays on screen. */
+    val error: String? = null,
 ) {
     val changed: Boolean get() = text != original
 }
@@ -79,14 +83,20 @@ class EditViewModel @Inject constructor(
             // is still waiting on a choice for.
             val blocked = repository.needsChoice(kbName)
             // A new note is written only when saved, so leaving the editor leaves nothing behind.
-            val (original, text) = withContext(Dispatchers.IO) {
-                if (template != null && !file.exists()) {
-                    "" to NoteTemplate.fill(kb.fileAt(template).readText(), title, kb.hubOf(file.parentFile!!), LocalDate.now())
-                } else {
-                    file.readText().let { it to it }
+            val read = withContext(Dispatchers.IO) {
+                runCatching {
+                    if (template != null && !file.exists()) {
+                        "" to NoteTemplate.fill(kb.fileAt(template).readText(), title, kb.hubOf(file.parentFile!!), LocalDate.now())
+                    } else {
+                        check(file.isFile) { "This note no longer exists. A sync may have removed it." }
+                        file.readText().let { it to it }
+                    }
                 }
             }
-            _state.value = EditState(loaded = true, original = original, text = text, blocked = blocked)
+            _state.value = read.fold(
+                onSuccess = { (original, text) -> EditState(loaded = true, original = original, text = text, blocked = blocked) },
+                onFailure = { EditState(error = "Could not open this note. ${it.message}") },
+            )
         }
     }
 
@@ -96,11 +106,23 @@ class EditViewModel @Inject constructor(
         val current = _state.value
         if (!current.changed) return onSaved()
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                file.parentFile?.mkdirs()
-                file.writeText(FrontmatterParser.withUpdated(current.text, LocalDate.now()))
+            // Checked again here, not only on opening: a sync from Home may have stopped on a conflict since.
+            if (repository.needsChoice(kbName)) {
+                _state.update {
+                    it.copy(error = "Not saved: this knowledge base has a sync conflict to resolve first. Your text is still here.")
+                }
+                return@launch
             }
-            onSaved()
+            val written = withContext(Dispatchers.IO) {
+                runCatching {
+                    file.parentFile?.mkdirs()
+                    file.writeText(FrontmatterParser.withUpdated(current.text, LocalDate.now()))
+                }
+            }
+            written.fold(
+                onSuccess = { onSaved() },
+                onFailure = { error -> _state.update { it.copy(error = "Not saved: ${error.message}") } },
+            )
         }
     }
 }
@@ -140,13 +162,20 @@ fun EditScreen(onDone: () -> Unit, viewModel: EditViewModel = hiltViewModel()) {
                     "Choose which version to keep from the home screen before editing.",
                 Modifier.padding(padding).padding(16.dp),
             )
-        } else if (state.loaded) {
-            OutlinedTextField(
-                value = state.text,
-                onValueChange = viewModel::onTextChange,
-                textStyle = TextStyle(fontFamily = FontFamily.Monospace),
-                modifier = Modifier.fillMaxSize().padding(padding).imePadding().padding(8.dp),
-            )
+        } else {
+            Column(Modifier.fillMaxSize().padding(padding).imePadding()) {
+                state.error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                }
+                if (state.loaded) {
+                    OutlinedTextField(
+                        value = state.text,
+                        onValueChange = viewModel::onTextChange,
+                        textStyle = TextStyle(fontFamily = FontFamily.Monospace),
+                        modifier = Modifier.fillMaxSize().padding(8.dp),
+                    )
+                }
+            }
         }
     }
 

@@ -1,6 +1,22 @@
 ## Changelog - vademo
 
 
+### v0.20.20 - 16th November 2026
+
+- Fixed the note editor crashing or saving into a conflict
+  (`ui/edit/EditScreen.kt`):
+  - A note that cannot be read, such as one a sync removed, shows an
+    error instead of crashing the app.
+  - Saving checks again for a sync conflict that appeared while the note
+    was open, as the diagram editor does, and refuses with the text kept
+    on screen.
+  - A failed write shows an error and keeps the editor open.
+- Added two `ReadAndEditTest` device tests: editing a note deleted
+  meanwhile, and a conflict appearing while editing.
+- Updated `.claude/rules/ux-areas-android.md`: a failed save is no
+  longer silent.
+
+
 ### v0.20.19 - 16th November 2026
 
 - Fixed two crashes on the conflict screen:
