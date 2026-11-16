@@ -133,6 +133,11 @@ class GitSync(
      * complete, so an interrupted download never looks like a finished one.
      */
     private fun clone(remoteUrl: String, dir: File): SyncOutcome {
+        // The rename below cannot replace a folder that holds files; say so
+        // before downloading, and leave those files alone.
+        if (!dir.list().isNullOrEmpty()) {
+            return SyncOutcome.Failed("The folder ${dir.name} on this phone holds files but is not a downloaded copy")
+        }
         val partial = File(dir.parentFile, "${dir.name}.downloading")
         partial.deleteRecursively()
         partial.parentFile?.mkdirs()

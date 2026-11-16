@@ -266,6 +266,38 @@ class GitSyncTest {
     }
 
     @Test
+    fun `a download left half done by a killed app is replaced`() {
+        val partial = File(tmp, "phone/kb-distributed-systems.downloading")
+        File(partial, ".git").mkdirs()
+        File(partial, "ideas.md").writeText("half written")
+
+        assertEquals(SyncOutcome.Synced(cloned = true), sync.sync(remoteUrl, phone))
+        assertEquals("line one\nline two\nline three\n", File(phone, "ideas/tyfold.md").readText())
+        assertFalse(partial.exists())
+    }
+
+    @Test
+    fun `an empty folder in the way is downloaded into`() {
+        phone.mkdirs()
+        assertEquals(SyncOutcome.Synced(cloned = true), sync.sync(remoteUrl, phone))
+        assertInstanceOf(LocalState.Ready::class.java, sync.inspect(phone))
+    }
+
+    @Test
+    fun `a folder with files but no git is left alone and reported before downloading`() {
+        File(phone, "notes").mkdirs()
+        File(phone, "notes/kept.md").writeText("not from git\n")
+
+        val outcome = sync.sync(remoteUrl, phone)
+
+        assertInstanceOf(SyncOutcome.Failed::class.java, outcome)
+        assertTrue((outcome as SyncOutcome.Failed).message.contains("not a downloaded copy"), outcome.message)
+        assertEquals("not from git\n", File(phone, "notes/kept.md").readText())
+        assertEquals(listOf("notes"), phone.list()!!.toList())
+        assertFalse(File(tmp, "phone/kb-distributed-systems.downloading").exists())
+    }
+
+    @Test
     fun `inspect reports a ready clone with its edits`() {
         sync.sync(remoteUrl, phone)
         File(phone, "ideas/tyfold.md").writeText("edited\n")

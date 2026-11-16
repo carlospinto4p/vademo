@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.20.33 - 17th November 2026
+
+- `GitSync` now refuses a first download into a folder that already holds
+  files but has no `.git`, before downloading anything, with a message
+  naming the folder. Before, it downloaded the whole repository and then
+  failed with "Could not move the download into place". The folder's
+  files are left as they are.
+- Added to `GitSyncTest`:
+  - A half-finished download left by a killed app is replaced.
+  - An empty folder in the way is downloaded into.
+  - The regression test for the folder with files and no git.
+
+
 ### v0.20.32 - 17th November 2026
 
 - Fixed saving a note with Windows line endings (CRLF) rewriting every

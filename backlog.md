@@ -100,11 +100,8 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Test coverage
 
-- [ ] Clone edge cases untested: a target folder with no `.git` (rename
-  fails), a stale `<name>.downloading` left by a killed process
-  (`git/GitSync.kt:58,130,140`). `KbRepository.downloaded()` treats any
-  folder as downloaded. MED, effort S.
-- [ ] `KbRepository` has no tests. Besides `resolve` above: `dirFor` gives
+- [ ] `KbRepository` has no tests. `downloaded()` treats any folder as
+  downloaded, though `list()` calls one without `.git` missing. Besides `resolve` above: `dirFor` gives
   `a/kb-x` and `b/kb-x` the same folder (:100-101), and once a clone
   exists sync uses `origin`, so changing a URL in Settings to another
   repository with the same name keeps syncing the old one. MED, effort M.
