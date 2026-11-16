@@ -1,6 +1,7 @@
 package com.cpinto.vademo.data
 
 import android.content.Context
+import android.util.Log
 import com.cpinto.vademo.git.Author
 import com.cpinto.vademo.git.ConflictFile
 import com.cpinto.vademo.git.GitSync
@@ -70,7 +71,11 @@ class KbRepository @Inject constructor(
 
     fun knowledgeBase(name: String): KnowledgeBase = KnowledgeBase(File(root, name))
 
-    private val indexes = NoteIndexCache()
+    // Logged so the cost of reading every note can be read on a phone:
+    // adb logcat -s vademo
+    private val indexes = NoteIndexCache { index, millis ->
+        Log.i("vademo", "Read ${index.notes.size} notes of ${index.kbName} in $millis ms")
+    }
 
     /** Every note of [name] with its links, read again only when a note file changed. */
     suspend fun index(name: String): NoteIndex = withContext(Dispatchers.IO) { indexes.of(knowledgeBase(name)) }

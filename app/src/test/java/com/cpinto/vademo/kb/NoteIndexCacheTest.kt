@@ -3,6 +3,7 @@ package com.cpinto.vademo.kb
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -23,6 +24,20 @@ class NoteIndexCacheTest {
         note("ideas/b.md", "")
         val cache = NoteIndexCache()
         assertSame(cache.of(kb), cache.of(kb))
+    }
+
+    @Test
+    fun `only a build is reported, not a lookup served from memory`() {
+        note("ideas/a.md", "")
+        note("ideas/b.md", "")
+        val built = mutableListOf<Int>()
+        val cache = NoteIndexCache { index, millis ->
+            assertTrue(millis >= 0)
+            built += index.notes.size
+        }
+        cache.of(kb)
+        cache.of(kb)
+        assertEquals(listOf(2), built)
     }
 
     @Test

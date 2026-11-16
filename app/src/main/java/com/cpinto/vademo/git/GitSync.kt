@@ -149,17 +149,22 @@ class GitSync(
     }
 
     private fun commitLocalChanges(git: Git): List<String> {
-        val changed = git.status().call().let {
-            (it.modified + it.untracked + it.missing).sorted()
-        }
+        val status = git.status().call()
+        val written = status.modified + status.untracked
+        val changed = (written + status.missing).sorted()
         if (changed.isEmpty()) return emptyList()
         // Never commit under a made-up identity: stop before anything is staged.
         check(author.name.isNotBlank() && author.email.isNotBlank()) {
             "Add your name and email in Settings to send your edits"
         }
-        git.add().addFilepattern(".").call()
-        // A second pass with update=true stages deletions, which the first misses.
-        git.add().addFilepattern(".").setUpdate(true).call()
+        // Staging the paths the status found, rather than ".", spares two
+        // more walks of the whole working tree.
+        if (written.isNotEmpty()) {
+            git.add().apply { written.forEach(::addFilepattern) }.call()
+        }
+        if (status.missing.isNotEmpty()) {
+            git.rm().setCached(true).apply { status.missing.forEach(::addFilepattern) }.call()
+        }
         val ident = ident()
         git.commit().setAuthor(ident).setCommitter(ident)
             .setMessage("note: edit ${names(changed)} from phone")

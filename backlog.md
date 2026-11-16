@@ -79,19 +79,21 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 - [ ] `.github/workflows/build-apk.yml`: CI run 43779009289 (2026-11-16)
   warns "The SDK Manager CLI tool (sdkmanager) is deprecated. Use Android
   CLI instead.", from `android-actions/setup-android@v4` and the "Install
-  the compileSdk platform" step. Find what replaces it and move both.
+  the compileSdk platform" step. The replacement is the Android CLI's
+  `android sdk install` (https://developer.android.com/tools/agents/android-cli/commands/sdk).
+  Blocked, checked 2026-11-16: its download page
+  (https://developer.android.com/tools/agents) picks the file per visitor
+  device and gives no Linux URL to script, its docs say nothing about
+  licences or unattended use, and setup-android's latest release (v4.0.4)
+  still uses sdkmanager. Move when either changes; sdkmanager still works.
   LOW, effort S.
-- [ ] `ui/note/NoteScreen.kt:238-249`: `markdownTypography` and
-  `markdownComponents` are rebuilt per block on every recomposition,
-  including every pinch frame. Hoist into one `remember`. LOW, effort S.
-- [ ] `git/GitSync.kt:147-158`: a sync walks the working tree three times
-  (`status`, `add .`, `add . --update`), then `list()` runs `status`
-  again. LOW, effort S.
-- [ ] `docs/kb-views-and-queries.md:28-30` says reading every note is "a
-  few hundred milliseconds on a phone". It is an undated estimate, never
-  measured. Since v0.20.9 it is paid once per knowledge base and again
-  after a note changes. Measure it on the phone and update the doc. LOW,
-  effort S.
+- [ ] **[manual]** Measure reading every note on the phone, with v0.20.18
+  installed: connect it with USB debugging, run `adb logcat -s vademo`,
+  then force-stop vademo, open it and tap a knowledge base. Each line
+  reads "Read N notes of <name> in X ms". Do it on the largest knowledge
+  base and the public example, then put the numbers in
+  `docs/kb-views-and-queries.md` (the "No database" bullet), which so far
+  has only the emulator's 158 to 282 ms for the public example.
 
 #### Refactoring
 

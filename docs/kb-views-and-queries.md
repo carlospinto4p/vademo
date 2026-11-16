@@ -26,8 +26,12 @@ notes, 38 KB, 186 wiki links; 9 `concept`, 8 `source`, 5 `hub`, 2
 Two consequences, and they decide most of the design:
 
 - **No database, no index file, no background indexer.** Reading every
-  note and parsing its frontmatter is a few hundred milliseconds of work
-  on a phone. An index is built in memory when a knowledge base is opened
+  note and parsing its frontmatter took 158 to 282 ms for the public
+  example (30 notes, 63 KB of markdown), measured 2026-11-16 on the Pixel 8
+  emulator (Android 16) on a desktop, six runs from a fresh app start. Not
+  yet measured on a phone, nor on the largest knowledge base, which is
+  about eight times bigger. The app logs each read with its time:
+  `adb logcat -s vademo`. An index is built in memory when a knowledge base is opened
   and kept, in memory only, until a note file changes
   (`kb/NoteIndexCache.kt` compares each file's size and modification time
   on every lookup). Nothing is written to disk, which keeps the roadmap's

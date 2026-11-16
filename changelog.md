@@ -1,6 +1,26 @@
 ## Changelog - vademo
 
 
+### v0.20.18 - 16th November 2026
+
+- Updated `git/GitSync.kt`: a sync stages only the files its status
+  found changed, instead of two more walks of the whole working tree
+  (`add .` and `add . --update`). The new-and-deleted-notes test now
+  also covers a note in a new folder and checks nothing is left unsynced.
+- Updated `ui/note/NoteScreen.kt`: the markdown typography and
+  components are built once per screen draw, not once per block.
+- Added timing to reading every note:
+  - `kb/NoteIndexCache.kt`: `onBuilt` hears of each index built, with
+    its milliseconds.
+  - `data/KbRepository.kt`: logs it, readable with
+    `adb logcat -s vademo`.
+  - `NoteIndexCacheTest`: a build is reported, a lookup from memory is
+    not.
+- Updated `docs/kb-views-and-queries.md`: the undated "a few hundred
+  milliseconds" is replaced by a measurement, 158 to 282 ms for the
+  public example on the Pixel 8 emulator. A phone reading is still owed.
+
+
 ### v0.20.17 - 16th November 2026
 
 - Fixed folder listings reading every note to the end only to get its

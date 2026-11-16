@@ -130,12 +130,17 @@ class GitSyncTest {
     fun `sync pushes new and deleted notes`() {
         sync.sync(remoteUrl, phone)
         File(phone, "ideas/new-idea.md").writeText("new\n")
+        File(phone, "topics/consensus").mkdirs()
+        File(phone, "topics/consensus/raft.md").writeText("in a new folder\n")
         File(phone, "ideas/tyfold.md").delete()
 
-        sync.sync(remoteUrl, phone)
+        val outcome = sync.sync(remoteUrl, phone) as SyncOutcome.Synced
 
+        assertEquals(listOf("ideas/new-idea.md", "ideas/tyfold.md", "topics/consensus/raft.md"), outcome.committed)
+        assertTrue(sync.localChanges(phone).isEmpty())
         Git.open(computer).use { it.pull().call() }
         assertTrue(File(computer, "ideas/new-idea.md").isFile)
+        assertTrue(File(computer, "topics/consensus/raft.md").isFile)
         assertFalse(File(computer, "ideas/tyfold.md").exists())
     }
 

@@ -10,8 +10,10 @@ import java.io.File
  * modification times with the ones the index was built from; any difference
  * (a sync, a save, a new or deleted note, whoever made it) builds the index
  * again. Listing costs one look at each file's details, not a read.
+ *
+ * [onBuilt] hears of each index actually built, with the milliseconds it took.
  */
-class NoteIndexCache {
+class NoteIndexCache(private val onBuilt: (NoteIndex, Long) -> Unit = { _, _ -> }) {
 
     private data class Stamp(val path: String, val modified: Long, val size: Long)
 
@@ -27,7 +29,9 @@ class NoteIndexCache {
             entries[key]?.takeIf { it.stamps == stamps }?.let { return it.index }
         }
         // Stamped before reading, so a file changed while being read is read again next time.
+        val started = System.nanoTime()
         val index = NoteIndex.of(kb, files)
+        onBuilt(index, (System.nanoTime() - started) / 1_000_000)
         synchronized(entries) { entries[key] = Entry(stamps, index) }
         return index
     }

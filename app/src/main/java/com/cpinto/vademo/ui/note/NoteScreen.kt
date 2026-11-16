@@ -245,25 +245,31 @@ fun NoteScreen(
                 CompositionLocalProvider(LocalUriHandler provides linkHandler) {
                     // The renderer's default headings use Material's display sizes,
                     // which put a note title across most of a phone screen.
+                    // Built once for all blocks. markdownTypography is composable,
+                    // so it is called here rather than inside remember.
                     val type = MaterialTheme.typography
+                    val typography = markdownTypography(
+                        h1 = type.headlineSmall,
+                        h2 = type.titleLarge,
+                        h3 = type.titleMedium,
+                        h4 = type.titleSmall,
+                        h5 = type.titleSmall,
+                        h6 = type.titleSmall,
+                    )
+                    val components = remember {
+                        markdownComponents(
+                            checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
+                            table = { NoteTable(it) },
+                        )
+                    }
                     for (block in state.blocks) {
                         when (block) {
                             is NoteBlock.Diagram ->
                                 DiagramCard(block.name, block.file) { onOpenDiagram(viewModel.kbName, block.name) }
                             is NoteBlock.Text -> Markdown(
                                 content = block.markdown,
-                                typography = markdownTypography(
-                                    h1 = type.headlineSmall,
-                                    h2 = type.titleLarge,
-                                    h3 = type.titleMedium,
-                                    h4 = type.titleSmall,
-                                    h5 = type.titleSmall,
-                                    h6 = type.titleSmall,
-                                ),
-                                components = markdownComponents(
-                                    checkbox = { MarkdownCheckBox(it.content, it.node, it.typography.text) },
-                                    table = { NoteTable(it) },
-                                ),
+                                typography = typography,
+                                components = components,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
