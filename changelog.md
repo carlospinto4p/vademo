@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.20.19 - 16th November 2026
+
+- Fixed two crashes on the conflict screen:
+  - `git/GitSync.kt`: `conflicts()` returns a `Result` instead of
+    throwing when the clone cannot be read.
+  - `ui/conflict/ConflictScreen.kt`: shows that error on the screen.
+  - `data/KbRepository.kt`: `resolve` reports a knowledge base removed
+    from Settings meanwhile instead of throwing.
+- Added a `GitSyncTest` case: reading conflicts of a damaged or missing
+  clone fails without throwing.
+
+
 ### v0.20.18 - 16th November 2026
 
 - Updated `git/GitSync.kt`: a sync stages only the files its status

@@ -165,7 +165,7 @@ class GitSyncTest {
         assertEquals(SyncOutcome.Conflict(listOf("ideas/tyfold.md")), outcome)
         assertTrue(GitSync.isMerging(phone))
 
-        val conflict = sync.conflicts(phone).single()
+        val conflict = sync.conflicts(phone).getOrThrow().single()
         assertEquals("line one\nPHONE\nline three\n", conflict.mine)
         assertEquals("line one\nCOMPUTER\nline three\n", conflict.theirs)
 
@@ -255,6 +255,13 @@ class GitSyncTest {
     fun `sync on a damaged repository fails without throwing`() {
         File(tmp, "broken/.git").mkdirs()
         assertInstanceOf(SyncOutcome.Failed::class.java, sync.sync(remoteUrl, File(tmp, "broken")))
+    }
+
+    @Test
+    fun `reading conflicts of a damaged or missing repository fails without throwing`() {
+        File(tmp, "broken/.git").mkdirs()
+        assertTrue(sync.conflicts(File(tmp, "broken")).isFailure)
+        assertTrue(sync.conflicts(File(tmp, "nowhere")).isFailure)
     }
 
     private fun computerAddsSymlink(path: String, target: File) = Git.open(computer).use { git ->

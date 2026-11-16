@@ -86,12 +86,15 @@ class GitSync(
     /** Files edited on this device and not yet synced. */
     fun localChanges(dir: File): List<String> = (inspect(dir) as? LocalState.Ready)?.changes.orEmpty()
 
-    fun conflicts(dir: File): List<ConflictFile> = Git.open(dir).use { git ->
-        val repo = git.repository
-        val mergeHead = repo.readMergeHeads()?.firstOrNull() ?: return emptyList()
-        val head = repo.resolve(Constants.HEAD)
-        conflictingPaths(git).map { path ->
-            ConflictFile(path, readBlob(repo, head, path), readBlob(repo, mergeHead, path))
+    /** The conflicting files, or a failure if the clone cannot be read. */
+    fun conflicts(dir: File): Result<List<ConflictFile>> = runCatching {
+        Git.open(dir).use { git ->
+            val repo = git.repository
+            val mergeHead = repo.readMergeHeads()?.firstOrNull() ?: return@runCatching emptyList()
+            val head = repo.resolve(Constants.HEAD)
+            conflictingPaths(git).map { path ->
+                ConflictFile(path, readBlob(repo, head, path), readBlob(repo, mergeHead, path))
+            }
         }
     }
 

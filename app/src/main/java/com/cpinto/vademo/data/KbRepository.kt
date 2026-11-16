@@ -102,13 +102,14 @@ class KbRepository @Inject constructor(
         current.repoUrls.distinctBy(::dirFor).map { url -> launch { sync(url, current) } }.joinAll()
     }
 
-    suspend fun conflicts(name: String): List<ConflictFile> = withContext(Dispatchers.IO) {
+    suspend fun conflicts(name: String): Result<List<ConflictFile>> = withContext(Dispatchers.IO) {
         gitSync(settings.current()).conflicts(File(root, name))
     }
 
     suspend fun resolve(name: String, chosen: Map<String, String?>): SyncOutcome {
         val current = settings.current()
-        val url = current.repoUrls.first { dirFor(it).name == name }
+        val url = current.repoUrls.firstOrNull { dirFor(it).name == name }
+            ?: return SyncOutcome.Failed("$name is no longer in Settings")
         setState(name, SyncState.Running)
         val outcome = withContext(Dispatchers.IO) {
             gitSync(current).resolve(url, File(root, name), chosen)

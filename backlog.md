@@ -97,12 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] `GitSync.conflicts()` (`git/GitSync.kt:87`) is the only public sync
-  call not wrapped in `runCatching`; a broken clone throws inside
-  `viewModelScope` from `ui/conflict/ConflictScreen.kt:74-76` and crashes
-  the app. `KbRepository.resolve` (`data/KbRepository.kt:80`) uses
-  `repoUrls.first {}`, which throws if the knowledge base was removed in
-  Settings meanwhile. HIGH, effort S.
 - [ ] Note editor (`ui/edit/EditScreen.kt:82-104`): `load` and `save` do
   unguarded `readText`/`writeText`, so a note deleted by a sync or a disk
   error crashes the app instead of saying so. `save()` also never

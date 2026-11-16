@@ -72,8 +72,14 @@ class ConflictViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch {
-            val files = repository.conflicts(kbName)
-            _state.value = ConflictState(files, files.associate { it.path to Choice(handText = it.mine.orEmpty()) })
+            repository.conflicts(kbName).fold(
+                onSuccess = { files ->
+                    _state.value = ConflictState(files, files.associate { it.path to Choice(handText = it.mine.orEmpty()) })
+                },
+                onFailure = { error ->
+                    _state.value = ConflictState(error = "Could not read the conflicting notes: ${error.message}")
+                },
+            )
         }
     }
 
