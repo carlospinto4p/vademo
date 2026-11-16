@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.20.14 - 16th November 2026
+
+- Updated `.github/workflows/build-apk.yml` to action releases that run
+  on Node 24, which removes CI's deprecation warnings:
+  - `actions/checkout` v4 → v7.
+  - `actions/setup-java` v4 → v6.
+  - `actions/upload-artifact` v4 → v7.
+  - `android-actions/setup-android` v3 → v4.
+  - `gradle/actions/setup-gradle` v4 → v5, not v6: v6 moves its caching
+    into a proprietary component under separate terms of use.
+
+
 ### v0.20.13 - 16th November 2026
 
 - Removed the Actions cache of the compileSdk 37 platform from
