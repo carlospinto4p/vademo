@@ -11,7 +11,8 @@ import java.io.IOException
  * A diagram in tyfold's graph format: `.tyfold-graphs/<name>.json` at the root
  * of a knowledge base, written by agents with tyfold's `tyfold_graph_write`
  * tool. The format and its rules are tyfold's (`docs/GRAPH-PANE.md` in that
- * repository, "The file"); vademo only reads it.
+ * repository, "The file"). This class is for reading and drawing it; vademo's
+ * edits go through [DiagramDocument], which works on the file's own JSON.
  *
  * Unknown keys are ignored rather than refused: tyfold already refuses them
  * when the file is written, and a newer tyfold adding a key should not stop

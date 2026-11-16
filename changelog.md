@@ -1,6 +1,20 @@
 ## Changelog - vademo
 
 
+### v0.20.25 - 16th November 2026
+
+- Fixed the two "Java type mismatch: inferred type is 'Int?'" compiler
+  warnings in `DiagramLayout`: the layering loop now ends when
+  `PriorityQueue.poll()` returns null instead of checking `isNotEmpty()`
+  first.
+- Removed `KnowledgeBase.folders()`, which only a test called;
+  `KnowledgeBaseTest` now checks the same filtering through `foldersIn`.
+- Updated docs that said vademo only reads diagrams: the comment on
+  `Diagram` in `kb/Diagram.kt` and the "Diagram files" bullet in
+  `CLAUDE.md`.
+- Fixed a nullable-receiver warning in `AtomicWriteTest`.
+
+
 ### v0.20.24 - 16th November 2026
 
 - Fixed a crash on opening a diagram file that is valid JSON but not a

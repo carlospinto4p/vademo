@@ -97,15 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] `kb/DiagramLayout.kt:424-425`: the compiler warns "Java type
-  mismatch: inferred type is 'Int?', but 'Int' was expected" twice
-  (seen 2026-11-16 building v0.20.24). Find which Java call returns a
-  nullable `Int` there and handle the null. LOW, effort S.
-- [ ] Stale docs: `kb/Diagram.kt:12-13` says "vademo only reads it", and
-  the "Diagram files" bullet in CLAUDE.md partly says the same; the app
-  now edits diagrams. LOW, effort S.
-- [ ] Dead in production: `KnowledgeBase.folders()` (`kb/KnowledgeBase.kt:27`),
-  used only by a test. LOW, effort S.
 - [ ] Imports: a stray `import com.cpinto.vademo.ui.BackForward` sits
   above the sorted imports in five screens (Graph, Browse, DiagramList,
   Search, Note); `DiagramListScreen.kt:31-52` and

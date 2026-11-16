@@ -26,7 +26,7 @@ class KnowledgeBaseTest {
         note("templates/idea.md", "Template")
         note(".claude/rules/x.md", "Rule")
         val kb = KnowledgeBase(root)
-        assertEquals(listOf("ideas", "markets"), kb.folders().map { it.name })
+        assertEquals(listOf("ideas", "markets"), kb.foldersIn(root).map { it.name })
     }
 
     @Test

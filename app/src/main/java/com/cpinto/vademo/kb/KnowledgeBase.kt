@@ -23,9 +23,7 @@ class KnowledgeBase(val root: File) {
 
     val index: File? get() = File(root, "index.md").takeIf { it.isFile && isInside(root, it) }
 
-    /** Top-level topic folders, excluding hidden directories and `templates/`. */
-    fun folders(): List<Folder> = foldersIn(root)
-
+    /** Topic folders directly inside [dir], excluding hidden directories and `templates/`. */
     fun foldersIn(dir: File): List<Folder> =
         dir.listFiles().orEmpty()
             .filter { it.isDirectory && isVisible(it) && isInside(root, it) }

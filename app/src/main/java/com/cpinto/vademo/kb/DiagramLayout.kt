@@ -419,8 +419,8 @@ object DiagramLayout {
         for ((a, b) in edges) { next[a] += b; indegree[b]++ }
         val ready = java.util.PriorityQueue<Int>()
         for (v in 0 until n) if (indegree[v] == 0) ready += v
-        while (ready.isNotEmpty()) {
-            val v = ready.poll()
+        while (true) {
+            val v = ready.poll() ?: break
             for (w in next[v]) {
                 layer[w] = maxOf(layer[w], layer[v] + 1)
                 if (--indegree[w] == 0) ready += w

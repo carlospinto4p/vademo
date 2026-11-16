@@ -21,7 +21,7 @@ class AtomicWriteTest {
         file.writeAtomically { it.write("second".toByteArray()) }
 
         assertEquals("second", file.readText())
-        assertEquals(listOf("note.md"), file.parentFile.list()!!.toList())
+        assertEquals(listOf("note.md"), file.parentFile!!.list()!!.toList())
     }
 
     @Test

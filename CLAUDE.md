@@ -80,8 +80,8 @@ For README screenshots, Android's demo mode gives a clean status bar:
   complete**, so an interrupted clone never looks like a finished one.
 - **Diagram files are tyfold's format, read leniently.** tyfold owns the
   format (its `docs/GRAPH-PANE.md`, "The file") and refuses unknown keys
-  when writing; vademo only reads, so it skips unknown keys and words
-  instead of failing. `DiagramLayout` follows tyfold's
+  when writing; vademo's reader skips unknown keys and words instead of
+  failing, so a newer tyfold does not stop an older vademo. `DiagramLayout` follows tyfold's
   `src/lib/graph/canvas/layout.ts` and `EdgeRoute` its `edgeRoute.ts`;
   keep the two drawing the same file alike. One part is vademo's own for
   now: `EdgeRoute` routes an arrow that runs backwards round boxes, which
