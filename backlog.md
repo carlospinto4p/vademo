@@ -76,11 +76,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Performance
 
-- [ ] `data/SettingsRepository.kt:47,86-87`: every DataStore change (text
-  size after a pinch, a saved search) decrypts the token again with the
-  Keystore. Add `distinctUntilChanged` on the ciphertext or cache the
-  plaintext; read `current()` once in `KbRepository.list()` (:49-50).
-  LOW-MED, effort S.
 - [ ] `data/KbRepository.kt:50-59,69-72`: knowledge bases are synced and
   inspected one after another; run them concurrently. LOW-MED, effort S.
 - [ ] `kb/KnowledgeBase.kt:36-37,62-63`: `notesIn` and `summary` read whole

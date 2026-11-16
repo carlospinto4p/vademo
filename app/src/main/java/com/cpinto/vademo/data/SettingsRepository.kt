@@ -9,6 +9,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.cpinto.vademo.kb.SavedQuery
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -43,8 +44,10 @@ class SettingsRepository @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
     private val cipher = TokenCipher()
+    private val token = DecryptOnce(cipher::decrypt)
 
-    val settings: Flow<Settings> = context.dataStore.data.map(::toSettings)
+    /** Emits only when a field of [Settings] changed, not on a text size or saved search. */
+    val settings: Flow<Settings> = context.dataStore.data.map(::toSettings).distinctUntilChanged()
 
     suspend fun current(): Settings = settings.first()
 
@@ -84,7 +87,7 @@ class SettingsRepository @Inject constructor(
     }
 
     private fun toSettings(prefs: Preferences) = Settings(
-        token = prefs[TOKEN]?.takeIf { it.isNotEmpty() }?.let(cipher::decrypt).orEmpty(),
+        token = prefs[TOKEN]?.takeIf { it.isNotEmpty() }?.let(token::plain).orEmpty(),
         authorName = prefs[AUTHOR_NAME].orEmpty(),
         authorEmail = prefs[AUTHOR_EMAIL].orEmpty(),
         repoUrls = prefs[REPOS]?.lines()?.map { it.trim() }?.filter { it.isNotEmpty() }
@@ -98,5 +101,20 @@ class SettingsRepository @Inject constructor(
         val REPOS = stringPreferencesKey("repo_urls")
         val TEXT_SCALE = floatPreferencesKey("note_text_scale")
         val SAVED_QUERIES = stringPreferencesKey("saved_queries")
+    }
+}
+
+/**
+ * Remembers the last stored token and what it decrypted to, so the Keystore
+ * is asked again only when the stored value changes. A value that could not
+ * be decrypted is not remembered, so the next read tries again.
+ */
+internal class DecryptOnce(private val decrypt: (String) -> String?) {
+    private var last: Pair<String, String>? = null
+
+    @Synchronized
+    fun plain(stored: String): String? {
+        last?.let { (cipherText, plain) -> if (cipherText == stored) return plain }
+        return decrypt(stored)?.also { last = stored to it }
     }
 }

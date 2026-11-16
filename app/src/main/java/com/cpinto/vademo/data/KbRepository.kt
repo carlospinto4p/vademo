@@ -47,8 +47,9 @@ class KbRepository @Inject constructor(
     val syncStates: StateFlow<Map<String, SyncState>> = _syncStates
 
     suspend fun list(): List<KbInfo> = withContext(Dispatchers.IO) {
-        val git = gitSync(settings.current())
-        settings.current().repoUrls.map { url ->
+        val current = settings.current()
+        val git = gitSync(current)
+        current.repoUrls.map { url ->
             val dir = dirFor(url)
             when (val local = git.inspect(dir)) {
                 LocalState.Missing -> KbInfo(dir.name, url, cloned = false, unsyncedEdits = 0, needsChoice = false)

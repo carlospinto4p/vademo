@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.20.15 - 16th November 2026
+
+- Fixed the GitHub token being decrypted with the Android Keystore on
+  every settings change, such as a pinch that changes the text size or a
+  saved search:
+  - `data/SettingsRepository.kt`: added `DecryptOnce`, which decrypts a
+    stored token once and asks again only when it changes; `settings`
+    emits only when a field of `Settings` changed.
+  - `data/KbRepository.kt`: `list()` reads the settings once, not twice.
+- Added `DecryptOnceTest`: 3 tests.
+
+
 ### v0.20.14 - 16th November 2026
 
 - Updated `.github/workflows/build-apk.yml` to action releases that run
