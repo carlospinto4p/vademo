@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.20.32 - 17th November 2026
+
+- Fixed saving a note with Windows line endings (CRLF) rewriting every
+  line ending to LF, so the next sync pushed the whole file.
+  `FrontmatterParser.withUpdated` now replaces only the `updated:` line
+  and leaves every other byte as it was. Two regression tests in
+  `FrontmatterTest`: CRLF throughout, and mixed endings.
+
+
 ### v0.20.31 - 16th November 2026
 
 - Fixed the last diagram edit being lost when the diagram was closed

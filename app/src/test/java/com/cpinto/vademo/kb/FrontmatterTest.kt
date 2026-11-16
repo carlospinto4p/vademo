@@ -70,6 +70,24 @@ class FrontmatterTest {
     }
 
     @Test
+    fun `withUpdated keeps a note's Windows line endings`() {
+        val text = "---\r\ntitle: x\r\nupdated: 2026-09-15\r\n---\r\nline one\r\nline two\r\n"
+        assertEquals(
+            text.replace("2026-09-15", "2026-09-16"),
+            FrontmatterParser.withUpdated(text, LocalDate.of(2026, 9, 16)),
+        )
+    }
+
+    @Test
+    fun `withUpdated keeps mixed line endings as they were`() {
+        val text = "---\ntitle: x\r\nupdated: 2026-09-15\n---\r\nbody\n"
+        assertEquals(
+            text.replace("2026-09-15", "2026-09-16"),
+            FrontmatterParser.withUpdated(text, LocalDate.of(2026, 9, 16)),
+        )
+    }
+
+    @Test
     fun `withUpdated ignores an updated line in the body`() {
         val text = "---\ntitle: x\n---\nupdated: yesterday"
         assertEquals(text, FrontmatterParser.withUpdated(text, LocalDate.of(2026, 9, 16)))

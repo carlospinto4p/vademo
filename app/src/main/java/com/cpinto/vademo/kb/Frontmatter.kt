@@ -24,6 +24,7 @@ object FrontmatterParser {
 
     private val FIELD = Regex("""^([A-Za-z_][\w-]*):\s*(.*)$""")
     private val COMMENT = Regex("""\s#""")
+    private val LINE_BREAK = Regex("\r\n|\n|\r")
 
     fun parse(text: String): ParsedNote {
         val lines = text.lines()
@@ -59,19 +60,19 @@ object FrontmatterParser {
      * Sets `updated:` to [date] when the note has that field. The knowledge-base
      * convention is to refresh it whenever the body changes. Notes without the
      * field are returned unchanged rather than gaining one.
+     *
+     * Only that line is replaced, so the note keeps its line endings and the
+     * next sync sends a one-line change, not the whole file.
      */
     fun withUpdated(text: String, date: LocalDate): String {
-        val lines = text.lines().toMutableList()
+        val lines = text.lines()
         if (lines.firstOrNull()?.trimEnd() != "---") return text
         val end = lines.drop(1).indexOfFirst { it.trimEnd() == "---" }
         if (end < 0) return text
-        for (i in 1..end) {
-            if (lines[i].startsWith("updated:")) {
-                lines[i] = "updated: $date"
-                return lines.joinToString("\n")
-            }
-        }
-        return text
+        val i = (1..end).firstOrNull { lines[it].startsWith("updated:") } ?: return text
+        // Same separators as lines(), so the i-th break ends the line before line i.
+        val start = LINE_BREAK.findAll(text).elementAt(i - 1).range.last + 1
+        return text.replaceRange(start, start + lines[i].length, "updated: $date")
     }
 
     /** Drops a trailing `# comment`, which YAML only treats as one after whitespace. */

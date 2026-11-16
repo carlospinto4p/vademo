@@ -111,10 +111,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   Since v0.20.31 its internal constructor takes a folder and a lazy
   `SettingsRepository`, so a JVM test needs no Context for the folder
   part; the settings part still needs one.
-- [ ] `kb/Frontmatter.kt:47,54`: `withUpdated` splits with `lines()` and
-  joins with `"\n"`, so saving a CRLF note rewrites every line ending and
-  the next sync pushes the whole file. Test, then keep the note's line
-  ending. MED, effort S.
 - [ ] Settings storage untested: token encrypt/decrypt round trip, trimming
   on save, empty URL list vs missing value falling back to `DEFAULT_REPOS`
   (`data/SettingsRepository.kt:77-92`). Needs a device test for the
