@@ -10,6 +10,7 @@ import com.cpinto.vademo.git.SyncOutcome
 import com.cpinto.vademo.kb.KnowledgeBase
 import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.NoteIndexCache
+import dagger.Lazy
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -43,11 +44,17 @@ sealed interface SyncState {
 
 /** The local clones of every configured knowledge base, and syncing them with GitHub. */
 @Singleton
-class KbRepository @Inject constructor(
-    @ApplicationContext context: Context,
-    private val settings: SettingsRepository,
+class KbRepository internal constructor(
+    private val root: File,
+    // Lazy, so a JVM test of a screen that never reads the settings needs no Context for them.
+    private val settingsStore: Lazy<SettingsRepository>,
 ) {
-    private val root = File(context.filesDir, "kb")
+    @Inject constructor(
+        @ApplicationContext context: Context,
+        settings: Lazy<SettingsRepository>,
+    ) : this(File(context.filesDir, "kb"), settings)
+
+    private val settings: SettingsRepository get() = settingsStore.get()
 
     private val _syncStates = MutableStateFlow<Map<String, SyncState>>(emptyMap())
     val syncStates: StateFlow<Map<String, SyncState>> = _syncStates

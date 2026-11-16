@@ -100,11 +100,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Test coverage
 
-- [ ] `ui/diagram/DiagramViewModel.kt:295-321` save logic has no test: the
-  400 ms delay, the changed-on-disk check (`seen`), the 100-step undo
-  cap, saving in `onCleared`, `deleteDiagram` cancelling a pending save.
-  No view model has a JVM test because `KbRepository` needs a Context.
-  HIGH, effort M.
 - [ ] Clone edge cases untested: a target folder with no `.git` (rename
   fails), a stale `<name>.downloading` left by a killed process
   (`git/GitSync.kt:58,130,140`). `KbRepository.downloaded()` treats any
@@ -113,6 +108,9 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
   `a/kb-x` and `b/kb-x` the same folder (:100-101), and once a clone
   exists sync uses `origin`, so changing a URL in Settings to another
   repository with the same name keeps syncing the old one. MED, effort M.
+  Since v0.20.31 its internal constructor takes a folder and a lazy
+  `SettingsRepository`, so a JVM test needs no Context for the folder
+  part; the settings part still needs one.
 - [ ] `kb/Frontmatter.kt:47,54`: `withUpdated` splits with `lines()` and
   joins with `"\n"`, so saving a CRLF note rewrites every line ending and
   the next sync pushes the whole file. Test, then keep the note's line

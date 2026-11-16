@@ -1,6 +1,23 @@
 ## Changelog - vademo
 
 
+### v0.20.31 - 16th November 2026
+
+- Fixed the last diagram edit being lost when the diagram was closed
+  within 400 ms of it. Android cancels a view model's coroutines before
+  `onCleared` runs, so `DiagramViewModel` always found its pending save
+  already cancelled and wrote nothing. It now keeps an `unsaved` flag,
+  set when a save is scheduled and cleared once one finishes or the
+  diagram is deleted.
+- `KbRepository` takes its folder in an internal constructor and the
+  settings as a `dagger.Lazy`, so a view model test can build one on the
+  JVM without a `Context`.
+- Added `DiagramViewModelTest`, the first view model test on the JVM:
+  the 400 ms wait and its restart on a second edit, no write over a file
+  changed on disk, the 100-step undo limit, the regression test for the
+  edit written on closing, and deleting with a save still waiting.
+
+
 ### v0.20.30 - 16th November 2026
 
 - Added tests to `GitSyncTest`:

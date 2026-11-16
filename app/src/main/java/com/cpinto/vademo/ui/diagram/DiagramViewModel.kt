@@ -86,6 +86,12 @@ class DiagramViewModel @Inject constructor(
     /** The file's text when last read or written here; different text on disk means something else wrote it. */
     private var seen: String? = null
     private var pendingSave: Job? = null
+    /**
+     * An edit not yet written. Kept apart from [pendingSave] because the
+     * view model's scope, and with it that job, is cancelled before
+     * [onCleared] runs.
+     */
+    private var unsaved = false
 
     /** The document being edited, for the editors to read fields from. */
     val document: DiagramDocument? get() = doc
@@ -335,6 +341,7 @@ class DiagramViewModel @Inject constructor(
         val file = file ?: return
         if (!_state.value.editable) return
         pendingSave?.cancel()
+        unsaved = false
         viewModelScope.launch(Dispatchers.IO) {
             file.delete()
             placesStore.forget(kbName, name)
@@ -347,9 +354,11 @@ class DiagramViewModel @Inject constructor(
 
     private fun scheduleSave() {
         pendingSave?.cancel()
+        unsaved = true
         pendingSave = viewModelScope.launch {
             delay(SAVE_DELAY_MS)
             save()
+            unsaved = false
         }
     }
 
@@ -377,10 +386,7 @@ class DiagramViewModel @Inject constructor(
     override fun onCleared() {
         // A pending edit is written now rather than lost with the screen, off the main thread.
         val file = file ?: return
-        if (pendingSave?.isActive == true) {
-            pendingSave?.cancel()
-            writes.launch(file) { save() }
-        }
+        if (unsaved) writes.launch(file) { save() }
     }
 
     private companion object {
