@@ -100,17 +100,11 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Test coverage
 
-- [ ] Push retry (`git/GitSync.kt:166-208`) is untested: a rejected
-  non-fast-forward push retried, another refusal, attempts running out,
-  and "GitHub has no branch named X" (:172-173). HIGH, effort M.
 - [ ] `ui/diagram/DiagramViewModel.kt:295-321` save logic has no test: the
   400 ms delay, the changed-on-disk check (`seen`), the 100-step undo
   cap, saving in `onCleared`, `deleteDiagram` cancelling a pending save.
   No view model has a JVM test because `KbRepository` needs a Context.
   HIGH, effort M.
-- [ ] A conflict where one side deleted the file is untested:
-  `conflicts()` returning null for `mine`/`theirs`, and `resolve` with a
-  null choice (`git/GitSync.kt:87-94,107-109`). MED, effort S.
 - [ ] Clone edge cases untested: a target folder with no `.git` (rename
   fails), a stale `<name>.downloading` left by a killed process
   (`git/GitSync.kt:58,130,140`). `KbRepository.downloaded()` treats any

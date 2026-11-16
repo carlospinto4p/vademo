@@ -295,6 +295,152 @@ class GitSyncTest {
         assertTrue(sync.conflicts(File(tmp, "nowhere")).isFailure)
     }
 
+    /**
+     * Makes GitHub move on between the phone's fetch and its push, [times]
+     * times in a row: commits made on the computer wait on a side branch,
+     * and a `pre-push` hook in the phone's clone moves `main` to the next one.
+     */
+    private fun computerPushesDuringEachSync(times: Int) {
+        val queue = File(tmp, "queue").apply { mkdirs() }
+        Git.open(computer).use { git ->
+            git.pull().call()
+            repeat(times) { i ->
+                File(computer, "ideas/race-$i.md").writeText("race $i\n")
+                git.add().addFilepattern("ideas/race-$i.md").call()
+                val commit = git.commit().setMessage("note: race $i").setAuthor("Computer", "c@example.invalid").call()
+                File(queue, "$i").writeText(commit.name + "\n")
+            }
+            git.push().setRemote("origin").add("main:refs/heads/waiting").call()
+            git.reset().setMode(org.eclipse.jgit.api.ResetCommand.ResetType.HARD).setRef("origin/main").call()
+        }
+        val mainRef = File(tmp, "github.git/refs/heads/main")
+        File(phone, ".git/hooks").mkdirs()
+        File(phone, ".git/hooks/pre-push").apply {
+            writeText(
+                """
+                #!/bin/sh
+                cat > /dev/null
+                next=${'$'}(ls "${queue.path}" | sort | head -n 1)
+                [ -n "${'$'}next" ] || exit 0
+                cat "${queue.path}/${'$'}next" > "${mainRef.path}"
+                rm "${queue.path}/${'$'}next"
+                """.trimIndent() + "\n",
+            )
+            setExecutable(true)
+        }
+    }
+
+    @Test
+    fun `a push rejected because GitHub moved on is merged and pushed again`() {
+        sync.sync(remoteUrl, phone)
+        computerPushesDuringEachSync(times = 1)
+        File(phone, "ideas/tyfold.md").writeText("edited on phone\n")
+
+        val outcome = sync.sync(remoteUrl, phone) as SyncOutcome.Synced
+
+        assertEquals(listOf("ideas/tyfold.md"), outcome.committed)
+        assertEquals(1, outcome.pulled)
+        assertEquals(2, outcome.pushed)
+        assertEquals("edited on phone\n", computerPulls("ideas/tyfold.md"))
+        assertEquals("race 0\n", File(computer, "ideas/race-0.md").readText())
+    }
+
+    @Test
+    fun `a push rejected on every attempt gives up and keeps the edit`() {
+        sync.sync(remoteUrl, phone)
+        computerPushesDuringEachSync(times = 3)
+        File(phone, "ideas/tyfold.md").writeText("edited on phone\n")
+
+        val outcome = sync.sync(remoteUrl, phone)
+
+        assertEquals(SyncOutcome.Failed("GitHub kept changing during sync; try again"), outcome)
+        assertEquals("line one\nline two\nline three\n", computerPulls("ideas/tyfold.md"))
+        // The edit is committed on the phone, so the next sync sends it.
+        assertInstanceOf(SyncOutcome.Synced::class.java, sync.sync(remoteUrl, phone))
+        assertEquals("edited on phone\n", computerPulls("ideas/tyfold.md"))
+        assertEquals("race 2\n", File(computer, "ideas/race-2.md").readText())
+    }
+
+    @Test
+    fun `a push refused for another reason is reported, not retried`() {
+        sync.sync(remoteUrl, phone)
+        File(phone, "ideas/tyfold.md").writeText("edited on phone\n")
+        // A lock git left behind on GitHub's side stops the update of main.
+        File(tmp, "github.git/refs/heads/main.lock").writeText("")
+
+        val outcome = sync.sync(remoteUrl, phone)
+
+        assertInstanceOf(SyncOutcome.Failed::class.java, outcome)
+        assertTrue((outcome as SyncOutcome.Failed).message.startsWith("GitHub refused the push"), outcome.message)
+    }
+
+    @Test
+    fun `a branch GitHub does not have is reported`() {
+        sync.sync(remoteUrl, phone)
+        Git.open(phone).use { it.checkout().setCreateBranch(true).setName("draft").call() }
+
+        assertEquals(SyncOutcome.Failed("GitHub has no branch named draft"), sync.sync(remoteUrl, phone))
+    }
+
+    @Test
+    fun `a note deleted on the phone and edited on GitHub stops with a conflict`() {
+        sync.sync(remoteUrl, phone)
+        computerEdits("ideas/tyfold.md", "COMPUTER\n")
+        File(phone, "ideas/tyfold.md").delete()
+
+        assertEquals(SyncOutcome.Conflict(listOf("ideas/tyfold.md")), sync.sync(remoteUrl, phone))
+        val conflict = sync.conflicts(phone).getOrThrow().single()
+        assertEquals(null, conflict.mine)
+        assertEquals("COMPUTER\n", conflict.theirs)
+    }
+
+    @Test
+    fun `a note edited on the phone and deleted on GitHub stops with a conflict`() {
+        sync.sync(remoteUrl, phone)
+        Git.open(computer).use { git ->
+            git.pull().call()
+            git.rm().addFilepattern("ideas/tyfold.md").call()
+            git.commit().setMessage("note: delete").setAuthor("Computer", "c@example.invalid").call()
+            git.push().call()
+        }
+        File(phone, "ideas/tyfold.md").writeText("PHONE\n")
+
+        assertEquals(SyncOutcome.Conflict(listOf("ideas/tyfold.md")), sync.sync(remoteUrl, phone))
+        val conflict = sync.conflicts(phone).getOrThrow().single()
+        assertEquals("PHONE\n", conflict.mine)
+        assertEquals(null, conflict.theirs)
+    }
+
+    @Test
+    fun `choosing the deletion in a conflict deletes the note on GitHub`() {
+        sync.sync(remoteUrl, phone)
+        computerEdits("ideas/tyfold.md", "COMPUTER\n")
+        File(phone, "ideas/tyfold.md").delete()
+        sync.sync(remoteUrl, phone)
+
+        val outcome = sync.resolve(remoteUrl, phone, mapOf("ideas/tyfold.md" to null))
+
+        assertInstanceOf(SyncOutcome.Synced::class.java, outcome)
+        assertFalse(GitSync.isMerging(phone))
+        assertFalse(File(phone, "ideas/tyfold.md").exists())
+        Git.open(computer).use { it.pull().call() }
+        assertFalse(File(computer, "ideas/tyfold.md").exists())
+    }
+
+    @Test
+    fun `choosing the content in a delete conflict brings the note back`() {
+        sync.sync(remoteUrl, phone)
+        computerEdits("ideas/tyfold.md", "COMPUTER\n")
+        File(phone, "ideas/tyfold.md").delete()
+        sync.sync(remoteUrl, phone)
+
+        val outcome = sync.resolve(remoteUrl, phone, mapOf("ideas/tyfold.md" to "COMPUTER\n"))
+
+        assertInstanceOf(SyncOutcome.Synced::class.java, outcome)
+        assertEquals("COMPUTER\n", File(phone, "ideas/tyfold.md").readText())
+        assertEquals("COMPUTER\n", computerPulls("ideas/tyfold.md"))
+    }
+
     private fun computerAddsSymlink(path: String, target: File) = Git.open(computer).use { git ->
         Files.createSymbolicLink(File(computer, path).toPath(), target.toPath())
         git.add().addFilepattern(".").call()

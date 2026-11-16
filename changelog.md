@@ -1,6 +1,21 @@
 ## Changelog - vademo
 
 
+### v0.20.30 - 16th November 2026
+
+- Added tests to `GitSyncTest`:
+  - A push rejected because GitHub moved on between fetch and push is
+    merged and pushed again; rejected on all three attempts, sync gives
+    up and the edit is sent by the next sync. A `pre-push` hook in the
+    test clone moves the bare repository's branch to stand in for GitHub.
+  - A push refused for another reason (a lock left on GitHub's side) is
+    reported, not retried.
+  - A branch GitHub does not have is reported by name.
+  - A note deleted on one side and edited on the other stops with a
+    conflict, with that side's content read as `null`; choosing the
+    deletion deletes it on GitHub, choosing the text brings it back.
+
+
 ### v0.20.29 - 16th November 2026
 
 - Fixed edits that were already staged never reaching GitHub. If the app
