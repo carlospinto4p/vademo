@@ -349,7 +349,7 @@ class DiagramViewModel @Inject constructor(
         }
         val text = document.toText()
         if (onDisk == text) return@withContext
-        file.writeText(text)
+        kb.write(file, text)
         seen = text
     }
 

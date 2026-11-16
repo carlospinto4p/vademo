@@ -90,7 +90,9 @@ For README screenshots, Android's demo mode gives a clean status bar:
   adds a `position` (tyfold keeps dragged places off the file).
 - **Nothing app-private goes inside a knowledge base's folder.** Sync
   stages every file there (`git add .` in `GitSync`), so anything written
-  into the clone is pushed to GitHub.
+  into the clone is pushed to GitHub. Write into a clone with
+  `KnowledgeBase.write`: its temporary file sits in `<name>.writing/`
+  beside the clone, so a killed app leaves nothing in it.
 - **`app/debug.keystore` is committed and `signingConfigs` points at
   it.** AGP otherwise signs with `~/.android/debug.keystore`, which a CI
   runner generates fresh every time, so each build came out with a

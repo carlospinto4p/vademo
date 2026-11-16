@@ -136,7 +136,7 @@ fun createDiagram(root: File, title: String, direction: Diagram.Direction): Stri
     require(isInside(root, folder)) { "${Diagram.FOLDER} leads outside the knowledge base" }
     val taken = folder.listFiles().orEmpty().map { it.nameWithoutExtension }.toSet()
     val name = diagramFileName(title, taken)
-    File(folder, "$name.json").writeText(DiagramDocument.new(title.trim(), direction).toText())
+    KnowledgeBase(root).write(File(folder, "$name.json"), DiagramDocument.new(title.trim(), direction).toText())
     return name
 }
 

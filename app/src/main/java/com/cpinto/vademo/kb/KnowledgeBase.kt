@@ -93,6 +93,17 @@ class KnowledgeBase(val root: File) {
         if (name.isBlank() || '/' in name || '\\' in name || '\u0000' in name) null
         else File(File(root, Diagram.FOLDER), "$name.json").takeIf { isInside(root, it) }
 
+    /**
+     * Writes [text] to [file] whole (see [writeAtomically]). The temporary
+     * file sits in a folder beside the clone, not in it, so one left by a
+     * killed app is never pushed by the next sync.
+     */
+    fun write(file: File, text: String) {
+        require(isInside(root, file)) { "${file.path} is outside $name" }
+        val scratch = File(root.parentFile, "$name.writing").apply { mkdirs() }
+        file.writeAtomically(File.createTempFile(file.name, ".tmp", scratch)) { it.write(text.toByteArray()) }
+    }
+
     /** The note templates in `templates/`, by name. */
     fun templates(): List<File> =
         noteFiles(File(root, NoteTemplate.FOLDER)).sortedBy { it.name }

@@ -1,6 +1,24 @@
 ## Changelog - vademo
 
 
+### v0.20.21 - 16th November 2026
+
+- Fixed half-written files: every file the app writes is now written
+  whole to a temporary file and moved into place in one step, so a
+  killed app or a full disk leaves the old content instead of half a
+  note that the next sync would push.
+  - Added `kb/AtomicWrite.kt`: `File.writeAtomically`. A failed move
+    now raises an error; `renameTo`'s result was ignored before.
+  - Added `KnowledgeBase.write`: its temporary file sits in
+    `<name>.writing/` beside the clone, never inside it.
+  - Notes (`ui/edit/EditScreen.kt`), diagram saves
+    (`ui/diagram/DiagramViewModel.kt`) and new diagrams
+    (`createDiagram`) write through it; diagram moves
+    (`data/DiagramMoves.kt`) and shared images
+    (`ui/diagram/DiagramShare.kt`) through `writeAtomically`.
+- Added `AtomicWriteTest`: 5 tests.
+
+
 ### v0.20.20 - 16th November 2026
 
 - Fixed the note editor crashing or saving into a conflict

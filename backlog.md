@@ -97,12 +97,6 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 
 #### Refactoring
 
-- [ ] Writes are not atomic: notes and diagrams use `writeText`
-  (`ui/edit/EditScreen.kt:101`, `ui/diagram/DiagramViewModel.kt:311`), so
-  a half-written file can be committed by `git add .`;
-  `data/DiagramMoves.kt:38-40` and `ui/diagram/DiagramShare.kt:35-37`
-  write-then-rename but ignore `renameTo`'s result. One
-  `File.writeAtomically` helper for all four. MED, effort S.
 - [ ] `ui/diagram/DiagramScreen.kt` (683 lines) holds both the screen and
   the drawing code shared with `DiagramCard.kt` and `DiagramEditors.kt`
   (`rememberPlaces`, `diagramColours`, `DiagramContent`, `NodeBox`,

@@ -2,6 +2,7 @@ package com.cpinto.vademo.data
 
 import android.content.Context
 import com.cpinto.vademo.kb.Position
+import com.cpinto.vademo.kb.writeAtomically
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
@@ -34,10 +35,7 @@ class DiagramMoves internal constructor(private val root: File) {
             file.delete()
             return
         }
-        file.parentFile?.mkdirs()
-        val tmp = File(file.parentFile, "${file.name}.tmp")
-        tmp.writeText(Json.encodeToString(serializer, moves))
-        tmp.renameTo(file)
+        file.writeAtomically { it.write(Json.encodeToString(serializer, moves).toByteArray()) }
     }
 
     fun forget(kb: String, diagram: String) {

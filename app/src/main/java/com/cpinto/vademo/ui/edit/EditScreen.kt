@@ -114,10 +114,7 @@ class EditViewModel @Inject constructor(
                 return@launch
             }
             val written = withContext(Dispatchers.IO) {
-                runCatching {
-                    file.parentFile?.mkdirs()
-                    file.writeText(FrontmatterParser.withUpdated(current.text, LocalDate.now()))
-                }
+                runCatching { kb.write(file, FrontmatterParser.withUpdated(current.text, LocalDate.now())) }
             }
             written.fold(
                 onSuccess = { onSaved() },

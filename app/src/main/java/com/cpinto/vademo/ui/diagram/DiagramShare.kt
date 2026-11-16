@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.core.content.FileProvider
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.kb.MermaidExport
+import com.cpinto.vademo.kb.writeAtomically
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -30,11 +31,9 @@ internal object DiagramShare {
     /** The whole diagram as a PNG named after its file, written to the app's cache and shared from there. */
     suspend fun image(context: Context, name: String, picture: ImageBitmap) {
         val file = withContext(Dispatchers.IO) {
-            val folder = File(context.cacheDir, "exports").apply { mkdirs() }
-            // Written whole and then renamed, so nothing ever reads a half-written image.
-            val tmp = File(folder, "$name.png.tmp")
-            tmp.outputStream().use { picture.asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
-            File(folder, "$name.png").also { tmp.renameTo(it) }
+            File(File(context.cacheDir, "exports"), "$name.png").apply {
+                writeAtomically { picture.asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+            }
         }
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.exports", file)
         val send = Intent(Intent.ACTION_SEND).apply {
