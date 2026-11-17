@@ -100,8 +100,10 @@ class KbRepository internal constructor(
     }
 
     /**
-     * Syncs every knowledge base at once. Two addresses that end in the same
-     * folder are synced once, by the first, so no two syncs touch one clone.
+     * Syncs every knowledge base at once. Settings refuses two addresses
+     * that end in the same folder, but a list saved before it did could
+     * hold them: those are synced once, by the first, so no two syncs touch
+     * one clone.
      */
     suspend fun syncAll() = coroutineScope {
         val current = currentSettings()
@@ -135,8 +137,7 @@ class KbRepository internal constructor(
         _syncStates.update { it + (name to state) }
 
     /** `https://github.com/carlospinto4p/kb-distributed-systems.git` → `files/kb/kb-distributed-systems`. */
-    private fun dirFor(url: String): File =
-        File(root, url.trimEnd('/').substringAfterLast('/').removeSuffix(".git"))
+    private fun dirFor(url: String): File = File(root, Settings.folderName(url))
 
     private fun gitSync(current: Settings) = GitSync(
         credentials = current.token.takeIf { it.isNotBlank() }?.let(::GitHubOnlyCredentials),

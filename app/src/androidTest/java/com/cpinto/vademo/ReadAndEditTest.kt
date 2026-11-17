@@ -22,6 +22,7 @@ import com.cpinto.vademo.data.SettingsRepository
 import kotlinx.coroutines.runBlocking
 import org.eclipse.jgit.api.Git
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -416,6 +417,24 @@ class ReadAndEditTest {
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("Scoring notes")).fetchSemanticsNodes().isEmpty()
         }
+    }
+
+    @Test
+    fun settingsRefusesTwoAddressesEndingInTheSameName() {
+        compose.onNodeWithContentDescription("Settings").performClick()
+        val repos = hasSetTextAction() and hasText("kb-distributed-systems", substring = true)
+        compose.waitUntil(5_000) { compose.onAllNodes(repos).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNode(repos).performTextReplacement(
+            "https://github.com/a/kb-x.git\nhttps://github.com/b/kb-x.git",
+        )
+        compose.onNodeWithText("Save").performScrollTo().performClick()
+
+        compose.onNodeWithText("only one can be synced", substring = true).assertIsDisplayed()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        assertEquals(
+            listOf("https://github.com/carlospinto4p/kb-distributed-systems.git"),
+            runBlocking { SettingsRepository(context).current() }.repoUrls,
+        )
     }
 
     @Test

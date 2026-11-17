@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.21.1 - 17th November 2026
+
+- Settings refuses to save two addresses that end in the same name (such
+  as `a/kb-x` and `b/kb-x`), and names them under the list. Both would be
+  cloned into one folder, so the second never synced and nothing said so.
+  A list saved before this keeps syncing the first one only.
+- Added `Settings.folderName` and `Settings.sharedFolders`; `KbRepository`
+  names its folders with the first.
+- Tests: `SettingsTest` for the two functions, and `ReadAndEditTest`
+  "settings refuses two addresses ending in the same name" on a device.
+
+
 ### v0.21.0 - 17th November 2026
 
 - Added a "Duplicate names" row to the Health tab, and the `is:duplicate`

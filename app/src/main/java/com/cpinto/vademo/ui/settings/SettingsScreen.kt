@@ -91,9 +91,10 @@ fun SettingsScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             )
             OutlinedTextField(
                 value = form.repos,
-                onValueChange = { v -> viewModel.update { it.copy(repos = v) } },
+                onValueChange = { v -> viewModel.update { it.copy(repos = v, reposError = null) } },
                 label = { Text("Knowledge bases") },
-                supportingText = { Text("One HTTPS clone address per line.") },
+                isError = form.reposError != null,
+                supportingText = { Text(form.reposError ?: "One HTTPS clone address per line.") },
                 modifier = Modifier.fillMaxWidth().heightIn(min = 140.dp),
             )
             Button(

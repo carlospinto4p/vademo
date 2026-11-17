@@ -39,6 +39,17 @@ data class Settings(
         val DEFAULT_REPOS = listOf(
             "https://github.com/carlospinto4p/kb-distributed-systems.git",
         )
+
+        /** The folder an address is cloned into: `https://github.com/o/kb-x.git` → `kb-x`. */
+        fun folderName(url: String): String = url.trimEnd('/').substringAfterLast('/').removeSuffix(".git")
+
+        /**
+         * Addresses that would share one folder, grouped by it, in the order
+         * given. Only the first of a group could ever sync, so Settings
+         * refuses to save any.
+         */
+        fun sharedFolders(urls: List<String>): List<List<String>> =
+            urls.groupBy(::folderName).values.filter { it.size > 1 }
     }
 }
 

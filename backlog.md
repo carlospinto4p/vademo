@@ -103,13 +103,3 @@ start with `app/`, `gradle`, `.github/` or `docs/`.
 - [ ] `GitOnDeviceTest` uses only a local file remote: HTTPS with
   credentials and a conflict on a device are never tested, though the
   comment at `ReadAndEditTest.kt:33` suggests otherwise. LOW, effort L.
-
-### 2026.11.17 (found while adding KbRepositoryTest, v0.20.34)
-
-- [ ] Two addresses in Settings that end in the same name (`a/kb-x` and
-  `b/kb-x`) share one folder: `KbRepository.syncAll` syncs the first only
-  and the second never syncs, with no message. Home shows two rows with
-  the same name and the first one's state. Decide: refuse such a pair in
-  Settings, or say so on the second row. Covered as it works today by
-  `KbRepositoryTest` "two addresses ending in the same name are synced
-  once". MED, effort S.

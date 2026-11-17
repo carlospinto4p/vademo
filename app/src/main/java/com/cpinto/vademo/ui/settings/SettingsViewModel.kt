@@ -18,6 +18,8 @@ data class SettingsForm(
     val authorEmail: String = "",
     val repos: String = "",
     val tokenUnreadable: Boolean = false,
+    /** Why Save refused the knowledge-base list, shown under it until it is edited. */
+    val reposError: String? = null,
 )
 
 @HiltViewModel
@@ -47,13 +49,24 @@ class SettingsViewModel @Inject constructor(
 
     fun save(onSaved: () -> Unit) {
         val form = _form.value
+        val repoUrls = form.repos.lines().map { it.trim() }.filter { it.isNotEmpty() }
+        val shared = Settings.sharedFolders(repoUrls).firstOrNull()
+        if (shared != null) {
+            _form.update {
+                it.copy(
+                    reposError = "These end in the same name, ${Settings.folderName(shared.first())}, " +
+                        "and only one can be synced: ${shared.joinToString(", ")}. Keep one.",
+                )
+            }
+            return
+        }
         viewModelScope.launch {
             repository.save(
                 Settings(
                     token = form.token,
                     authorName = form.authorName,
                     authorEmail = form.authorEmail,
-                    repoUrls = form.repos.lines().map { it.trim() }.filter { it.isNotEmpty() },
+                    repoUrls = repoUrls,
                 )
             )
             onSaved()

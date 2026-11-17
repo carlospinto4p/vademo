@@ -45,7 +45,8 @@ one of those needs the app uninstalled once first.
 1. Tap **Sync** on the home screen. The example knowledge base,
    `kb-distributed-systems`, is public, so it downloads with no setup.
 2. To use your own, open **Settings** (gear icon) and edit the list (one
-   HTTPS clone address per line).
+   HTTPS clone address per line). Two addresses that end in the same name,
+   such as `a/kb-x` and `b/kb-x`, cannot both be listed.
 3. For a private repository, or to send your edits back to GitHub, also
    paste a GitHub personal access token with the `repo` scope (classic)
    or `Contents: Read and write` (fine-grained), and the name and email
