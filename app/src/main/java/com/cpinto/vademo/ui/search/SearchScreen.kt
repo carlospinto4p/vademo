@@ -134,13 +134,16 @@ fun SearchScreen(
                         Hint(
                             "Words in titles, headings or text, and filters: type:question status:draft tag:raft " +
                                 "updated:>2026-09-01 kb:name folder:inbox links:note is:orphan is:unverified " +
-                                "is:broken. Save a search with the bookmark at the top.",
+                                "is:broken is:duplicate. Save a search with the bookmark at the top.",
                         )
                     }
                 }
                 state.hits.isEmpty() -> Hint("No notes match.")
                 else -> LazyColumn(Modifier.fillMaxSize()) {
-                    val listsBroken = NoteSearch.Filter.Is("broken") in NoteSearch.parse(state.query).filters
+                    val filters = NoteSearch.parse(state.query).filters
+                    val listsBroken = NoteSearch.Filter.Is("broken") in filters
+                    // Two notes of one name can have one title too; the path tells them apart.
+                    val listsDuplicates = NoteSearch.Filter.Is("duplicate") in filters
                     items(state.hits, key = { it.kb + "/" + it.note.path }) { hit ->
                         ListItem(
                             modifier = Modifier.clickable { onOpenNote(hit.kb, hit.note.path) },
@@ -148,6 +151,7 @@ fun SearchScreen(
                             headlineContent = { Text(hit.note.title) },
                             supportingContent = listOfNotNull(
                                 hit.kb.takeIf { state.showKb },
+                                hit.note.path.takeIf { listsDuplicates },
                                 hit.note.type,
                                 hit.note.status,
                                 ("No note named " + hit.missing.joinToString(", ")).takeIf { listsBroken },

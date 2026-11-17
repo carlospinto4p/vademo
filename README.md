@@ -63,7 +63,8 @@ search.
 Health counts what needs looking after: notes nothing links to, notes
 with a link to a note that does not exist, notes with an `(unverified)`
 marker, open questions (`type: question` still at `status: draft`), and
-files waiting in `inbox/`. Tap a row to see those notes in search.
+files waiting in `inbox/`, and notes whose file name another note also
+has (a `[[link]]` to that name opens either one). Tap a row to see those notes in search.
 
 ## Reading a note
 
@@ -110,6 +111,7 @@ folder:inbox     notes inside a folder
 is:orphan        notes nothing links to
 is:unverified    notes with an (unverified) marker
 is:broken        notes linking to a note that does not exist
+is:duplicate     notes whose file name another note also has
 ```
 
 Before anything is typed, search lists saved searches: the Health checks,

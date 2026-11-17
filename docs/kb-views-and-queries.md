@@ -72,7 +72,9 @@ index rather than a single folder list:
 - **Tags** — every tag with its count; tapping one lists its notes.
 - **Health** — the numbers a knowledge-base dashboard would show, per
   knowledge base: orphans, links that resolve to nothing, `(unverified)` figures,
-  open questions, items waiting in `inbox/`. Each is a row that opens the
+  open questions, items waiting in `inbox/`, notes sharing a file name
+  (the layout forbids it, so a `[[link]]` to that name is ambiguous).
+  Each is a row that opens the
   list behind it, so a number is never a dead end.
 
 ## Queries
@@ -87,6 +89,7 @@ updated:>2026-09-01 kb:distributed-systems
 links:quorum            # notes linking to that note
 is:orphan               # nothing links to it
 is:unverified           # has an (unverified) marker
+is:duplicate            # another note has the same file name
 ```
 
 Tokens combine with an implicit AND; anything that is not a filter is free

@@ -42,8 +42,25 @@ class HealthTest {
                 // Answered (`reviewed`) and `outdated` questions are not open.
                 "Open questions" to 1,
                 "Waiting in the inbox" to 1,
+                "Duplicate names" to 0,
             ),
             counts,
+        )
+    }
+
+    @Test
+    fun `notes sharing a file name are both counted and both listed`() {
+        write("index.md", "[[raft]]")
+        write("consensus/raft.md", "Raft")
+        write("ideas/raft.md", "Raft idea")
+        write("consensus/paxos.md", "Paxos")
+        val index = NoteIndex.of(KnowledgeBase(root))
+
+        val counts = Health.counts(index).associate { (check, n) -> check.name to n }
+        assertEquals(2, counts["Duplicate names"])
+        assertEquals(
+            listOf("consensus/raft.md", "ideas/raft.md"),
+            NoteSearch.search(listOf(index), "is:duplicate").map { it.note.path }.sorted(),
         )
     }
 

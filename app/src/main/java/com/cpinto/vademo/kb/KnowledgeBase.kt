@@ -54,11 +54,15 @@ class KnowledgeBase(val root: File) {
         return if ('/' in path) null else notes()[path.removeSuffix(".md")]
     }
 
-    fun allNotes(): Map<String, File> =
+    /** Note name → its file. A name held by two files keeps one of them; [noteFiles] has both. */
+    fun allNotes(): Map<String, File> = noteFiles().associateBy { it.nameWithoutExtension }
+
+    /** Every `.md` file of the repository, outside hidden folders and `templates/`. */
+    fun noteFiles(): List<File> =
         root.walkTopDown()
             .onEnter { it == root || (isVisible(it) && isInside(root, it)) }
             .filter { it.isFile && it.extension == "md" && isInside(root, it) }
-            .associateBy { it.nameWithoutExtension }
+            .toList()
 
     fun summary(file: File): NoteSummary {
         val front = FrontmatterParser.read(file)

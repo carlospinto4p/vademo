@@ -68,6 +68,14 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
     /** Names of the [orphans], built once for search's `is:orphan`. */
     val orphanNames: Set<String> by lazy { orphans.mapTo(HashSet()) { it.name } }
 
+    /**
+     * Names held by more than one note file. The knowledge-base layout keeps
+     * names unique, so a `[[link]]` to one of these opens either file.
+     */
+    val duplicateNames: Set<String> by lazy {
+        notes.groupingBy { it.name }.eachCount().filterValues { it > 1 }.keys
+    }
+
     /** Note name → the notes it links to that do not exist, built once for search. */
     val missingFrom: Map<String, List<String>> by lazy { unresolved.groupBy({ it.from }, { it.target }) }
 
@@ -103,8 +111,11 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
         note.type == "hub" || note.path.substringBeforeLast('/', "").substringAfterLast('/') == note.name
 
     companion object {
-        /** The files the index reads, by path: `index.md` and every note in a folder. */
-        fun files(kb: KnowledgeBase): List<File> = kb.allNotes().values
+        /**
+         * The files the index reads, by path: `index.md` and every note in a
+         * folder, both files of a name two folders hold included.
+         */
+        fun files(kb: KnowledgeBase): List<File> = kb.noteFiles()
             .filter { it.parentFile != kb.root || it == kb.index }
             .sortedBy { kb.relativePath(it) }
 

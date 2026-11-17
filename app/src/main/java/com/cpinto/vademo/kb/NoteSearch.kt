@@ -18,7 +18,8 @@ data class SearchHit(val kb: String, val note: IndexedNote, val score: Int, val 
  * - `links:quorum` keeps the notes linking to `quorum`.
  * - `folder:inbox` keeps the notes inside that folder, at any depth.
  * - `is:orphan` (nothing links to it), `is:unverified` (has the marker),
- *   `is:broken` (links to a note that does not exist).
+ *   `is:broken` (links to a note that does not exist), `is:duplicate`
+ *   (another note has the same file name).
  *
  * Anything else is a word to find in the title, a heading or the body.
  * Matches rank by where the words are, title first, then headings, then
@@ -115,6 +116,7 @@ object NoteSearch {
                 "orphan" -> note.name in index.orphanNames
                 "unverified" -> note.unverified > 0
                 "broken" -> missing.isNotEmpty()
+                "duplicate" -> note.name in index.duplicateNames
                 else -> false
             }
         }

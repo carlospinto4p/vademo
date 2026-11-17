@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.21.0 - 17th November 2026
+
+- Added a "Duplicate names" row to the Health tab, and the `is:duplicate`
+  search filter behind it: notes whose file name another note also has.
+  A `[[link]]` to such a name opens either file, and until now nothing
+  said so. Listing them shows each note's path, since both titles can be
+  the same.
+- `NoteIndex` now reads every note file, both of a shared name included
+  (`KnowledgeBase.noteFiles`); before, one of the two was left out of
+  search, the map and Health. `NoteIndex.duplicateNames` holds the names.
+- `HealthTest`: both files of a shared name are counted and listed.
+
+
 ### v0.20.36 - 17th November 2026
 
 - Added tests where the 2026-11-15 scan found coverage missing:
