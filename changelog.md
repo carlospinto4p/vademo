@@ -1,6 +1,36 @@
 ## Changelog - vademo
 
 
+### v0.22.0 - 22nd November 2026
+
+- Settings lists the knowledge bases as rows instead of one text box of
+  addresses: each shows its name, its owner (or host) and, once GitHub
+  has been asked, whether it is private or public, with a button to
+  remove it.
+- Added "On your GitHub" to Settings: with a token, every repository it
+  can reach whose name starts with `kb-`, public and private, owned,
+  shared or in an organisation, each with an Add button. It is asked
+  when Settings opens with a saved token, and again with the refresh
+  button; a new token is asked about only when "List my kb- repositories"
+  is tapped. One whose name matches a listed knowledge base cannot be
+  added.
+- Added "Add by address", which takes `owner/name`, `github.com/owner/name`
+  or any HTTPS clone address, and says at once why one is refused (not
+  HTTPS, an SSH address, already listed, or ending in a listed name)
+  instead of at the next sync. Save adds an address left typed in it.
+- Added to `data/`:
+  - `KbAddress`: a clone address read into host, owner and name, with a
+    key shared by every spelling of one repository.
+  - `GitHubRepoFinder`: GitHub's `GET /user/repos`, every page, kept to
+    `kb-` names.
+  - `GitHubRepo`, `RepoSearch`, `HttpAnswer` and `HttpGet`.
+- Tests:
+  - `KbAddressTest`: 8 tests of reading, refusing and comparing addresses.
+  - `GitHubRepoFinderTest`: 7 tests of filtering, paging and each failure.
+  - `ReadAndEditTest`: the same-name refusal now goes through the add
+    field, and adding and removing rows is saved.
+
+
 ### v0.21.2 - 19th November 2026
 
 - Rotated changelog: archived 44 entries to `changelog/2026.md`.

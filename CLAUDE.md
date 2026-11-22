@@ -64,7 +64,10 @@ For README screenshots, Android's demo mode gives a clean status bar:
 - `git/GitSync.kt` — clone, commit, merge, push and conflict handling on
   JGit. Tested against real bare repositories in temp folders.
 - `data/` — settings (DataStore, token encrypted with the Android
-  Keystore) and `KbRepository`, which maps settings to local clones.
+  Keystore), `KbRepository`, which maps settings to local clones,
+  `KbAddress`, which reads a clone address into host, owner and name, and
+  `GitHubRepoFinder`, which lists the token's `kb-` repositories from
+  GitHub's `GET /user/repos` over `HttpURLConnection` (no HTTP library).
 - `ui/` — Jetpack Compose + Material 3, one screen per package, Hilt
   view models.
 

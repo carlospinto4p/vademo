@@ -422,19 +422,40 @@ class ReadAndEditTest {
     @Test
     fun settingsRefusesTwoAddressesEndingInTheSameName() {
         compose.onNodeWithContentDescription("Settings").performClick()
-        val repos = hasSetTextAction() and hasText("kb-distributed-systems", substring = true)
-        compose.waitUntil(5_000) { compose.onAllNodes(repos).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNode(repos).performTextReplacement(
-            "https://github.com/a/kb-x.git\nhttps://github.com/b/kb-x.git",
-        )
-        compose.onNodeWithText("Save").performScrollTo().performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasContentDescription("Remove kb-distributed-systems")).fetchSemanticsNodes().isNotEmpty()
+        }
+        val add = hasSetTextAction() and hasText("Add by address")
+        compose.onNode(add).performScrollTo().performTextInput("someone-else/kb-distributed-systems")
+        compose.onNodeWithContentDescription("Add knowledge base").performClick()
+        compose.onNodeWithText("only one can be synced", substring = true).assertIsDisplayed()
 
+        // Saving with the refused address still typed saves nothing.
+        compose.onNodeWithText("Save").performScrollTo().performClick()
         compose.onNodeWithText("only one can be synced", substring = true).assertIsDisplayed()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals(
             listOf("https://github.com/carlospinto4p/kb-distributed-systems.git"),
             runBlocking { SettingsRepository(context).current() }.repoUrls,
         )
+    }
+
+    @Test
+    fun settingsAddsAndRemovesKnowledgeBasesAsRows() {
+        compose.onNodeWithContentDescription("Settings").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasContentDescription("Remove kb-distributed-systems")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNode(hasSetTextAction() and hasText("Add by address")).performScrollTo().performTextInput("a/kb-x")
+        compose.onNodeWithContentDescription("Add knowledge base").performClick()
+        compose.onNodeWithContentDescription("Remove kb-x").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Remove kb-distributed-systems").performClick()
+        compose.onNodeWithText("Save").performScrollTo().performClick()
+
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        compose.waitUntil(5_000) {
+            runBlocking { SettingsRepository(context).current() }.repoUrls == listOf("https://github.com/a/kb-x.git")
+        }
     }
 
     @Test
