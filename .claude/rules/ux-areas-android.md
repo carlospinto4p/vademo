@@ -55,10 +55,10 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
   gives no visual cue (fade, scrollbar) that there's more below the
   fold.
 - **Settings gives no save feedback**: `SettingsScreen`'s Save
-  button returns to Home unconditionally; an invalid token or
-  malformed repo URL is only discovered later, at the next sync
-  attempt, with no immediate validation or error state on the form
-  itself.
+  button returns to Home with no confirmation. A malformed or
+  duplicate address is refused as it is added, and "On your GitHub"
+  says when GitHub refuses the token, but a token that lists fine yet
+  cannot push is still only found at the next sync.
 - **Accessibility**: `contentDescription` is already present on the
   navigation and action icons (Sync, Settings, Back, Edit) — keep
   that going for any new icon-only control. Touch targets via

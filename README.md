@@ -44,14 +44,20 @@ one of those needs the app uninstalled once first.
 
 1. Tap **Sync** on the home screen. The example knowledge base,
    `kb-distributed-systems`, is public, so it downloads with no setup.
-2. To use your own, open **Settings** (gear icon) and edit the list (one
-   HTTPS clone address per line). Two addresses that end in the same name,
-   such as `a/kb-x` and `b/kb-x`, cannot both be listed.
+2. To use your own, open **Settings** (gear icon). Each knowledge base is
+   a row with its name, owner and whether it is private; remove one with
+   its ✕. Add one by typing `owner/name` (a GitHub repository) or any
+   HTTPS clone address. Two addresses that end in the same name, such as
+   `a/kb-x` and `b/kb-x`, cannot both be listed.
 3. For a private repository, or to send your edits back to GitHub, also
    paste a GitHub personal access token with the `repo` scope (classic)
    or `Contents: Read and write` (fine-grained), and the name and email
    to put on commits. Without a name and email, an edit stays on the
    phone and sync tells you what is missing.
+4. With a token, **On your GitHub** lists every repository it can reach
+   whose name starts with `kb-`, public and private (yours, shared with
+   you, or in your organisations). Tap **Add** on one to sync it. A
+   fine-grained token lists only the repositories it was given.
 
 ## Folders, Recent, Types, Tags and Health
 
