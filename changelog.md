@@ -1,6 +1,14 @@
 ## Changelog - vademo
 
 
+### v0.24.1 - 22nd November 2026
+
+- Added "Merge Finished Work Into Main" to `.claude/rules/committing.md`:
+  each finished task is merged from its branch into `main` with a merge
+  commit through a pull request, once CI is green, without asking, so a
+  new session and the phone's `debug-latest` APK both see it.
+
+
 ### v0.24.0 - 22nd November 2026
 
 - The app reopens the knowledge base it was left in, instead of starting
