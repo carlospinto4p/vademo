@@ -1,6 +1,29 @@
 ## Changelog - vademo
 
 
+### v0.23.0 - 22nd November 2026
+
+- Diagrams and the map of notes open at a size that can be read. A
+  drawing too big to show whole used to be shrunk to fit, down to 35 %,
+  which put its 11 sp labels near 4 sp; it now opens whole only when that
+  keeps it at 85 % or larger, and otherwise at 85 % where it starts: the
+  top left of a left-to-right diagram, the top of a top-to-bottom one,
+  the middle of the map.
+- `ui/graph/PanZoom.kt`:
+  - Added a Show all button at the bottom right, which turns into Zoom to
+    read once all is shown. It appears only when the whole drawing is too
+    small to read.
+  - Added double tap: to full size round the tap, and from there back out
+    to the whole drawing. Both glide over 300 ms; a drag or pinch stops
+    the glide.
+  - The framing is now read only while drawing, so a drag recomposes
+    nothing.
+- Added `ui/graph/Viewport.kt`: `Framing`, `StartAt` and the zoom
+  arithmetic, apart from Compose.
+- Added `ViewportTest`: 11 tests of the opening scale and place, Show
+  all, zooming round a point, double tap and gliding.
+
+
 ### v0.22.0 - 22nd November 2026
 
 - Settings lists the knowledge bases as rows instead of one text box of

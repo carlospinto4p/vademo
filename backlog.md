@@ -43,14 +43,6 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 
 #### Readable diagrams and map
 
-- [ ] Never open a drawing shrunk past readable. `PanZoom` fits the whole
-  drawing and only stops at 35 % (`graph/PanZoom.kt:39`), so diagram
-  labels (`labelLarge`, 14 sp) start near 5 sp and the tag, ref and arrow
-  labels (`labelSmall`, 11 sp) near 4 sp: the unreadable letters. Start at
-  a scale where the smallest text is at least about 10 sp on screen
-  (around 0.9 for diagrams), at the drawing's start (top-left for LR,
-  top for TB), and add a "Fit all" button and double-tap to zoom in and
-  out. HIGH, effort S.
 - [ ] Diagrams inside a note shrink without limit to the note's width
   (`diagram/DiagramCard.kt:67`), so a wide diagram becomes a row of
   specks. Keep a readable minimum scale, crop what does not fit with a

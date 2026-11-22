@@ -43,9 +43,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.ui.BackForward
 import com.cpinto.vademo.ui.graph.Legend
 import com.cpinto.vademo.ui.graph.PanZoom
+import com.cpinto.vademo.ui.graph.StartAt
 
 private val EXPORT_MARGIN = 48.dp
 
@@ -131,7 +133,9 @@ fun DiagramScreen(
                         }
                         translate(-margin, -margin) { drawLayer(picture) }
                     }
-                    PanZoom(places.width.dp, places.height.dp, contentModifier = recording) {
+                    // Opens where the flow starts, when it is too big to read whole.
+                    val start = if (diagram.direction == Diagram.Direction.TB) StartAt.Top else StartAt.TopLeft
+                    PanZoom(places.width.dp, places.height.dp, start = start, contentModifier = recording) {
                         DiagramContent(diagram, places, colours, state.notes, actions)
                     }
                     if (diagram.legend.isNotEmpty()) {
