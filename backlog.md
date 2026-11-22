@@ -17,10 +17,6 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   map of notes otherwise, with a bottom `NavigationBar` of Map, Diagrams
   and Notes (today's tabs) that remembers the last one per knowledge
   base. HIGH, effort M.
-- [ ] Skip Home when only one knowledge base is set up: the app opens
-  straight onto that knowledge base's picture
-  (`Navigation.kt:90` starts on `Routes.HOME`). Home stays reachable from
-  the app bar for sync status and settings. HIGH, effort S.
 - [ ] Make the map of notes a way in, not a hairball. `GraphScreen` draws
   every note, sources included, as same-sized 140×52 dp boxes and starts
   shrunk to fit (`graph/GraphScreen.kt:37`, `graph/PanZoom.kt:39`). Start

@@ -61,6 +61,9 @@ one of those needs the app uninstalled once first.
 
 ## Folders, Recent, Types, Tags and Health
 
+The app reopens the knowledge base it was left in; go back to the list of
+knowledge bases before leaving to start there next time.
+
 A knowledge base opens on its folders. The tabs above them list the same
 notes other ways: Recent by the date each was last updated, Types grouped
 by type (all sources in one row), and Tags with every tag and how many

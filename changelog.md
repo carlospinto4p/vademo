@@ -1,6 +1,25 @@
 ## Changelog - vademo
 
 
+### v0.24.0 - 22nd November 2026
+
+- The app reopens the knowledge base it was left in, instead of starting
+  on the list of knowledge bases each time. Going back to the list and
+  leaving from there starts there next time. A knowledge base that has
+  been removed, is not downloaded, is damaged or waits for a choice after
+  a conflict is not reopened. Back from it still reaches the list.
+- Added `SettingsRepository.lastKb` and `saveLastKb`, kept apart from
+  `Settings` like the text size; `BrowseViewModel` saves it when the top
+  of a knowledge base opens.
+- `HomeViewModel.refresh` became `start`, which reopens the last
+  knowledge base once per launch (remembered in its `SavedStateHandle`)
+  and forgets it whenever the list is come back to; `kbToReopen` decides.
+- Tests:
+  - `ReopenTest`: 4 tests of which knowledge base is reopened.
+  - `ReadAndEditTest`: `reopenTheLastKnowledgeBaseAtLaunch`, launching
+    the app three times.
+
+
 ### v0.23.1 - 22nd November 2026
 
 - Fixed diagrams inside a note becoming unreadable specks. `DiagramCard`

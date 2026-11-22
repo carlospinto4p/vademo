@@ -1,5 +1,6 @@
 package com.cpinto.vademo.ui.home
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbInfo
@@ -26,10 +27,21 @@ data class HomeState(
         get() = hasRepos && syncStates.values.none { it == SyncState.Running }
 }
 
+/**
+ * Of [kbs], the one named [last] when it can be opened as it is: downloaded,
+ * readable and not waiting for a choice after a conflict. Anything else
+ * needs the home screen.
+ */
+internal fun kbToReopen(last: String?, kbs: List<KbInfo>): String? =
+    kbs.firstOrNull { it.name == last }
+        ?.takeIf { it.cloned && !it.needsChoice && it.problem == null }
+        ?.name
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val repository: KbRepository,
-    settings: SettingsRepository,
+    private val settings: SettingsRepository,
+    private val savedState: SavedStateHandle,
 ) : ViewModel() {
 
     private val kbs = MutableStateFlow<List<KbInfo>>(emptyList())
@@ -39,8 +51,23 @@ class HomeViewModel @Inject constructor(
             HomeState(kbs, syncStates, current.canSync, current.canWrite, current.tokenUnreadable)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeState())
 
-    fun refresh() {
-        viewModelScope.launch { kbs.value = repository.list() }
+    /**
+     * Lists the knowledge bases. The first time after launch it also reopens,
+     * with [onOpen], the one the app was left in; any later time the home
+     * screen shows, it was come back to, so the next launch starts here.
+     */
+    fun start(onOpen: (String) -> Unit) {
+        viewModelScope.launch {
+            val list = repository.list()
+            kbs.value = list
+            // Saved, so a home screen rebuilt after the process was stopped does not count as a launch.
+            if (savedState.get<Boolean>(LAUNCHED) == true) {
+                settings.saveLastKb(null)
+                return@launch
+            }
+            savedState[LAUNCHED] = true
+            kbToReopen(settings.lastKb(), list)?.let(onOpen)
+        }
     }
 
     fun syncAll() {
@@ -48,5 +75,9 @@ class HomeViewModel @Inject constructor(
             repository.syncAll()
             kbs.value = repository.list()
         }
+    }
+
+    private companion object {
+        const val LAUNCHED = "launched"
     }
 }
