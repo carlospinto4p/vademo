@@ -78,6 +78,23 @@ class SettingsRepository @Inject constructor(
         context.dataStore.edit { prefs -> prefs[TEXT_SCALE] = TextZoom.clamp(scale) }
     }
 
+    /**
+     * The knowledge base open when the app was last left, reopened at the
+     * next launch; null when it was left on the home screen. Kept apart from
+     * [Settings] like [textScale], so remembering it never emits a change.
+     */
+    suspend fun lastKb(): String? = context.dataStore.data.first()[LAST_KB]
+
+    suspend fun saveLastKb(name: String?) {
+        context.dataStore.edit { prefs ->
+            if (name == null) {
+                prefs.remove(LAST_KB)
+            } else {
+                prefs[LAST_KB] = name
+            }
+        }
+    }
+
     /** The searches saved from the search screen, in the order saved. */
     val savedQueries: Flow<List<SavedQuery>> = context.dataStore.data.map { SavedQueries.decode(it[SAVED_QUERIES]) }
 
@@ -117,6 +134,7 @@ class SettingsRepository @Inject constructor(
         val REPOS = stringPreferencesKey("repo_urls")
         val TEXT_SCALE = floatPreferencesKey("note_text_scale")
         val SAVED_QUERIES = stringPreferencesKey("saved_queries")
+        val LAST_KB = stringPreferencesKey("last_kb")
     }
 }
 

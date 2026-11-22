@@ -61,6 +61,9 @@ one of those needs the app uninstalled once first.
 
 ## Folders, Recent, Types, Tags and Health
 
+The app reopens the knowledge base it was left in; go back to the list of
+knowledge bases before leaving to start there next time.
+
 A knowledge base opens on its folders. The tabs above them list the same
 notes other ways: Recent by the date each was last updated, Types grouped
 by type (all sources in one row), and Tags with every tag and how many
@@ -131,7 +134,9 @@ the phone and are not synced.
 The map button at the top of a knowledge base shows every note as a box
 and every `[[link]]` between two notes as a line, with notes of the same
 folder in the same colour. Drag to move around, pinch to zoom, and tap a
-box to open that note. The picture is worked out from the notes each
+box to open that note. A big map opens at a size its titles can be read
+at; the button at the bottom right shows all of it and zooms back in, and
+a double tap zooms in round the tap and back out. The picture is worked out from the notes each
 time, so nothing is saved and it always matches what is on the phone.
 
 ## Diagrams
@@ -140,8 +145,13 @@ Agents working on a knowledge base can draw diagrams with tyfold's graph
 tool; each one is a file in the knowledge base's `.tyfold-graphs/` folder
 and syncs like a note. The Diagrams button at the top of a knowledge base
 lists them. A diagram opens with drag and pinch-zoom, and tapping a box
-that stands for a note opens that note. A note shows a diagram in place
-where it has a line `![[name]]`; tap it to open the diagram.
+that stands for a note opens that note. A diagram too big to read whole
+opens at a readable size where it starts (its top left, or its top when
+drawn top to bottom); Show all, double tap and Zoom to read work as on
+the map. A note shows a diagram in place
+where it has a line `![[name]]`; tap it to open the diagram. A diagram
+too wide or tall to read at the note's width shows the part where it
+starts, faded at the cut.
 
 Diagrams can be edited on the phone too. Long-press a box or a group for
 what can be done to it (edit, connect to another box, status, category,

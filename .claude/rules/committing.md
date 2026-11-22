@@ -70,6 +70,29 @@ uncommitted edits into its unrelated commit.
 7. **Commit** with a message in the format below, **always including
    `uv.lock`** when it changed.
 8. **Push** with `git push`.
+9. **Merge into `main`** once the task is finished (a backlog item
+   done, or whatever the prompt asked for), per "Merge Finished Work
+   Into Main" below.
+
+## Merge Finished Work Into Main
+
+Work happens on a branch, never on `main`, but finished work does not
+stay there: a new session starts from `main`, so anything left on a
+branch (versions, backlog entries) is invisible to it, and the phone's
+`debug-latest` APK is built from `main` only.
+
+- **When**: after every finished task, not after each commit. A task
+  half done stays on the branch until it is finished.
+- **Only on green CI**: wait for "Build APK" to pass on the branch's
+  head commit. A red run is fixed and pushed first; never merge red.
+- **How**: open a pull request from the branch into `main` (or reuse
+  the one already open for it) and merge it straight away with a merge
+  commit, without asking again: this rule is the standing permission.
+  No squash and no rebase, so the branch's commits stay as they are and
+  the next task continues on the same branch.
+- **After merging**, check that `main` now holds the head commit, and
+  tell the user it was merged. If GitHub refuses the merge (a conflict,
+  a protection rule), say so and why instead of working around it.
 
 **Config/tooling changes** (anything under `.claude/` and `CLAUDE.md`)
 still take a patch bump and changelog entry with no code change; skip

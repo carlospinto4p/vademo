@@ -1,6 +1,69 @@
 ## Changelog - vademo
 
 
+### v0.24.1 - 22nd November 2026
+
+- Added "Merge Finished Work Into Main" to `.claude/rules/committing.md`:
+  each finished task is merged from its branch into `main` with a merge
+  commit through a pull request, once CI is green, without asking, so a
+  new session and the phone's `debug-latest` APK both see it.
+
+
+### v0.24.0 - 22nd November 2026
+
+- The app reopens the knowledge base it was left in, instead of starting
+  on the list of knowledge bases each time. Going back to the list and
+  leaving from there starts there next time. A knowledge base that has
+  been removed, is not downloaded, is damaged or waits for a choice after
+  a conflict is not reopened. Back from it still reaches the list.
+- Added `SettingsRepository.lastKb` and `saveLastKb`, kept apart from
+  `Settings` like the text size; `BrowseViewModel` saves it when the top
+  of a knowledge base opens.
+- `HomeViewModel.refresh` became `start`, which reopens the last
+  knowledge base once per launch (remembered in its `SavedStateHandle`)
+  and forgets it whenever the list is come back to; `kbToReopen` decides.
+- Tests:
+  - `ReopenTest`: 4 tests of which knowledge base is reopened.
+  - `ReadAndEditTest`: `reopenTheLastKnowledgeBaseAtLaunch`, launching
+    the app three times.
+
+
+### v0.23.1 - 22nd November 2026
+
+- Fixed diagrams inside a note becoming unreadable specks. `DiagramCard`
+  shrank a diagram to the note's width without limit; it now stops at
+  70 % (box names at about 10 sp) and shows the part where the diagram
+  starts, its left side or, drawn top to bottom, its top, faded out where
+  it is cut, with "Part of the diagram. Tap to open all of it." under it.
+  A diagram that fits at 70 % or larger is shown whole as before.
+- Added `CardFit` in `ui/diagram/DiagramCard.kt`: the card's scale, place,
+  height and cut edges, apart from Compose.
+- Added `CardFitTest`: 5 tests of small, readable, wide and tall diagrams.
+
+
+### v0.23.0 - 22nd November 2026
+
+- Diagrams and the map of notes open at a size that can be read. A
+  drawing too big to show whole used to be shrunk to fit, down to 35 %,
+  which put its 11 sp labels near 4 sp; it now opens whole only when that
+  keeps it at 85 % or larger, and otherwise at 85 % where it starts: the
+  top left of a left-to-right diagram, the top of a top-to-bottom one,
+  the middle of the map.
+- `ui/graph/PanZoom.kt`:
+  - Added a Show all button at the bottom right, which turns into Zoom to
+    read once all is shown. It appears only when the whole drawing is too
+    small to read.
+  - Added double tap: to full size round the tap, and from there back out
+    to the whole drawing. Both glide over 300 ms; a drag or pinch stops
+    the glide.
+  - The framing is now read only while drawing, so a drag recomposes
+    nothing.
+- Added `ui/graph/Viewport.kt`: `Framing`, `StartAt` and the zoom
+  arithmetic, apart from Compose.
+- Added `ViewportTest`: 11 tests of the opening scale and place, Show
+  all, zooming round a point, double tap and gliding.
+
+
 ### v0.22.0 - 22nd November 2026
 
 - Settings lists the knowledge bases as rows instead of one text box of

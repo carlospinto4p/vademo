@@ -4,9 +4,11 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -238,6 +240,30 @@ class ReadAndEditTest {
         }
         compose.onNodeWithContentDescription("Forward").performClick()
         compose.waitUntil(5_000) { compose.onAllNodes(hasText("scored by")).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun reopenTheLastKnowledgeBaseAtLaunch() {
+        val folders = { compose.onAllNodes(hasText("ideas")).fetchSemanticsNodes().isNotEmpty() }
+        // The knowledge base's own title has its name too, but only the home screen's row can be tapped.
+        val home = {
+            compose.onAllNodes(hasText("kb-distributed-systems") and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.openKnowledgeBase()
+        compose.waitUntil(5_000, folders)
+
+        // Left in the knowledge base: the next launch opens it with no tap on the home screen.
+        scenario?.close()
+        scenario = ActivityScenario.launch(MainActivity::class.java)
+        compose.waitUntil(5_000, folders)
+
+        // Back reaches the home screen, and leaving from there starts there next time.
+        compose.onNodeWithContentDescription("Back").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasContentDescription("Settings")).fetchSemanticsNodes().isNotEmpty() }
+        scenario?.close()
+        scenario = ActivityScenario.launch(MainActivity::class.java)
+        compose.waitUntil(5_000, home)
+        compose.onNodeWithText("ideas").assertDoesNotExist()
     }
 
     @Test
