@@ -146,7 +146,9 @@ that stands for a note opens that note. A diagram too big to read whole
 opens at a readable size where it starts (its top left, or its top when
 drawn top to bottom); Show all, double tap and Zoom to read work as on
 the map. A note shows a diagram in place
-where it has a line `![[name]]`; tap it to open the diagram.
+where it has a line `![[name]]`; tap it to open the diagram. A diagram
+too wide or tall to read at the note's width shows the part where it
+starts, faded at the cut.
 
 Diagrams can be edited on the phone too. Long-press a box or a group for
 what can be done to it (edit, connect to another box, status, category,

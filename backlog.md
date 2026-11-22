@@ -43,11 +43,6 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 
 #### Readable diagrams and map
 
-- [ ] Diagrams inside a note shrink without limit to the note's width
-  (`diagram/DiagramCard.kt:67`), so a wide diagram becomes a row of
-  specks. Keep a readable minimum scale, crop what does not fit with a
-  fade at the edge, and say "Tap to open the whole diagram". HIGH,
-  effort S.
 - [ ] Arrow labels collide and are tiny: 11 sp on a borderless
   `surface` pill centred on the arrow's middle, cut to two lines in
   160 dp (`diagram/DiagramDrawing.kt:404-410`), drawn over boxes and over

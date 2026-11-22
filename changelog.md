@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.23.1 - 22nd November 2026
+
+- Fixed diagrams inside a note becoming unreadable specks. `DiagramCard`
+  shrank a diagram to the note's width without limit; it now stops at
+  70 % (box names at about 10 sp) and shows the part where the diagram
+  starts, its left side or, drawn top to bottom, its top, faded out where
+  it is cut, with "Part of the diagram. Tap to open all of it." under it.
+  A diagram that fits at 70 % or larger is shown whole as before.
+- Added `CardFit` in `ui/diagram/DiagramCard.kt`: the card's scale, place,
+  height and cut edges, apart from Compose.
+- Added `CardFitTest`: 5 tests of small, readable, wide and tall diagrams.
+
+
 ### v0.23.0 - 22nd November 2026
 
 - Diagrams and the map of notes open at a size that can be read. A
