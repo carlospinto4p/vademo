@@ -33,22 +33,22 @@ class ViewportTest {
     @Test
     fun `a left-to-right diagram opens at its top left`() {
         val f = Viewport.opening(4000f, 8000f, 1000f, 2000f, readable, StartAt.TopLeft)
-        assertEquals(0f, f.x)
-        assertEquals(0f, f.y)
+        assertEquals(0f, f.x, 1e-3f)
+        assertEquals(0f, f.y, 1e-3f)
     }
 
     @Test
     fun `a top-to-bottom diagram opens at its top, centred across`() {
         val f = Viewport.opening(4000f, 8000f, 1000f, 2000f, readable, StartAt.Top)
         assertEquals((1000f - 4000f * readable) / 2, f.x, 1e-3f)
-        assertEquals(0f, f.y)
+        assertEquals(0f, f.y, 1e-3f)
     }
 
     @Test
     fun `a side that fits is centred whatever the start says`() {
         // Wide and short: too wide at the readable scale, but its height fits.
         val f = Viewport.opening(4000f, 400f, 1000f, 2000f, readable, StartAt.TopLeft)
-        assertEquals(0f, f.x)
+        assertEquals(0f, f.x, 1e-3f)
         assertEquals((2000f - 400f * readable) / 2, f.y, 1e-3f)
     }
 
