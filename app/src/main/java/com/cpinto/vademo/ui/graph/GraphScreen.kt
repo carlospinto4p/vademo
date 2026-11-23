@@ -104,7 +104,8 @@ fun GraphScreen(
             }
             Box(Modifier.fillMaxSize()) {
                 when {
-                    graph == null || map == null || layout == null -> Unit
+                    // Reading every note and laying them out can take a moment on a big knowledge base.
+                    graph == null || map == null || layout == null -> Loading()
                     graph.notes.isEmpty() -> Text(
                         if (state.focus != null) "This note is not in the knowledge base's index." else "This knowledge base has no notes yet.",
                         Modifier.padding(16.dp),

@@ -47,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.ui.BackForward
 import com.cpinto.vademo.ui.graph.Legend
+import com.cpinto.vademo.ui.graph.Loading
 import com.cpinto.vademo.ui.graph.PanZoom
 import com.cpinto.vademo.ui.graph.StartAt
 
@@ -109,7 +110,7 @@ fun DiagramScreen(
             val diagram = state.diagram
             when {
                 state.error != null -> Text("This diagram could not be read: ${state.error}", Modifier.padding(16.dp))
-                diagram == null -> Unit
+                diagram == null -> Loading()
                 diagram.nodes.isEmpty() -> Text(
                     if (state.editable) "This diagram has no boxes yet. Add one from the menu at the top right."
                     else "This diagram has no boxes yet.",

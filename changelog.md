@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.29.1 - 23rd November 2026
+
+- The map of notes, a diagram and the list of diagrams show a spinner
+  while they are read and laid out, instead of a blank screen. Now that a
+  picture is a knowledge base's first screen, that blank was the first
+  thing seen.
+- Added `Loading` in `ui/graph/PanZoom.kt`.
+
+
 ### v0.29.0 - 23rd November 2026
 
 - Show on map, a button on a note's top bar, opens a map of that note and
