@@ -28,11 +28,11 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 - [ ] "Show on map" from a note: the map centred on that note with only
   its links one or two steps away, so a reader can wander to related
   notes by picture. MED, effort M.
-- [ ] A "Continue reading" strip on the knowledge base's first screen:
+- [x] A "Continue reading" strip on the knowledge base's first screen:
   the last few notes opened, kept per knowledge base. The Recent tab
   sorts by `updated`, which is when a note was written, not read. MED,
   effort S.
-- [ ] Note screen: show "Links to" next to "Linked from"
+- [x] Note screen: show "Links to" next to "Linked from"
   (`note/NoteScreen.kt:175`), and the note's hub as a tappable line
   under the title, so moving around never needs Back or search. MED,
   effort S.

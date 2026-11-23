@@ -66,7 +66,8 @@ A knowledge base opens on a picture of it: its main diagram, the one its
 notes when it has none. The bar at the bottom switches between Map,
 Diagrams and Notes, and the knowledge base opens on the one it was left on
 next time. On a main diagram, the list button at the top lists all the
-knowledge base's diagrams.
+knowledge base's diagrams. Above the bar, "Continue reading" lists the last
+five notes opened in that knowledge base, newest first.
 
 The app reopens the knowledge base it was left in; go back to the list of
 knowledge bases before leaving to start there next time.
@@ -92,8 +93,10 @@ reflows to the width of the screen, so a larger size never means
 scrolling sideways, and the size is kept for every note until it is
 changed again.
 
-Under the text, "Linked from" lists the notes that link to this one. Tap
-one to open it. Tap the type, status or a tag at the top of a note to
+Under the text, "Links to" lists the notes this one links to and "Linked
+from" the notes that link to it. Tap one to open it. At the top, "In …"
+names the topic hub the note sits under (a hub's is the index); tap it to
+go up without Back or search. Tap the type, status or a tag at the top of a note to
 search for the other notes that share it.
 
 A table sizes its columns by their content: short columns keep their

@@ -4,13 +4,18 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -22,6 +27,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -37,6 +43,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.cpinto.vademo.kb.IndexedNote
 import com.cpinto.vademo.kb.WikiLinks
 import com.cpinto.vademo.ui.BackForward
 import com.cpinto.vademo.ui.diagram.DiagramCard
@@ -122,6 +129,17 @@ fun NoteScreen(
                     Text("This note no longer exists. It may have been renamed or deleted on GitHub.")
                     return@Column
                 }
+                state.hub?.let { hub ->
+                    // Up to the topic without Back or search, whichever way this note was reached.
+                    TextButton(
+                        onClick = { onOpenNote(viewModel.kbName, hub.path) },
+                        contentPadding = PaddingValues(horizontal = 4.dp),
+                    ) {
+                        Icon(Icons.Outlined.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("In ${hub.title}")
+                    }
+                }
                 state.frontmatter?.let { front ->
                     // Each chip searches this knowledge base for the notes sharing it.
                     val filters = listOfNotNull(
@@ -170,20 +188,26 @@ fun NoteScreen(
                         }
                     }
                 }
-                if (state.linkedFrom.isNotEmpty()) {
-                    HorizontalDivider()
-                    Text("Linked from (${state.linkedFrom.size})", style = MaterialTheme.typography.titleMedium)
-                    Column {
-                        for (from in state.linkedFrom) {
-                            ListItem(
-                                modifier = Modifier.clickable { onOpenNote(viewModel.kbName, from.path) },
-                                headlineContent = { Text(from.title) },
-                                supportingContent = from.type?.let { { Text(it) } },
-                            )
-                        }
-                    }
-                }
+                NoteLinks("Links to", state.linksTo) { onOpenNote(viewModel.kbName, it.path) }
+                NoteLinks("Linked from", state.linkedFrom) { onOpenNote(viewModel.kbName, it.path) }
             }
+        }
+    }
+}
+
+/** A heading with the count, then one row per note, each opening it; nothing at all when [notes] is empty. */
+@Composable
+private fun NoteLinks(heading: String, notes: List<IndexedNote>, onOpen: (IndexedNote) -> Unit) {
+    if (notes.isEmpty()) return
+    HorizontalDivider()
+    Text("$heading (${notes.size})", style = MaterialTheme.typography.titleMedium)
+    Column {
+        for (note in notes) {
+            ListItem(
+                modifier = Modifier.clickable { onOpen(note) },
+                headlineContent = { Text(note.title) },
+                supportingContent = note.type?.let { { Text(it) } },
+            )
         }
     }
 }

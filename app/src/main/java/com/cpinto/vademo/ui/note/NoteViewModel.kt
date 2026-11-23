@@ -37,6 +37,10 @@ data class NoteState(
     val missing: Boolean = false,
     /** Notes linking to this one; filled in after the text, since it reads every note. */
     val linkedFrom: List<IndexedNote> = emptyList(),
+    /** Notes this one links to that exist, each once; filled in with [linkedFrom]. */
+    val linksTo: List<IndexedNote> = emptyList(),
+    /** The hub this note sits under, shown under its title; null for the index or a topic with no hub. */
+    val hub: IndexedNote? = null,
 )
 
 @HiltViewModel
@@ -74,6 +78,7 @@ class NoteViewModel @Inject constructor(
                 _state.value = NoteState(title = path, missing = true)
                 return@launch
             }
+            settings.noteOpened(kbName, path)
             val parsed = FrontmatterParser.parse(file.readText())
             val blocks = WikiLinks.parts(parsed.body).map { part ->
                 when (part) {
@@ -91,7 +96,11 @@ class NoteViewModel @Inject constructor(
             )
             val noteIndex = repository.index(kbName)
             index = noteIndex
-            _state.value = _state.value.copy(linkedFrom = noteIndex.linkedFrom(path))
+            _state.value = _state.value.copy(
+                linkedFrom = noteIndex.linkedFrom(path),
+                linksTo = noteIndex.linksTo(path),
+                hub = noteIndex.hubOf(path),
+            )
         }
     }
 

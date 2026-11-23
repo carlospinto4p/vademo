@@ -97,6 +97,30 @@ class NoteIndexTest {
     }
 
     @Test
+    fun `linksTo gives the notes a note links to, each once, in order, only ones that exist`() {
+        write("ideas/a.md", "[[c]] then [[b]], [[c]] again, [[missing]] and [[a]]")
+        write("ideas/b.md", "---\ntitle: Note B\n---\n")
+        write("sources/c.md", "---\ntitle: Note C\n---\n")
+        assertEquals(listOf("Note C", "Note B"), index().linksTo("ideas/a.md").map { it.title })
+        assertEquals(emptyList<IndexedNote>(), index().linksTo("ideas/b.md"))
+        assertEquals(emptyList<IndexedNote>(), index().linksTo("ideas/none.md"))
+    }
+
+    @Test
+    fun `hubOf gives a note's topic hub, a hub's the index, and the index none`() {
+        write("index.md", "---\ntitle: Home\n---\n")
+        write("ideas/ideas.md", "---\ntitle: Ideas\n---\n")
+        write("ideas/deep/a.md", "")
+        write("markets/saas.md", "")
+        val index = index()
+        assertEquals("Ideas", index.hubOf("ideas/deep/a.md")?.title)
+        assertEquals("Home", index.hubOf("ideas/ideas.md")?.title)
+        assertEquals(null, index.hubOf("index.md"))
+        // A topic with no hub note has nothing to lead up to.
+        assertEquals(null, index.hubOf("markets/saas.md"))
+    }
+
+    @Test
     fun `links that name no note are unresolved, once per note`() {
         write("ideas/a.md", "[[gone]] [[gone]] [[b]]")
         write("ideas/b.md", "[[also-gone]]")
