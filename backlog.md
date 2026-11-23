@@ -59,12 +59,17 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   folder colours (`graph/GraphScreen.kt:136`, value 0.8 on a light
   surface) need the same check: yellows and greens fade out. MED,
   effort S.
-- [ ] Is the text blurry when zoomed in? Zoom is a `graphicsLayer` scale
+- [x] Is the text blurry when zoomed in? Zoom is a `graphicsLayer` scale
   of the whole drawing (`graph/PanZoom.kt`), and diagrams also record
   every frame into a layer for Share as image
   (`diagram/DiagramScreen.kt`), which can draw glyphs at 1× and stretch
   them. Look at 2× and 3× on the phone; if blurry, record only while
-  exporting. MED, effort S.
+  exporting. MED, effort S. Done in v0.29.10: it records only while
+  exporting, whatever the phone shows.
+- [ ] **[manual]** With v0.29.10 installed, open a diagram and zoom to 2×
+  and 3×: box text and arrow labels should be as sharp as the app bar's.
+  Then Share as image: the picture still shows the whole diagram, without
+  the arrows' round handles.
 - [x] Lines thin out with the zoom: arrows and map links are 1.5 dp
   before scaling, so about 0.5 dp at the starting scale. Keep them at
   least 1 dp on screen whatever the zoom. LOW, effort S.

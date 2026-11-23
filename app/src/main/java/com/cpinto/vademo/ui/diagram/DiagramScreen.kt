@@ -78,7 +78,9 @@ fun DiagramScreen(
     var open by remember { mutableStateOf<DiagramDialog?>(null) }
     LaunchedEffect(state.deleted) { if (state.deleted) onBack() }
     val context = LocalContext.current
-    // Every frame of the whole drawing, at its own size, is recorded here for Share as image.
+    // The whole drawing, at its own size, is recorded here for Share as image, only while exporting:
+    // recording every frame cost work for a picture seldom taken, and risked the screen showing a
+    // recording instead of text drawn at the zoom.
     val picture = rememberGraphicsLayer()
     val paper = MaterialTheme.colorScheme.surface
     // While the picture is taken the drawing is shown once without the arrows' edit handles,
@@ -143,7 +145,7 @@ fun DiagramScreen(
                     }
                     // Recorded with tyfold's export margin round it (`PADDING` in its graphExport.ts);
                     // the screen draws the recording back at the content's own place.
-                    val recording = Modifier.drawWithContent {
+                    val recording = if (!exporting) Modifier else Modifier.drawWithContent {
                         val margin = EXPORT_MARGIN.toPx()
                         picture.record(size = IntSize((size.width + 2 * margin).toInt(), (size.height + 2 * margin).toInt())) {
                             drawRect(paper)

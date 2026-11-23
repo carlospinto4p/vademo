@@ -1,6 +1,17 @@
 ## Changelog - vademo
 
 
+### v0.29.10 - 23rd November 2026
+
+- Fixed `DiagramScreen` recording the whole drawing into a layer on every
+  frame, for a Share as image that is seldom used. It now records only
+  while the picture is being taken. Besides the work saved at each frame
+  of a pan or zoom, the screen no longer shows the drawing through that
+  recording, the likely cause if diagram text looked blurry when zoomed in.
+  The zoom itself is a `graphicsLayer` scale, which Android draws text
+  afresh for at the new size. Not yet checked on a phone.
+
+
 ### v0.29.9 - 23rd November 2026
 
 - Updated the map of notes' boxes, which said little:
