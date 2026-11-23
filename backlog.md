@@ -51,7 +51,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   (`graph/GraphScreen.kt:122`). Let group titles wrap to two lines, and
   make a tap on a box that is not a note open a bottom sheet with its
   whole name, notes and ref (today the tap does nothing). MED, effort M.
-- [ ] Check text contrast on coloured boxes with a unit test:
+- [x] Check text contrast on coloured boxes with a unit test:
   `DiagramColours` (`diagram/DiagramDrawing.kt`) tints boxes and draws the
   headline in `onSurfaceVariant` on them, and with Material You's dynamic
   colours that pair is not checked anywhere. Test 4.5:1 for text on every

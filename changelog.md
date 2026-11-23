@@ -1,6 +1,22 @@
 ## Changelog - vademo
 
 
+### v0.29.2 - 23rd November 2026
+
+- Fixed colours that faded into what they sit on, on the light theme:
+  legend stripes in yellow, cyan and green (2.3:1 against their box), the
+  "changed" status border (2.1:1), and most of the map's folder colours
+  (down to 1.4:1). Each colour is now darkened on a light theme, or
+  lightened on a dark one, until it reaches 3:1 against everything behind
+  it.
+- Added `ui/theme/Palette.kt`: those colours as ARGB, apart from Compose,
+  checked against the Material tones the theme uses whatever the
+  wallpaper. `DiagramColours` and the map's `folderColours` take theirs
+  from it.
+- Tests: `PaletteTest`, 6 tests: text 4.5:1 on every tint, stripes,
+  status borders and folder colours 3:1, every 5° of hue, light and dark.
+
+
 ### v0.29.1 - 23rd November 2026
 
 - The map of notes, a diagram and the list of diagrams show a spinner
