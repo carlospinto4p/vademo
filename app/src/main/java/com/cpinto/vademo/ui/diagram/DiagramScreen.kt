@@ -124,7 +124,15 @@ fun DiagramScreen(
                     // Kept across drag frames, so the boxes that did not move skip recomposing.
                     val actions = remember(viewModel, onOpenNote, state.editable, exporting, state.connectingFrom, state.selected) {
                         DiagramActions(
-                            onTap = { id -> viewModel.tap(id)?.let { onOpenNote(viewModel.kbName, it) } },
+                            onTap = { id ->
+                                val opens = viewModel.tapOpens
+                                val note = viewModel.tap(id)
+                                when {
+                                    note != null -> onOpenNote(viewModel.kbName, note)
+                                    // A box that is not a note shows all its text, which the drawing may cut short.
+                                    opens -> open = DiagramDialog.Details(id)
+                                }
+                            },
                             onLongPress = if (state.editable) { id -> open = DiagramDialog.Actions(id) } else null,
                             onEdge = if (state.editable && !exporting) { id -> open = DiagramDialog.Edge(id) } else null,
                             highlighted = state.connectingFrom,

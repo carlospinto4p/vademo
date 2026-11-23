@@ -88,6 +88,16 @@ class DiagramEditTest {
     }
 
     @Test
+    fun tapABoxThatIsNotANoteToReadAllOfIt() {
+        openDiagram()
+        compose.onNodeWithText("Client").performClick()
+        // Its sheet has its name again, whole, and a way to edit it.
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Edit")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Edit").performClick()
+        compose.onNode(hasSetTextAction() and hasText("Client")).assertExists()
+    }
+
+    @Test
     fun renameABoxThenUndo() {
         openDiagram()
         longPress("Client")

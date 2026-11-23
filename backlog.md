@@ -45,7 +45,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   each other when arrows are close. Use `labelMedium`, outline the pill,
   and slide a label along its arrow when it would cover a box or another
   label. MED, effort M.
-- [ ] Text cut short with no way to read the rest: group titles one line
+- [x] Text cut short with no way to read the rest: group titles one line
   (`diagram/DiagramDrawing.kt:307`), box headlines and ref lines one line,
   box names three, notes four, map titles two
   (`graph/GraphScreen.kt:122`). Let group titles wrap to two lines, and

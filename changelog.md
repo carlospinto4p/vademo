@@ -1,6 +1,20 @@
 ## Changelog - vademo
 
 
+### v0.29.6 - 23rd November 2026
+
+- Fixed diagram text cut short with no way to read the rest. Tapping a
+  box or group that is not a note, which did nothing, now opens a sheet
+  with its whole name, what its legend calls it, its status, its notes and
+  what it refers to, and Edit when it can be edited. A group title wraps
+  to two lines when the group has no note under it, which fits the room
+  the layout leaves above its boxes.
+- Added `DiagramDialog.Details` and `DetailsSheet`; `DiagramViewModel`
+  tells with `tapOpens` whether a tap opens a box or is part of drawing an
+  arrow or selecting.
+- Tests: `DiagramEditTest.tapABoxThatIsNotANoteToReadAllOfIt`.
+
+
 ### v0.29.5 - 23rd November 2026
 
 - Fixed lines on the map of notes and diagram arrows breaking up when

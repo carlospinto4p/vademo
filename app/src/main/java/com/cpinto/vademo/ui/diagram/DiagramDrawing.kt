@@ -93,7 +93,7 @@ private fun boxStyles(): BoxStyles {
  * colours are never the only sign. An entry with the box's own name is left
  * out, as a group named after its category would otherwise say it twice.
  */
-private fun headline(node: DiagramNode, diagram: Diagram): String =
+internal fun headline(node: DiagramNode, diagram: Diagram): String =
     listOfNotNull(
         node.tag,
         node.status?.name?.lowercase(),
@@ -307,14 +307,15 @@ private fun GroupBox(
         }
         Column(Modifier.padding(horizontal = DiagramLayout.PAD_SIDE.dp, vertical = 6.dp)) {
             val title = listOfNotNull(group.text, headline(group, diagram).ifEmpty { null }).joinToString(" · ")
+            val second = group.notes?.takeIf { it.isNotBlank() } ?: group.ref?.let(::refText)
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
+                // The layout leaves a group 48 dp above its boxes: room for two lines of title, or one and a note.
+                maxLines = if (second == null) 2 else 1,
                 overflow = TextOverflow.Ellipsis,
                 textDecoration = if (group.status == DiagramNode.Status.REMOVED) TextDecoration.LineThrough else null,
             )
-            val second = group.notes?.takeIf { it.isNotBlank() } ?: group.ref?.let(::refText)
             second?.let {
                 Text(
                     it,

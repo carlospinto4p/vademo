@@ -241,6 +241,9 @@ class DiagramViewModel @Inject constructor(
      * out; otherwise the box's note opens when it links to one. Returns the
      * note's path to open, if any.
      */
+    /** Whether a tap now would open a box, rather than end an arrow or add to a selection. */
+    val tapOpens: Boolean get() = _state.value.connectingFrom == null && _state.value.selected.isEmpty()
+
     fun tap(id: String): String? {
         val now = _state.value
         val from = now.connectingFrom
