@@ -73,10 +73,8 @@ class DiagramEditTest {
 
     private fun openDiagram() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
+        // Its only diagram is the knowledge base's first screen.
         compose.openKnowledgeBase()
-        compose.onNodeWithContentDescription("Diagrams").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Request flow")).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("Request flow").performClick()
         compose.waitUntil(5_000) { compose.onAllNodes(hasText("Server")).fetchSemanticsNodes().isNotEmpty() }
     }
 
@@ -116,8 +114,7 @@ class DiagramEditTest {
         compose.onNodeWithContentDescription("Back").performClick()
         waitForFile { "\"label\": \"Browser\"" in it }
         // Opened again, it shows the saved edit.
-        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Request flow")).fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("Request flow").performClick()
+        compose.openKnowledgeBase()
         compose.waitUntil(5_000) { compose.onAllNodes(hasText("Browser")).fetchSemanticsNodes().isNotEmpty() }
     }
 
@@ -151,7 +148,10 @@ class DiagramEditTest {
     fun createADiagramFromTheList() {
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.openKnowledgeBase()
-        compose.onNodeWithContentDescription("Diagrams").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasContentDescription("All diagrams")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("All diagrams").performClick()
         // The button appears once the list has checked that no sync conflict waits.
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasContentDescription("New diagram")).fetchSemanticsNodes().isNotEmpty()

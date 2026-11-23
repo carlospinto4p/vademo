@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material3.AlertDialog
@@ -16,6 +17,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -40,6 +42,8 @@ import com.cpinto.vademo.ui.BackForward
 fun DiagramListScreen(
     onBack: () -> Unit,
     onOpen: (kb: String, name: String) -> Unit,
+    /** Shown as a Search action when given, as on a knowledge base's Diagrams tab. */
+    onSearch: (() -> Unit)? = null,
     viewModel: DiagramListViewModel = hiltViewModel(),
 ) {
     val diagrams by viewModel.diagrams.collectAsStateWithLifecycle()
@@ -69,6 +73,13 @@ fun DiagramListScreen(
             TopAppBar(
                 title = { Text("Diagrams") },
                 navigationIcon = { BackForward(onBack) },
+                actions = {
+                    if (onSearch != null) {
+                        IconButton(onClick = onSearch) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search")
+                        }
+                    }
+                },
             )
         },
     ) { padding ->

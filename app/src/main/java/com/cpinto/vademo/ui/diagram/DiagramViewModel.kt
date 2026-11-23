@@ -102,6 +102,13 @@ class DiagramViewModel @Inject constructor(
             return
         }
         viewModelScope.launch(Dispatchers.IO) {
+            // Shown again, back from a note or its tab chosen again, with an edit not yet
+            // written: it is written first, or reading the file would drop it.
+            if (unsaved) {
+                pendingSave?.cancel()
+                save()
+                unsaved = false
+            }
             // An edit made just before this diagram was last closed may still be being written.
             writes.awaitFor(file)
             val moves = placesStore.read(kbName, name)

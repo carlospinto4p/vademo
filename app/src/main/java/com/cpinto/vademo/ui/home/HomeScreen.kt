@@ -34,11 +34,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.data.KbInfo
 import com.cpinto.vademo.data.SyncState
 import com.cpinto.vademo.git.SyncOutcome
+import com.cpinto.vademo.ui.kb.KbStart
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    onOpenKb: (String) -> Unit,
+    onOpenKb: (KbStart) -> Unit,
     onResolve: (String) -> Unit,
     onSettings: () -> Unit,
     onSearch: () -> Unit,
@@ -91,7 +92,7 @@ fun HomeScreen(
                     onClick = {
                         when {
                             kb.needsChoice -> onResolve(kb.name)
-                            kb.cloned -> onOpenKb(kb.name)
+                            kb.cloned -> viewModel.open(kb.name, onOpenKb)
                         }
                     },
                 )

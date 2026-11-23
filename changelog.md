@@ -1,6 +1,37 @@
 ## Changelog - vademo
 
 
+### v0.25.0 - 23rd November 2026
+
+- A knowledge base opens on a picture instead of its folders: its main
+  diagram (the first one `index.md` shows with `![[name]]`, else its only
+  diagram) or, with none, the map of notes. A bottom bar switches between
+  Map, Diagrams and Notes (the folders and the Recent, Types, Tags and
+  Health lists), and the knowledge base opens on the tab it was left on
+  next time. The map and diagrams buttons left the Notes tab's top bar.
+- Added `ui/kb/`:
+  - `KbScreen`: the bottom bar and the tab showing, one view model per tab
+    for as long as the knowledge base is open.
+  - `KbViewModel`: the tab, kept in its `SavedStateHandle` and in
+    `SettingsRepository.kbTab`.
+  - `KbTab`, `KbStart` and `firstTab`: the tabs, and the one a knowledge
+    base opens on.
+- Added `mainDiagram` (`kb/MainDiagram.kt`) and `WikiLinks.embeds`.
+- `HomeViewModel.open` reads the index and the diagrams before opening a
+  knowledge base, at a tap and when it is reopened at launch; the `kb/{kb}`
+  route replaced `browse/{kb}` at the top and `graph/{kb}`.
+- On a tab, the map and the diagram list have a Search action, and a main
+  diagram an All diagrams action and Search notes in its menu.
+- `DiagramViewModel.load` writes an edit still waiting for its 400 ms
+  delay before reading the file again, so coming back to the diagram's tab
+  or from a note no longer drops it.
+- Tests:
+  - `MainDiagramTest`: 4 tests.
+  - `KbTabTest`: 3 tests.
+  - `WikiLinksTest`: `embeds`.
+  - Device tests open the Notes tab, or start on the opening diagram.
+
+
 ### v0.24.1 - 22nd November 2026
 
 - Added "Merge Finished Work Into Main" to `.claude/rules/committing.md`:

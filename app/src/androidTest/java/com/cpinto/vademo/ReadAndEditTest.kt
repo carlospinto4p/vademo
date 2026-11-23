@@ -93,7 +93,7 @@ class ReadAndEditTest {
 
     @Test
     fun browseReadFollowALinkThenEdit() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.onNodeWithText("Scored with the method below.").assertIsDisplayed()
@@ -133,7 +133,7 @@ class ReadAndEditTest {
             "ideas/scores.md",
             note("Scores", "concept", "| Criterion | Score | Reasons |\n|---|---|---|\n| Demand | four | $reasons |\n"),
         )
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Scores").performClick()
         // A cell's text keeps the spaces around it in the markdown.
@@ -155,7 +155,7 @@ class ReadAndEditTest {
     fun startANoteFromATemplateThenSaveIt() {
         write("templates/note.md", "---\ntitle: <Title>\ntype: concept\nstatus: draft\ntags: []\ncreated: YYYY-MM-DD\nupdated: YYYY-MM-DD\n---\n\n# <Title>\n\nHub: [[<topic-hub>]]\n\n<One idea.>\n")
         write("templates/question.md", "---\ntitle: <The question>\ntype: question\n---\n\n# <The question>\n")
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("New note", useUnmergedTree = true).performClick()
 
@@ -192,7 +192,7 @@ class ReadAndEditTest {
     @Test
     fun leavingANewNoteUnsavedWritesNothing() {
         write("templates/note.md", "---\ntitle: <Title>\n---\n\n# <Title>\n")
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("New note", useUnmergedTree = true).performClick()
         compose.onNode(hasSetTextAction() and hasText("Title")).performTextInput("Scratch")
@@ -210,7 +210,7 @@ class ReadAndEditTest {
 
     @Test
     fun goBackThenForwardAgain() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.waitUntil(5_000) {
@@ -249,10 +249,10 @@ class ReadAndEditTest {
         val home = {
             compose.onAllNodes(hasText("kb-distributed-systems") and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.waitUntil(5_000, folders)
 
-        // Left in the knowledge base: the next launch opens it with no tap on the home screen.
+        // Left in the knowledge base: the next launch opens it, on the tab it was left on, with no tap on the home screen.
         scenario?.close()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         compose.waitUntil(5_000, folders)
@@ -269,7 +269,8 @@ class ReadAndEditTest {
     @Test
     fun openANoteFromTheMap() {
         compose.openKnowledgeBase()
-        compose.onNodeWithContentDescription("Map of notes").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("Map")).fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("Map").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
         }
@@ -281,12 +282,8 @@ class ReadAndEditTest {
 
     @Test
     fun openANoteFromADiagram() {
+        // Its only diagram is the knowledge base's first screen.
         compose.openKnowledgeBase()
-        compose.onNodeWithContentDescription("Diagrams").performClick()
-        compose.waitUntil(5_000) {
-            compose.onAllNodes(hasText("How an idea is scored")).fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithText("How an idea is scored").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("The scorecard")).fetchSemanticsNodes().isNotEmpty()
         }
@@ -299,7 +296,7 @@ class ReadAndEditTest {
 
     @Test
     fun aNoteShowsTheDiagramItEmbeds() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.waitUntil(5_000) {
@@ -315,7 +312,7 @@ class ReadAndEditTest {
 
     @Test
     fun followABacklinkToTheNoteLinkingHere() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Business idea scorecard").performClick()
         compose.waitUntil(5_000) {
@@ -329,7 +326,7 @@ class ReadAndEditTest {
 
     @Test
     fun openANoteFromTheTypesTab() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("Types").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("idea (1)")).fetchSemanticsNodes().isNotEmpty()
@@ -342,7 +339,7 @@ class ReadAndEditTest {
 
     @Test
     fun aTagInTheTagsTabListsItsNotes() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("Tags").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("scoring")).fetchSemanticsNodes().isNotEmpty()
@@ -358,7 +355,7 @@ class ReadAndEditTest {
     @Test
     fun aHealthRowListsTheNotesItCounts() {
         write("inbox/read-later.md", "A link to look at.")
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("Health").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("Waiting in the inbox")).fetchSemanticsNodes().isNotEmpty()
@@ -373,7 +370,7 @@ class ReadAndEditTest {
 
     @Test
     fun aNoteTypeChipListsTheNotesOfThatType() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.waitUntil(5_000) {
@@ -405,7 +402,7 @@ class ReadAndEditTest {
 
     @Test
     fun searchAKnowledgeBaseWithAFilter() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithContentDescription("Search").performClick()
         // The field starts with the knowledge base's own filter.
         compose.onNode(hasSetTextAction()).assert(hasText("kb:distributed-systems ", substring = true))
@@ -418,7 +415,7 @@ class ReadAndEditTest {
 
     @Test
     fun saveASearchRunItAgainThenDeleteIt() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithContentDescription("Search").performClick()
         // Before anything is typed, the Health checks are offered as saved searches.
         compose.waitUntil(5_000) {
@@ -486,7 +483,7 @@ class ReadAndEditTest {
 
     @Test
     fun editingANoteDeletedMeanwhileSaysSoInsteadOfCrashing() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.waitUntil(5_000) {
@@ -503,7 +500,7 @@ class ReadAndEditTest {
 
     @Test
     fun aConflictThatAppearsWhileEditingStopsTheSave() {
-        compose.openKnowledgeBase()
+        compose.openNotes()
         compose.onNodeWithText("ideas").performClick()
         compose.onNodeWithText("Tyfold desktop app").performClick()
         compose.onNodeWithContentDescription("Edit").performClick()

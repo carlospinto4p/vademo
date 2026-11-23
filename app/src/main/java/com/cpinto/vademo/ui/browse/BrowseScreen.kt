@@ -15,12 +15,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.LibraryBooks
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.ErrorOutline
 import androidx.compose.material.icons.outlined.Folder
-import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Sell
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,8 +68,6 @@ fun BrowseScreen(
     onBack: () -> Unit,
     onOpenFolder: (kb: String, path: String) -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
-    onOpenMap: (kb: String) -> Unit,
-    onOpenDiagrams: (kb: String) -> Unit,
     onSearch: (kb: String, filters: String) -> Unit,
     onNewNote: (kb: String, path: String, template: String, title: String) -> Unit,
     viewModel: BrowseViewModel = hiltViewModel(),
@@ -113,12 +109,6 @@ fun BrowseScreen(
                 actions = {
                     IconButton(onClick = { onSearch(viewModel.kbName, "") }) {
                         Icon(Icons.Filled.Search, contentDescription = "Search")
-                    }
-                    IconButton(onClick = { onOpenDiagrams(viewModel.kbName) }) {
-                        Icon(Icons.Outlined.AccountTree, contentDescription = "Diagrams")
-                    }
-                    IconButton(onClick = { onOpenMap(viewModel.kbName) }) {
-                        Icon(Icons.Outlined.Hub, contentDescription = "Map of notes")
                     }
                 },
             )

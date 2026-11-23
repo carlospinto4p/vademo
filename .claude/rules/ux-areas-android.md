@@ -3,8 +3,9 @@
 Project-specific UX areas to watch for when running
 `/review-ux-android` or noticing issues during normal work.
 vademo has no charts, no workout flows, and no REST calls — its
-screens are `HomeScreen` (knowledge-base list), `BrowseScreen`
-(folders/notes), `NoteScreen` (rendered markdown), `EditScreen`
+screens are `HomeScreen` (knowledge-base list), `KbScreen` (a
+knowledge base's first screen: Map, Diagrams and Notes tabs along the
+bottom), `BrowseScreen` (folders/notes, the Notes tab), `NoteScreen` (rendered markdown), `EditScreen`
 (plain-text editor), `ConflictScreen` (merge resolution),
 `GraphScreen` (map of notes and their links), `SearchScreen` (search
 with filters, from Home or a knowledge base), `DiagramListScreen` and

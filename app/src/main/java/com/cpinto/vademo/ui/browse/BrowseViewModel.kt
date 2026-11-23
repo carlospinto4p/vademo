@@ -7,7 +7,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
-import com.cpinto.vademo.data.SettingsRepository
 import com.cpinto.vademo.kb.Folder
 import com.cpinto.vademo.kb.NoteIndex
 import com.cpinto.vademo.kb.NoteSummary
@@ -34,7 +33,6 @@ data class BrowseState(
 class BrowseViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val repository: KbRepository,
-    private val settings: SettingsRepository,
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
@@ -47,8 +45,6 @@ class BrowseViewModel @Inject constructor(
 
     fun load() {
         viewModelScope.launch(Dispatchers.IO) {
-            // Reopened at the next launch, unless the home screen is gone back to first.
-            if (isTop) settings.saveLastKb(kbName)
             val dir = if (path.isEmpty()) kb.root else kb.fileAt(path)
             // At the root only the index is a note; README, CLAUDE.md and the
             // backlog are repository files, not knowledge.

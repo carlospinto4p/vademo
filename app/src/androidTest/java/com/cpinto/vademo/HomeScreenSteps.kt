@@ -15,3 +15,10 @@ fun ComposeTestRule.openKnowledgeBase(name: String = "kb-distributed-systems") {
     waitUntil(5_000) { onAllNodes(hasText(name) and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
     onNodeWithText(name).performClick()
 }
+
+/** Opens the knowledge base [name] on its Notes tab: its folders and the Recent, Types, Tags and Health lists. */
+fun ComposeTestRule.openNotes(name: String = "kb-distributed-systems") {
+    openKnowledgeBase(name)
+    waitUntil(5_000) { onAllNodes(hasText("Notes")).fetchSemanticsNodes().isNotEmpty() }
+    onNodeWithText("Notes").performClick()
+}

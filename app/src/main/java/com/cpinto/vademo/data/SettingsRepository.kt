@@ -95,6 +95,17 @@ class SettingsRepository @Inject constructor(
         }
     }
 
+    /**
+     * The tab ([com.cpinto.vademo.ui.kb.KbTab]'s name) the knowledge base
+     * [kb] was last shown on, so it opens there again; null before it was
+     * ever left on one. Kept apart from [Settings] like [lastKb].
+     */
+    suspend fun kbTab(kb: String): String? = context.dataStore.data.first()[kbTabKey(kb)]
+
+    suspend fun saveKbTab(kb: String, tab: String) {
+        context.dataStore.edit { prefs -> prefs[kbTabKey(kb)] = tab }
+    }
+
     /** The searches saved from the search screen, in the order saved. */
     val savedQueries: Flow<List<SavedQuery>> = context.dataStore.data.map { SavedQueries.decode(it[SAVED_QUERIES]) }
 
@@ -135,6 +146,8 @@ class SettingsRepository @Inject constructor(
         val TEXT_SCALE = floatPreferencesKey("note_text_scale")
         val SAVED_QUERIES = stringPreferencesKey("saved_queries")
         val LAST_KB = stringPreferencesKey("last_kb")
+
+        fun kbTabKey(kb: String) = stringPreferencesKey("kb_tab:$kb")
     }
 }
 

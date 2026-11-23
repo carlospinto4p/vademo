@@ -9,7 +9,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -44,6 +48,8 @@ internal val BOX_MARGIN = 12.dp
 fun GraphScreen(
     onBack: () -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
+    /** Shown as a Search action when given, as on a knowledge base's Map tab. */
+    onSearch: (() -> Unit)? = null,
     viewModel: GraphViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -55,6 +61,13 @@ fun GraphScreen(
             TopAppBar(
                 title = { Text("Map of notes") },
                 navigationIcon = { BackForward(onBack) },
+                actions = {
+                    if (onSearch != null) {
+                        IconButton(onClick = onSearch) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search")
+                        }
+                    }
+                },
             )
         },
     ) { padding ->
