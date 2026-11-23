@@ -22,6 +22,31 @@ data class GraphNote(val name: String, val title: String, val folder: String, va
  */
 data class NoteGraph(val notes: List<GraphNote>, val links: List<Pair<Int, Int>>) {
 
+    /**
+     * The notes at most [steps] links away from the note at [path], it
+     * included, and the links among them; empty when no note is at [path].
+     */
+    fun around(path: String, steps: Int = 2): NoteGraph {
+        val start = notes.indexOfFirst { it.path == path }
+        if (start < 0) return NoteGraph(emptyList(), emptyList())
+        val neighbours = List(notes.size) { mutableListOf<Int>() }
+        for ((a, b) in links) {
+            neighbours[a] += b
+            neighbours[b] += a
+        }
+        val reached = sortedSetOf(start)
+        var edge = listOf(start)
+        repeat(steps) {
+            edge = edge.flatMap { neighbours[it] }.filter { reached.add(it) }
+        }
+        val kept = reached.toList()
+        val at = kept.withIndex().associate { (i, note) -> note to i }
+        return NoteGraph(
+            kept.map { notes[it] },
+            links.mapNotNull { (a, b) -> at[a]?.let { p -> at[b]?.let { q -> p to q } } },
+        )
+    }
+
     companion object {
         /** The map of the notes [index] holds, which are the ones it shows. */
         fun of(index: NoteIndex): NoteGraph {

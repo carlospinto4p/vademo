@@ -55,4 +55,20 @@ class NoteGraphTest {
         note("ideas/b.md", "")
         assertEquals(emptySet<Pair<String, String>>(), graph().linkNames())
     }
+
+    @Test
+    fun `around keeps the notes up to two links away and the links among them`() {
+        // a - b - c - d, and e on its own.
+        note("ideas/a.md", "[[b]]")
+        note("ideas/b.md", "[[c]]")
+        note("ideas/c.md", "[[d]]")
+        note("ideas/d.md", "")
+        note("ideas/e.md", "")
+        val around = graph().around("ideas/a.md")
+        assertEquals(listOf("a", "b", "c"), around.notes.map { it.name })
+        assertEquals(setOf("a" to "b", "b" to "c"), around.linkNames())
+        assertEquals(listOf("a", "b"), graph().around("ideas/a.md", steps = 1).notes.map { it.name })
+        assertEquals(listOf("e"), graph().around("ideas/e.md").notes.map { it.name })
+        assertEquals(emptyList<GraphNote>(), graph().around("ideas/none.md").notes)
+    }
 }

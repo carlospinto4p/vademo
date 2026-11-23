@@ -17,6 +17,7 @@ import com.cpinto.vademo.ui.conflict.ConflictScreen
 import com.cpinto.vademo.ui.diagram.DiagramListScreen
 import com.cpinto.vademo.ui.diagram.DiagramScreen
 import com.cpinto.vademo.ui.edit.EditScreen
+import com.cpinto.vademo.ui.graph.GraphScreen
 import com.cpinto.vademo.ui.home.HomeScreen
 import com.cpinto.vademo.ui.kb.KbScreen
 import com.cpinto.vademo.ui.note.NoteScreen
@@ -31,6 +32,7 @@ object Routes {
     const val NOTE = "note/{kb}?path={path}"
     const val EDIT = "edit/{kb}?path={path}&template={template}&title={title}"
     const val CONFLICT = "conflict/{kb}"
+    const val MAP_AROUND = "map/{kb}?focus={focus}"
     const val DIAGRAMS = "diagrams/{kb}"
     const val DIAGRAM = "diagram/{kb}?name={name}"
     const val SEARCH = "search?q={q}"
@@ -45,6 +47,8 @@ object Routes {
     fun kb(kb: String, tab: String, diagram: String?) = "kb/${enc(kb)}?tab=${enc(tab)}&name=${enc(diagram.orEmpty())}"
 
     fun browse(kb: String, path: String = "") = "browse/${enc(kb)}?path=${enc(path)}"
+    /** The map round the note at [path]: it and the notes up to two links away. */
+    fun mapAround(kb: String, path: String) = "map/${enc(kb)}?focus=${enc(path)}"
     fun diagrams(kb: String) = "diagrams/${enc(kb)}"
     fun diagram(kb: String, name: String) = "diagram/${enc(kb)}?name=${enc(name)}"
     fun note(kb: String, path: String) = "note/${enc(kb)}?path=${enc(path)}"
@@ -64,7 +68,7 @@ private val kbArgs = listOf(
 )
 
 /** Screens Forward may reopen. The editor, settings and conflicts are steps, not places. */
-private val PLACES = setOf(Routes.KB, Routes.BROWSE, Routes.NOTE, Routes.DIAGRAMS, Routes.DIAGRAM, Routes.SEARCH)
+private val PLACES = setOf(Routes.KB, Routes.BROWSE, Routes.NOTE, Routes.MAP_AROUND, Routes.DIAGRAMS, Routes.DIAGRAM, Routes.SEARCH)
 
 /** The route that opens [entry] again, its pattern with each `{argument}` filled in. */
 private fun routeOf(entry: NavBackStackEntry): String =
@@ -155,11 +159,24 @@ private fun AppNavHost(nav: NavHostController) {
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
             )
         }
+        composable(
+            Routes.MAP_AROUND,
+            arguments = listOf(
+                navArgument("kb") { type = NavType.StringType },
+                navArgument("focus") { type = NavType.StringType; defaultValue = "" },
+            ),
+        ) {
+            GraphScreen(
+                onBack = { nav.popBackStack() },
+                onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
+            )
+        }
         composable(Routes.NOTE, arguments = kbArgs) {
             NoteScreen(
                 onBack = { nav.popBackStack() },
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
                 onEdit = { kb, path -> nav.navigate(Routes.edit(kb, path)) },
+                onShowOnMap = { kb, path -> nav.navigate(Routes.mapAround(kb, path)) },
                 onOpenDiagram = { kb, name -> nav.navigate(Routes.diagram(kb, name)) },
                 onSearch = { kb, filters -> nav.navigate(Routes.searchIn(kb, filters)) },
             )

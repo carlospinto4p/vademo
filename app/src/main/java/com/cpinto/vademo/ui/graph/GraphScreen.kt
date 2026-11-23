@@ -69,7 +69,10 @@ fun GraphScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Map of notes") },
+                title = {
+                    val around = state.focusTitle
+                    Text(if (around != null) "Around $around" else "Map of notes", maxLines = 1, overflow = TextOverflow.Ellipsis)
+                },
                 navigationIcon = { BackForward(onBack) },
                 actions = {
                     if (onSearch != null) {
@@ -85,7 +88,7 @@ fun GraphScreen(
         val map = state.map
         val layout = state.layout
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (graph != null && graph.notes.isNotEmpty()) {
+            if (graph != null && graph.notes.isNotEmpty() && state.focus == null) {
                 Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = state.allOpen,
@@ -102,16 +105,25 @@ fun GraphScreen(
             Box(Modifier.fillMaxSize()) {
                 when {
                     graph == null || map == null || layout == null -> Unit
-                    graph.notes.isEmpty() -> Text("This knowledge base has no notes yet.", Modifier.padding(16.dp))
+                    graph.notes.isEmpty() -> Text(
+                        if (state.focus != null) "This note is not in the knowledge base's index." else "This knowledge base has no notes yet.",
+                        Modifier.padding(16.dp),
+                    )
                     else -> {
                         val colours = folderColours(state.folders)
                         // Opened afresh each time a topic opens or folds, at a size that fits the new picture.
+                        val focused = map.boxes.indexOfFirst { it.path == state.focus && state.focus != null }
                         key(map) {
-                            PanZoom(contentWidth = UNIT * layout.width.toFloat(), contentHeight = UNIT * layout.height.toFloat()) {
+                            PanZoom(
+                                contentWidth = UNIT * layout.width.toFloat(),
+                                contentHeight = UNIT * layout.height.toFloat(),
+                                focus = layout.centres.getOrNull(focused)?.let { UNIT * it.x.toFloat() to UNIT * it.y.toFloat() },
+                            ) {
                                 GraphContent(
                                     map,
                                     layout,
                                     colours,
+                                    focused = focused,
                                     onTap = { box -> viewModel.tap(box)?.let { onOpenNote(viewModel.kbName, it) } },
                                     onLongPress = viewModel::fold,
                                 )
@@ -134,6 +146,8 @@ private fun GraphContent(
     map: FoldedMap,
     layout: Layout,
     colours: Map<String, Color>,
+    /** The box of the note the map is centred on, drawn in the primary colour; -1 for none. */
+    focused: Int,
     onTap: (MapBox) -> Unit,
     onLongPress: (MapBox) -> Unit,
 ) {
@@ -154,7 +168,7 @@ private fun GraphContent(
         }
         map.boxes.forEachIndexed { i, box ->
             val centre = layout.centres[i]
-            val colour = colours.getValue(box.folder)
+            val colour = if (i == focused) MaterialTheme.colorScheme.primary else colours.getValue(box.folder)
             val width = if (box.large) LARGE_WIDTH else BOX_WIDTH
             val height = if (box.large) LARGE_HEIGHT else BOX_HEIGHT
             val shape = RoundedCornerShape(if (box.large) 12.dp else 8.dp)
@@ -162,7 +176,7 @@ private fun GraphContent(
                 modifier = Modifier
                     .offset(x = UNIT * centre.x.toFloat() - width / 2, y = UNIT * centre.y.toFloat() - height / 2)
                     .size(width, height)
-                    .border(if (box.large) 3.dp else 2.dp, colour, shape)
+                    .border(if (box.large || i == focused) 3.dp else 2.dp, colour, shape)
                     .combinedClickable(
                         onClickLabel = if (box.folded) "Show its notes" else "Open",
                         onLongClickLabel = if (box.folder.isNotEmpty() && !box.folded) "Fold the topic" else null,
