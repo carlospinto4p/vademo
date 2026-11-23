@@ -4,23 +4,44 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.cpinto.vademo.data.KbRepository
+import com.cpinto.vademo.kb.FoldedMap
 import com.cpinto.vademo.kb.GraphLayout
 import com.cpinto.vademo.kb.Layout
+import com.cpinto.vademo.kb.MapBox
 import com.cpinto.vademo.kb.NoteGraph
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class GraphState(
     val graph: NoteGraph? = null,
+    /** What is drawn: [graph] with the folders not in [open] folded into one box each. */
+    val map: FoldedMap? = null,
     val layout: Layout? = null,
     /** Top-level folders in the order their colours are assigned. */
     val folders: List<String> = emptyList(),
-)
+    /** Folders drawn note by note. */
+    val open: Set<String> = emptySet(),
+    /** Whether source notes are drawn. */
+    val sources: Boolean = false,
+) {
+    /** Topic folders that can be opened, sources left out while they are hidden. */
+    val foldable: Set<String>
+        get() = graph?.notes.orEmpty().filter { sources || !it.isSource }.map { it.folder }.filter { it.isNotEmpty() }.toSet()
 
+    val allOpen: Boolean get() = foldable.isNotEmpty() && open.containsAll(foldable)
+}
+
+/**
+ * The map of notes. It starts folded, as the knowledge base's shape: the
+ * index and one box per topic, sources hidden. Tapping a folded topic opens
+ * it in place, and tapping a note, or the hub of an open topic, opens it.
+ */
 @HiltViewModel
 class GraphViewModel @Inject constructor(
     savedState: SavedStateHandle,
@@ -32,20 +53,62 @@ class GraphViewModel @Inject constructor(
     private val _state = MutableStateFlow(GraphState())
     val state: StateFlow<GraphState> = _state
 
+    private var aspect = 1.0
+    private var placing: Job? = null
+
     /** [aspect] is the screen's height ÷ width, so the map is laid out in that shape. */
     fun load(aspect: Double) {
         if (_state.value.graph != null) return
+        this.aspect = aspect
         viewModelScope.launch(Dispatchers.Default) {
             val graph = NoteGraph.of(repository.index(kbName))
-            val layout = GraphLayout.layout(
-                count = graph.notes.size,
-                links = graph.links,
-                groups = graph.notes.map { it.folder },
-                boxWidth = ((BOX_WIDTH + BOX_MARGIN) / UNIT).toDouble(),
-                boxHeight = ((BOX_HEIGHT + BOX_MARGIN) / UNIT).toDouble(),
-                aspect = aspect,
-            )
-            _state.value = GraphState(graph, layout, graph.notes.map { it.folder }.distinct().sorted())
+            _state.update { it.copy(graph = graph, folders = graph.notes.map { n -> n.folder }.distinct().sorted()) }
+            place()
         }
+    }
+
+    /** The note to open for a tap on [box], or null when the tap opened a folded topic instead. */
+    fun tap(box: MapBox): String? {
+        if (!box.folded) return box.path
+        show(_state.value.open + box.folder, _state.value.sources)
+        return null
+    }
+
+    /** Folds the topic [box] is in back into one box. */
+    fun fold(box: MapBox) {
+        if (box.folder.isNotEmpty()) show(_state.value.open - box.folder, _state.value.sources)
+    }
+
+    /** Opens every topic, or folds them all when they are all open. */
+    fun toggleAll() {
+        val state = _state.value
+        show(if (state.allOpen) emptySet() else state.foldable, state.sources)
+    }
+
+    fun toggleSources() {
+        val state = _state.value
+        show(state.open, !state.sources)
+    }
+
+    private fun show(open: Set<String>, sources: Boolean) {
+        _state.update { it.copy(open = open, sources = sources) }
+        placing?.cancel()
+        placing = viewModelScope.launch(Dispatchers.Default) { place() }
+    }
+
+    private fun place() {
+        val state = _state.value
+        val graph = state.graph ?: return
+        val map = FoldedMap.of(graph, state.open, state.sources)
+        // Every box is spaced as a large one, so a topic box never overlaps its neighbours.
+        val layout = GraphLayout.layout(
+            count = map.boxes.size,
+            links = map.links,
+            groups = map.boxes.map { it.folder },
+            boxWidth = ((LARGE_WIDTH + BOX_MARGIN) / UNIT).toDouble(),
+            boxHeight = ((LARGE_HEIGHT + BOX_MARGIN) / UNIT).toDouble(),
+            aspect = aspect,
+        )
+        _state.update { if (it.open == state.open && it.sources == state.sources) it.copy(map = map, layout = layout) else it }
     }
 }

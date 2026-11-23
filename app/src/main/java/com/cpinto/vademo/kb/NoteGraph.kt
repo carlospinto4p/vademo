@@ -1,7 +1,17 @@
 package com.cpinto.vademo.kb
 
-/** One note on the map. [folder] is its top-level folder, or `""` for the root `index.md`. */
-data class GraphNote(val name: String, val title: String, val folder: String, val path: String)
+/**
+ * One note on the map. [folder] is its top-level folder, or `""` for the root
+ * `index.md`; [type] is its frontmatter `type`, if any.
+ */
+data class GraphNote(val name: String, val title: String, val folder: String, val path: String, val type: String? = null) {
+    /** A source note: in `sources/`, or of type `source`. The map can leave these out. */
+    val isSource: Boolean get() = folder == SOURCES || type == SOURCES.removeSuffix("s")
+
+    private companion object {
+        const val SOURCES = "sources"
+    }
+}
 
 /**
  * The notes of a knowledge base and the `[[links]]` between them, for drawing
@@ -21,6 +31,7 @@ data class NoteGraph(val notes: List<GraphNote>, val links: List<Pair<Int, Int>>
                     title = note.title,
                     folder = if ('/' in note.path) note.path.substringBefore('/') else "",
                     path = note.path,
+                    type = note.type,
                 )
             }
             val byName = notes.withIndex().associate { (i, note) -> note.name to i }
