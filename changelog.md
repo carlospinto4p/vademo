@@ -1,6 +1,69 @@
 ## Changelog - vademo
 
 
+### v0.29.13 - 23rd November 2026
+
+- Added "Settings saved" on Home after Save in Settings, which returned to
+  Home with no word that it worked. `SettingsScreen` takes `onSaved` apart
+  from `onDone` (Back), and Settings tells Home through its saved state, as
+  the editor tells the note.
+- Fixed Home's setup card ("Public knowledge bases sync without setup…")
+  appearing and disappearing at once when a token is saved or removed: it
+  is a keyed list item with `animateItem()`, like the rows below it.
+- Updated `.claude/rules/ux-areas-android.md`: both are now listed as
+  feedback in place.
+- Tests: `ReadAndEditTest.settingsAddsAndRemovesKnowledgeBasesAsRows`
+  waits for "Settings saved".
+
+
+### v0.29.12 - 23rd November 2026
+
+- Added a direction to screen changes. Going in (Home to a knowledge base,
+  to a note, to its editor) the new screen slides in a little from the
+  right as the old one fades out; Back slides the other way. It is
+  Material's shared-axis X motion, 300 ms, in place of Navigation's
+  700 ms crossfade, and is set once on `AppNavHost` in `ui/Navigation.kt`
+  for every screen.
+- Updated `.claude/rules/ux-areas-android.md`: screen changes slide now;
+  only a shared-element transition from a box to its note is still to do.
+
+
+### v0.29.11 - 23rd November 2026
+
+- Fixed `DiagramScreen` recording the whole drawing into a layer on every
+  frame, for a Share as image that is seldom used. It now records only
+  while the picture is being taken. Besides the work saved at each frame
+  of a pan or zoom, the screen no longer shows the drawing through that
+  recording, the likely cause if diagram text looked blurry when zoomed in.
+  The zoom itself is a `graphicsLayer` scale, which Android draws text
+  afresh for at the new size. Not yet checked on a phone.
+
+
+### v0.29.10 - 23rd November 2026
+
+- Updated the map of notes' boxes, which said little:
+  - Each box has a band of its folder's colour across its top, a larger
+    patch of colour than the 2 dp border, which was the only sign of it.
+  - Back on the map from a note opened there, that note's box is drawn in
+    the primary colour with its links twice as wide, so where reading left
+    off and where it leads show at a glance. On a map round one note, that
+    note is marked the same way until another is opened.
+- `GraphState.lastOpened` holds the note last opened from the map.
+
+
+### v0.29.9 - 23rd November 2026
+
+- Fixed diagram arrow labels that covered boxes and each other, and were
+  small. A label now slides along its own arrow to the nearest spot where
+  it covers no box and no other label, or where it covers least when no
+  spot is free; it is `labelMedium` instead of `labelSmall`, on a pill with
+  an outline.
+- Added `kb/EdgeLabels.kt`: `place` chooses where labels go, in the file's
+  order; `points` turns an arrow's route into points. `Edges` in
+  `DiagramDrawing.kt` measures each label and draws it where `place` says.
+- Tests: `EdgeLabelsTest`, 7 tests.
+
+
 ### v0.29.8 - 23rd November 2026
 
 - Updated `.github/workflows/build-apk.yml`: Build APK also runs on pushes

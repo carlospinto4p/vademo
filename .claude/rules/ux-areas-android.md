@@ -22,20 +22,20 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
   shows "Saved" on the note; a link to a missing note buzzes
   (`HapticFeedbackType.Reject`) as well as showing a snackbar, and a
   missing note offers "Open its folder"; a long conflict version fades
-  out at the bottom while more is below. New screens and lists should
-  match.
-- **The "Public knowledge bases sync without setup…" card** on Home
-  still appears and disappears instantly when `state.canWrite`
-  flips.
-- **Screen-to-screen navigation has no transition**: Home → a
-  knowledge base → Note → Edit are plain pushes with the default
-  abrupt swap; no shared-element or slide transition marks the
-  drill-down/back relationship between a folder and its contents.
-- **Settings gives no save feedback**: `SettingsScreen`'s Save
-  button returns to Home with no confirmation. A malformed or
-  duplicate address is refused as it is added, and "On your GitHub"
-  says when GitHub refuses the token, but a token that lists fine yet
-  cannot push is still only found at the next sync.
+  out at the bottom while more is below; Home's setup card ("Public
+  knowledge bases sync without setup…") fades in and out with
+  `animateItem()`; and Settings' Save shows "Settings saved" on Home. New
+  screens and lists should match.
+- **Screen changes slide, but nothing carries over**: every screen
+  change uses Material's shared-axis X motion (`AppNavHost` in
+  `ui/Navigation.kt`; in from the right going in, the other way on
+  Back), so keep new destinations on it rather than giving one its own.
+  No shared-element transition yet takes a map or diagram box into its
+  note.
+- **A token that cannot push is found late**: a malformed or duplicate
+  address is refused as it is added, and "On your GitHub" says when
+  GitHub refuses the token, but a token that lists fine yet cannot push
+  is still only found at the next sync.
 - **Accessibility**: `contentDescription` is already present on the
   navigation and action icons (Sync, Settings, Back, Edit) — keep
   that going for any new icon-only control. Touch targets via

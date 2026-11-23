@@ -24,11 +24,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
@@ -45,6 +48,9 @@ import com.cpinto.vademo.ui.kb.KbStart
 @Composable
 fun HomeScreen(
     onOpenKb: (KbStart) -> Unit,
+    /** Settings were just saved, to be said once; then [onSettingsSavedShown]. */
+    settingsSaved: Boolean = false,
+    onSettingsSavedShown: () -> Unit = {},
     onResolve: (String) -> Unit,
     onSettings: () -> Unit,
     onSearch: () -> Unit,
@@ -52,8 +58,16 @@ fun HomeScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.start(onOpenKb) }
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(settingsSaved) {
+        if (settingsSaved) {
+            snackbar.showSnackbar("Settings saved")
+            onSettingsSavedShown()
+        }
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         topBar = {
             TopAppBar(
                 title = { Text("vademo") },
@@ -81,8 +95,9 @@ fun HomeScreen(
     ) { padding ->
         LazyColumn(Modifier.fillMaxSize().padding(padding)) {
             if (!state.canWrite) {
-                item {
-                    Card(Modifier.fillMaxWidth().padding(16.dp)) {
+                // Keyed and animated like the rows, so it fades in and out and the list slides instead of jumping.
+                item(key = SETUP_CARD) {
+                    Card(Modifier.animateItem().fillMaxWidth().padding(16.dp)) {
                         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(
                                 if (state.tokenUnreadable) {
@@ -116,6 +131,9 @@ fun HomeScreen(
         }
     }
 }
+
+/** The setup card's key in the list; GitHub allows no `#` in a repository's name, so no row's key clashes with it. */
+private const val SETUP_CARD = "#setup"
 
 @Composable
 private fun KbRow(kb: KbInfo, sync: SyncState, onClick: () -> Unit) {

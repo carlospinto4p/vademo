@@ -54,7 +54,12 @@ import com.cpinto.vademo.data.KbAddress
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
+fun SettingsScreen(
+    onDone: () -> Unit,
+    /** After Save has stored the settings; Back without saving is [onDone]. */
+    onSaved: () -> Unit = onDone,
+    viewModel: SettingsViewModel = hiltViewModel(),
+) {
     val form by viewModel.form.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.load() }
 
@@ -136,7 +141,7 @@ fun SettingsScreen(onDone: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
             OnGitHub(form, onFind = viewModel::findOnGitHub, onAdd = viewModel::addFound)
 
             Button(
-                onClick = { viewModel.save(onDone) },
+                onClick = { viewModel.save(onSaved) },
                 enabled = form.loaded,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text("Save") }

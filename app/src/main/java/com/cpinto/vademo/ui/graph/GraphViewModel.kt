@@ -31,6 +31,8 @@ data class GraphState(
     val sources: Boolean = false,
     /** The note a map round one note is centred on, its path; null for the whole knowledge base. */
     val focus: String? = null,
+    /** The note last opened from this map, its path: drawn marked with its links, to show where reading left off. */
+    val lastOpened: String? = null,
 ) {
     /** The focused note's title, once read. */
     val focusTitle: String? get() = focus?.let { path -> graph?.notes?.firstOrNull { it.path == path }?.title }
@@ -83,7 +85,7 @@ class GraphViewModel @Inject constructor(
 
     /** The note to open for a tap on [box], or null when the tap opened a folded topic instead. */
     fun tap(box: MapBox): String? {
-        if (!box.folded) return box.path
+        if (!box.folded) return box.path?.also { path -> _state.update { it.copy(lastOpened = path) } }
         show(_state.value.open + box.folder, _state.value.sources)
         return null
     }

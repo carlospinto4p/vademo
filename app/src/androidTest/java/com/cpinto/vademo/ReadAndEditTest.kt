@@ -503,6 +503,10 @@ class ReadAndEditTest {
         compose.onNodeWithContentDescription("Remove kb-x").assertIsDisplayed()
         compose.onNodeWithContentDescription("Remove kb-distributed-systems").performClick()
         compose.onNodeWithText("Save").performScrollTo().performClick()
+        // Back on Home, which says the save worked.
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Settings saved")).fetchSemanticsNodes().isNotEmpty()
+        }
 
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         compose.waitUntil(5_000) {
