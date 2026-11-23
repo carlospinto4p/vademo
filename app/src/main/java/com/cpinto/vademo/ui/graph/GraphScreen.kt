@@ -2,6 +2,7 @@ package com.cpinto.vademo.ui.graph
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,6 +55,9 @@ internal val BOX_HEIGHT = 52.dp
 /** The index, topic hubs and folded topics: the boxes that show the knowledge base's shape. */
 internal val LARGE_WIDTH = 176.dp
 internal val LARGE_HEIGHT = 72.dp
+/** The folder-coloured band across the top of a box. */
+private val BAND = 6.dp
+private val BAND_LARGE = 8.dp
 /** Space kept clear around each box, so neighbours never touch. Also used by [GraphViewModel]'s layout. */
 internal val BOX_MARGIN = 12.dp
 
@@ -116,6 +122,9 @@ fun GraphScreen(
                         val colours = folderColours(state.folders, MaterialTheme.colorScheme.surface.luminance() < 0.5f)
                         // Opened afresh each time a topic opens or folds, at a size that fits the new picture.
                         val focused = map.boxes.indexOfFirst { it.path == state.focus && state.focus != null }
+                        // The note just read, back from it, or else the note the map is round.
+                        val marked = map.boxes.indexOfFirst { !it.folded && it.path == state.lastOpened && state.lastOpened != null }
+                            .takeIf { it >= 0 } ?: focused
                         key(map) {
                             PanZoom(
                                 contentWidth = UNIT * layout.width.toFloat(),
@@ -126,7 +135,7 @@ fun GraphScreen(
                                     map,
                                     layout,
                                     colours,
-                                    focused = focused,
+                                    marked = marked,
                                     onTap = { box -> viewModel.tap(box)?.let { onOpenNote(viewModel.kbName, it) } },
                                     onLongPress = viewModel::fold,
                                 )
@@ -149,31 +158,40 @@ private fun GraphContent(
     map: FoldedMap,
     layout: Layout,
     colours: Map<String, Color>,
-    /** The box of the note the map is centred on, drawn in the primary colour; -1 for none. */
-    focused: Int,
+    /**
+     * The box drawn in the primary colour with its links, so where it leads shows at a glance: the note
+     * last opened from the map, or the one the map is centred on; -1 for none.
+     */
+    marked: Int,
     onTap: (MapBox) -> Unit,
     onLongPress: (MapBox) -> Unit,
 ) {
     val lineColour = MaterialTheme.colorScheme.outline
+    val markColour = MaterialTheme.colorScheme.primary
     val zoom = LocalZoom.current
     Box(Modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
             val unit = UNIT.toPx()
             val width = Viewport.lineWidth(1.5.dp.toPx(), 1.dp.toPx(), zoom())
-            for ((a, b) in map.links) {
+            fun line(a: Int, b: Int, colour: Color, strokeWidth: Float) {
                 val p = layout.centres[a]
                 val q = layout.centres[b]
                 drawLine(
-                    color = lineColour,
+                    color = colour,
                     start = Offset((p.x * unit).toFloat(), (p.y * unit).toFloat()),
                     end = Offset((q.x * unit).toFloat(), (q.y * unit).toFloat()),
-                    strokeWidth = width,
+                    strokeWidth = strokeWidth,
                 )
             }
+            // The marked box's links last, so they are drawn over the others.
+            val (own, others) = map.links.partition { (a, b) -> a == marked || b == marked }
+            for ((a, b) in others) line(a, b, lineColour, width)
+            for ((a, b) in own) line(a, b, markColour, width * 2)
         }
         map.boxes.forEachIndexed { i, box ->
             val centre = layout.centres[i]
-            val colour = if (i == focused) MaterialTheme.colorScheme.primary else colours.getValue(box.folder)
+            val folderColour = colours.getValue(box.folder)
+            val colour = if (i == marked) markColour else folderColour
             val width = if (box.large) LARGE_WIDTH else BOX_WIDTH
             val height = if (box.large) LARGE_HEIGHT else BOX_HEIGHT
             val shape = RoundedCornerShape(if (box.large) 12.dp else 8.dp)
@@ -181,7 +199,7 @@ private fun GraphContent(
                 modifier = Modifier
                     .offset(x = UNIT * centre.x.toFloat() - width / 2, y = UNIT * centre.y.toFloat() - height / 2)
                     .size(width, height)
-                    .border(if (box.large || i == focused) 3.dp else 2.dp, colour, shape)
+                    .border(if (box.large || i == marked) 3.dp else 2.dp, colour, shape)
                     .combinedClickable(
                         onClickLabel = if (box.folded) "Show its notes" else "Open",
                         onLongClickLabel = if (box.folder.isNotEmpty() && !box.folded) "Fold the topic" else null,
@@ -191,24 +209,28 @@ private fun GraphContent(
                 shape = shape,
                 color = if (box.large) MaterialTheme.colorScheme.surfaceContainerHighest else MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                Column(
-                    Modifier.padding(horizontal = 8.dp),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        box.title,
-                        style = if (box.large) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    if (box.folded) {
+                Column {
+                    // The folder's colour as a band across the top, a larger patch of it than the border alone.
+                    Box(Modifier.fillMaxWidth().height(if (box.large) BAND_LARGE else BAND).background(folderColour))
+                    Column(
+                        Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
                         Text(
-                            if (box.notes == 1) "1 note" else "${box.notes} notes",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            box.title,
+                            style = if (box.large) MaterialTheme.typography.titleSmall else MaterialTheme.typography.labelMedium,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
                         )
+                        if (box.folded) {
+                            Text(
+                                if (box.notes == 1) "1 note" else "${box.notes} notes",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                 }
             }

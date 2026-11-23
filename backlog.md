@@ -68,13 +68,17 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 - [x] Lines thin out with the zoom: arrows and map links are 1.5 dp
   before scaling, so about 0.5 dp at the starting scale. Keep them at
   least 1 dp on screen whatever the zoom. LOW, effort S.
-- [ ] Map boxes say little: one size for every note, a 2 dp folder border
+- [x] Map boxes say little: one size for every note, a 2 dp folder border
   as the only colour, links without direction. Size hubs larger, fill a
   coloured header band per folder, and on tap highlight the box's links
   and neighbours before opening it. MED, effort M. Partly done in v0.26.0:
   the index, hubs and folded topics are large boxes with a 3 dp border;
   the coloured header band and the highlight on tap are still open (a tap
   now opens a folded topic, so a highlight would need a second gesture).
+  Done in v0.29.9: a folder-coloured band across each box's top, and
+  instead of a highlight before opening (which would cost every note an
+  extra tap), the note last opened from the map is marked with its links
+  when you come back to it.
 
 #### Gestures and loading
 

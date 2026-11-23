@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.29.9 - 23rd November 2026
+
+- Updated the map of notes' boxes, which said little:
+  - Each box has a band of its folder's colour across its top, a larger
+    patch of colour than the 2 dp border, which was the only sign of it.
+  - Back on the map from a note opened there, that note's box is drawn in
+    the primary colour with its links twice as wide, so where reading left
+    off and where it leads show at a glance. On a map round one note, that
+    note is marked the same way until another is opened.
+- `GraphState.lastOpened` holds the note last opened from the map.
+
+
 ### v0.29.8 - 23rd November 2026
 
 - Fixed diagram arrow labels that covered boxes and each other, and were
