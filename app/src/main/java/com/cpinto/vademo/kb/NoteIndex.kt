@@ -42,6 +42,7 @@ data class UnresolvedLink(val from: String, val target: String)
 class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
 
     private val byName: Map<String, IndexedNote> = notes.associateBy { it.name }
+    private val byPath: Map<String, IndexedNote> by lazy { notes.associateBy { it.path } }
 
     /** Note name → names of the notes linking to it, each once, in path order. */
     val backlinks: Map<String, List<String>> = buildMap<String, MutableList<String>> {
@@ -84,6 +85,27 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
     /** The notes linking to the note at [path], in path order. */
     fun linkedFrom(path: String): List<IndexedNote> =
         backlinks[path.substringAfterLast('/').removeSuffix(".md")].orEmpty().mapNotNull(byName::get)
+
+    /**
+     * The notes the note at [path] links to, each once, in the order first
+     * linked; links to itself or to no note are left out.
+     */
+    fun linksTo(path: String): List<IndexedNote> {
+        val note = byPath[path] ?: return emptyList()
+        return note.links.distinct().filter { it != note.name }.mapNotNull(byName::get)
+    }
+
+    /**
+     * The hub the note at [path] sits under: its topic's
+     * `<topic>/<topic>.md`, or for that hub `index.md`. Null for `index.md`
+     * itself, and when the knowledge base has no such note.
+     */
+    fun hubOf(path: String): IndexedNote? {
+        if ('/' !in path) return null
+        val topic = path.substringBefore('/')
+        val hub = "$topic/$topic.md"
+        return byPath[if (path == hub) "index.md" else hub]
+    }
 
     /** Newest `updated:` first; notes without one last, by title. */
     fun recent(): List<IndexedNote> = notes.sortedWith(

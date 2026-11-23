@@ -1,6 +1,17 @@
 ## Changelog - vademo
 
 
+### v0.27.0 - 23rd November 2026
+
+- A note shows "Links to" above "Linked from": the notes it links to,
+  each once, in the order first linked. Above its type and tags, "In …"
+  names the topic hub it sits under (the index for a hub) and opens it.
+- Added `NoteIndex.linksTo` and `NoteIndex.hubOf`; `NoteState` has
+  `linksTo` and `hub`, filled in with `linkedFrom`.
+- `NoteScreen`'s two lists are one `NoteLinks` composable.
+- Tests: `NoteIndexTest`, 2 tests for `linksTo` and `hubOf`.
+
+
 ### v0.26.0 - 23rd November 2026
 
 - The map of notes starts as the knowledge base's shape instead of every
