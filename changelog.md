@@ -1,6 +1,15 @@
 ## Changelog - vademo
 
 
+### v0.29.8 - 23rd November 2026
+
+- Updated `.github/workflows/build-apk.yml`: Build APK also runs on pushes
+  to `ccr-**` branches, the ones Claude Code cloud sessions work on. It
+  ran only on `main` and `claude/**`, so a cloud session's branch had no
+  check to wait for before merging into `main` unless one was started by
+  hand.
+
+
 ### v0.29.7 - 23rd November 2026
 
 - Updated `.claude/rules/committing.md`: "Merge Into `main` After Every
