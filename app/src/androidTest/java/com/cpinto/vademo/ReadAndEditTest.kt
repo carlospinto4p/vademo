@@ -287,6 +287,29 @@ class ReadAndEditTest {
     }
 
     @Test
+    fun showANoteOnTheMapThenOpenANeighbour() {
+        compose.openNotes()
+        compose.onNodeWithText("ideas").performClick()
+        compose.onNodeWithText("Tyfold desktop app").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Scored with the method below.")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithContentDescription("Show on map").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Around Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
+        }
+        // Its links, one and two steps away, every one drawn as a note.
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Business idea scorecard")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Business").assertExists()
+        compose.onNodeWithText("Business idea scorecard").performClick()
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("Seven criteria.")).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
     fun openANoteFromADiagram() {
         // Its only diagram is the knowledge base's first screen.
         compose.openKnowledgeBase()

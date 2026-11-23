@@ -25,7 +25,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   second tap on a note opens it), sources hidden behind a filter chip.
   That gets from opening the app to any note in two or three taps with
   no typing. HIGH, effort L.
-- [ ] "Show on map" from a note: the map centred on that note with only
+- [x] "Show on map" from a note: the map centred on that note with only
   its links one or two steps away, so a reader can wander to related
   notes by picture. MED, effort M.
 - [x] A "Continue reading" strip on the knowledge base's first screen:

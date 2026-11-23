@@ -36,6 +36,20 @@ internal object Viewport {
         return Framing(scale, place(width * scale, screenWidth, start.x), place(height * scale, screenHeight, start.y))
     }
 
+    /**
+     * As [opening], but showing the drawing's point ([pointX], [pointY]) in
+     * the middle of the screen as near as the drawing's edges allow, as for a
+     * map opened round one note.
+     */
+    fun openingAt(width: Float, height: Float, screenWidth: Float, screenHeight: Float, readable: Float, pointX: Float, pointY: Float): Framing {
+        val scale = maxOf(fitScale(width, height, screenWidth, screenHeight), readable).coerceAtMost(1f)
+        return Framing(scale, around(width * scale, screenWidth, pointX * scale), around(height * scale, screenHeight, pointY * scale))
+    }
+
+    /** Where a side [size] long starts so that [point] along it is mid-[screen]; centred when it fits, never past an edge. */
+    private fun around(size: Float, screen: Float, point: Float): Float =
+        if (size <= screen) (screen - size) / 2 else (screen / 2 - point).coerceIn(screen - size, 0f)
+
     /** [framing] scaled to [scale], with the drawing's point under ([focusX], [focusY]) staying there. */
     fun zoomAt(framing: Framing, scale: Float, focusX: Float, focusY: Float): Framing {
         val ratio = scale / framing.scale

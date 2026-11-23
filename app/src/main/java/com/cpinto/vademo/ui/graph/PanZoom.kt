@@ -76,6 +76,8 @@ internal fun PanZoom(
     start: StartAt = StartAt.Centre,
     /** Applied to the content at its own size, inside the zoom, as for recording a picture of all of it. */
     contentModifier: Modifier = Modifier,
+    /** A point of the content, in its own dp, to open centred on instead of [start]. */
+    focus: Pair<Dp, Dp>? = null,
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -87,7 +89,12 @@ internal fun PanZoom(
     var glide by remember { mutableStateOf<Job?>(null) }
 
     val all = Viewport.all(width, height, screen.width.toFloat(), screen.height.toFloat(), MIN_SCALE)
-    val opening = Viewport.opening(width, height, screen.width.toFloat(), screen.height.toFloat(), READABLE_SCALE, start)
+    val focusPx = focus?.let { (fx, fy) -> with(density) { fx.toPx() to fy.toPx() } }
+    val openingOn = { screenWidth: Float, screenHeight: Float ->
+        if (focusPx == null) Viewport.opening(width, height, screenWidth, screenHeight, READABLE_SCALE, start)
+        else Viewport.openingAt(width, height, screenWidth, screenHeight, READABLE_SCALE, focusPx.first, focusPx.second)
+    }
+    val opening = openingOn(screen.width.toFloat(), screen.height.toFloat())
     val glideTo = { target: Framing ->
         glide?.cancel()
         val from = framing
@@ -110,7 +117,7 @@ internal fun PanZoom(
                     return@onSizeChanged
                 }
                 screen = size
-                framing = Viewport.opening(width, height, size.width.toFloat(), size.height.toFloat(), READABLE_SCALE, start)
+                framing = openingOn(size.width.toFloat(), size.height.toFloat())
             }
             .pointerInput(Unit) {
                 detectTapGestures(onDoubleTap = { at -> glideTo(Viewport.doubleTap(framing, currentAll, at.x, at.y)) })

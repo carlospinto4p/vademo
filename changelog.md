@@ -1,6 +1,22 @@
 ## Changelog - vademo
 
 
+### v0.29.0 - 23rd November 2026
+
+- Show on map, a button on a note's top bar, opens a map of that note and
+  the notes up to two links from it, every one drawn, centred on the note
+  and titled "Around …". Tapping one opens it.
+- Added `NoteGraph.around` and `Viewport.openingAt`; `PanZoom` takes a
+  `focus` point to open centred on.
+- `GraphViewModel` reads a `focus` from the new `map/{kb}?focus={path}`
+  route; `GraphScreen` draws that note's box in the primary colour and
+  hides the chips there.
+- Tests:
+  - `NoteGraphTest`: `around`.
+  - `ViewportTest`: `openingAt`.
+  - `ReadAndEditTest.showANoteOnTheMapThenOpenANeighbour`.
+
+
 ### v0.28.0 - 23rd November 2026
 
 - A "Continue reading" strip above a knowledge base's tab bar lists the

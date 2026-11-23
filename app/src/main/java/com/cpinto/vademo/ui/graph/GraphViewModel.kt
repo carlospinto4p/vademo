@@ -29,7 +29,12 @@ data class GraphState(
     val open: Set<String> = emptySet(),
     /** Whether source notes are drawn. */
     val sources: Boolean = false,
+    /** The note a map round one note is centred on, its path; null for the whole knowledge base. */
+    val focus: String? = null,
 ) {
+    /** The focused note's title, once read. */
+    val focusTitle: String? get() = focus?.let { path -> graph?.notes?.firstOrNull { it.path == path }?.title }
+
     /** Topic folders that can be opened, sources left out while they are hidden. */
     val foldable: Set<String>
         get() = graph?.notes.orEmpty().filter { sources || !it.isSource }.map { it.folder }.filter { it.isNotEmpty() }.toSet()
@@ -38,7 +43,8 @@ data class GraphState(
 }
 
 /**
- * The map of notes. It starts folded, as the knowledge base's shape: the
+ * The map of notes. Opened with a `focus` note, it is only that note and the
+ * notes up to two links from it, every one drawn. Otherwise it starts folded, as the knowledge base's shape: the
  * index and one box per topic, sources hidden. Tapping a folded topic opens
  * it in place, and tapping a note, or the hub of an open topic, opens it.
  */
@@ -49,8 +55,9 @@ class GraphViewModel @Inject constructor(
 ) : ViewModel() {
 
     val kbName: String = checkNotNull(savedState["kb"])
+    private val focus: String? = savedState.get<String>("focus")?.ifEmpty { null }
 
-    private val _state = MutableStateFlow(GraphState())
+    private val _state = MutableStateFlow(GraphState(focus = focus))
     val state: StateFlow<GraphState> = _state
 
     private var aspect = 1.0
@@ -61,8 +68,15 @@ class GraphViewModel @Inject constructor(
         if (_state.value.graph != null) return
         this.aspect = aspect
         viewModelScope.launch(Dispatchers.Default) {
-            val graph = NoteGraph.of(repository.index(kbName))
-            _state.update { it.copy(graph = graph, folders = graph.notes.map { n -> n.folder }.distinct().sorted()) }
+            val whole = NoteGraph.of(repository.index(kbName))
+            val graph = focus?.let { whole.around(it) } ?: whole
+            // Colours follow the whole knowledge base's folders, so a folder looks the same on both maps.
+            val folders = whole.notes.map { n -> n.folder }.distinct().sorted()
+            _state.update {
+                if (focus == null) it.copy(graph = graph, folders = folders)
+                // Round one note nothing is folded or hidden: it is the neighbourhood as it is.
+                else it.copy(graph = graph, folders = folders, open = folders.toSet(), sources = true)
+            }
             place()
         }
     }

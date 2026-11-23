@@ -92,4 +92,19 @@ class ViewportTest {
         assertTrue(Viewport.same(Framing(0.5f, 10f, 10f), Framing(0.5f, 10.4f, 9.7f)))
         assertFalse(Viewport.same(Framing(0.5f, 10f, 10f), Framing(0.6f, 10f, 10f)))
     }
+
+    @Test
+    fun `a map round one note opens with that note mid-screen, as near as the edges allow`() {
+        // 4000 × 8000 at 0.85 is 3400 × 6800 on a 1000 × 2000 screen.
+        val middle = Viewport.openingAt(4000f, 8000f, 1000f, 2000f, readable, 2000f, 4000f)
+        assertEquals(readable, middle.scale)
+        assertEquals(500f - 2000f * readable, middle.x, 1e-2f)
+        assertEquals(1000f - 4000f * readable, middle.y, 1e-2f)
+        // A note in a corner leaves the drawing against that edge, not past it.
+        val corner = Viewport.openingAt(4000f, 8000f, 1000f, 2000f, readable, 0f, 8000f)
+        assertEquals(0f, corner.x, 1e-3f)
+        assertEquals(2000f - 8000f * readable, corner.y, 1e-2f)
+        // A drawing that fits is centred whatever the note.
+        assertEquals(Framing(1f, 300f, 900f), Viewport.openingAt(400f, 200f, 1000f, 2000f, readable, 0f, 0f))
+    }
 }
