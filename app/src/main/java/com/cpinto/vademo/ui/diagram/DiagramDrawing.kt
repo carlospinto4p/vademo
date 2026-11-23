@@ -1,5 +1,6 @@
 package com.cpinto.vademo.ui.diagram
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -48,10 +49,12 @@ import com.cpinto.vademo.kb.DiagramEdge
 import com.cpinto.vademo.kb.DiagramLayout
 import com.cpinto.vademo.kb.DiagramNode
 import com.cpinto.vademo.kb.DiagramPlaces
+import com.cpinto.vademo.kb.EdgeLabels
 import com.cpinto.vademo.kb.EdgeRoute
 import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Position
 import com.cpinto.vademo.kb.Ref
+import com.cpinto.vademo.kb.Size
 import com.cpinto.vademo.ui.graph.LocalZoom
 import com.cpinto.vademo.ui.graph.Viewport
 import com.cpinto.vademo.ui.theme.Palette
@@ -339,13 +342,21 @@ private fun Modifier.centredAt(x: Dp, y: Dp, maxWidth: Dp) = layout { measurable
 
 /** One arrow as drawn: straight between [start] and [end], or round a box along [detour]. */
 private class DrawnEdge(val edge: DiagramEdge, val start: Position, val end: Position, val detour: EdgeRoute.Detour?) {
-    val label: Position get() = detour?.label ?: Position((start.x + end.x) / 2, (start.y + end.y) / 2)
+    val middle: Position get() = detour?.label ?: Position((start.x + end.x) / 2, (start.y + end.y) / 2)
+    val points: List<Position> get() = EdgeLabels.points(start, detour?.pieces ?: listOf(EdgeRoute.Piece.Line(end)))
 }
+
+private val LABEL_WIDTH = 160.dp
+private val LABEL_PAD_X = 6.dp
+private val LABEL_PAD_Y = 2.dp
+private const val LABEL_MAX_LINES = 2
 
 /**
  * The arrows, with their labels at their middles, or on the bend or lane of
- * an arrow that goes round a box ([EdgeRoute]). When [onEdge] is given each arrow can be
- * tapped there, on its label or, without one, on a small handle, to edit it.
+ * an arrow that goes round a box ([EdgeRoute]); a label that would cover a box
+ * or another label slides along its arrow ([EdgeLabels]). When [onEdge] is given
+ * each arrow can be tapped there, on its label or, without one, on a small
+ * handle, to edit it.
  */
 @Composable
 private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> Unit)?) {
@@ -358,6 +369,33 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
             val detour = EdgeRoute.detour(a, b, diagram.direction, EdgeRoute.obstacles(diagram, places, edge.source, edge.target), places)
             DrawnEdge(edge, detour?.start ?: EdgeRoute.exit(a, b), detour?.end ?: EdgeRoute.exit(b, a), detour)
         }
+    }
+    val measurer = rememberTextMeasurer()
+    val screen = LocalDensity.current
+    val labelStyle = MaterialTheme.typography.labelMedium
+    // Measured as drawn below: the text inside its padding (the outline is drawn over the pill's edge).
+    val labelSizes = remember(diagram, screen, labelStyle) {
+        with(screen) {
+            val inner = Constraints(maxWidth = (LABEL_WIDTH - LABEL_PAD_X * 2).roundToPx())
+            diagram.edges.associateWith { edge ->
+                edge.label?.takeIf { it.isNotBlank() }?.let { text ->
+                    val size = measurer.measure(text, labelStyle, overflow = TextOverflow.Ellipsis, maxLines = LABEL_MAX_LINES, constraints = inner).size
+                    Size(
+                        (size.width.toDp() + LABEL_PAD_X * 2).value.toDouble(),
+                        (size.height.toDp() + LABEL_PAD_Y * 2).value.toDouble(),
+                    )
+                }
+            }
+        }
+    }
+    val labelPlaces = remember(drawn, labelSizes, places) {
+        val boxes = diagram.nodes.filterNot { it.isGroup }.mapNotNull { places.boxes[it.id] }
+        EdgeLabels.place(
+            drawn.map { line ->
+                labelSizes[line.edge]?.let { EdgeLabels.Label(line.points, line.middle, it.width, it.height) }
+            },
+            boxes,
+        )
     }
     val zoom = LocalZoom.current
     Canvas(Modifier.fillMaxSize()) {
@@ -402,30 +440,30 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
             drawPath(head, colour)
         }
     }
-    for (line in drawn) {
+    drawn.forEachIndexed { i, line ->
         val edge = line.edge
         val label = edge.label?.takeIf { it.isNotBlank() }
-        val midX = line.label.x.dp
-        val midY = line.label.y.dp
+        val at = labelPlaces[i] ?: line.middle
         val tap = onEdge?.let { Modifier.combinedClickableEdge { it(edge.id) } } ?: Modifier
         when {
             label != null -> Surface(
-                modifier = Modifier.centredAt(midX, midY, 160.dp).then(tap),
-                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.centredAt(at.x.dp, at.y.dp, LABEL_WIDTH).then(tap),
+                shape = RoundedCornerShape(6.dp),
                 color = MaterialTheme.colorScheme.surface,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 Text(
                     label,
-                    style = MaterialTheme.typography.labelSmall,
-                    maxLines = 2,
+                    style = labelStyle,
+                    maxLines = LABEL_MAX_LINES,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
+                    modifier = Modifier.padding(horizontal = LABEL_PAD_X, vertical = LABEL_PAD_Y),
                 )
             }
             // A 14 dp dot inside a 32 dp target, so a finger can hit it.
             onEdge != null -> Box(
                 Modifier
-                    .centredAt(midX, midY, 32.dp)
+                    .centredAt(at.x.dp, at.y.dp, 32.dp)
                     .size(32.dp)
                     .semantics { contentDescription = "Arrow ${edge.source} to ${edge.target}" }
                     .then(tap),

@@ -39,7 +39,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 
 #### Readable diagrams and map
 
-- [ ] Arrow labels collide and are tiny: 11 sp on a borderless
+- [x] Arrow labels collide and are tiny: 11 sp on a borderless
   `surface` pill centred on the arrow's middle, cut to two lines in
   160 dp (`diagram/DiagramDrawing.kt:404-410`), drawn over boxes and over
   each other when arrows are close. Use `labelMedium`, outline the pill,

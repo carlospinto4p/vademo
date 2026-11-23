@@ -59,7 +59,8 @@ For README screenshots, Android's demo mode gives a clean status bar:
   built from the index, and
   `GraphLayout`, which places its boxes), and diagrams in tyfold's graph
   format (`Diagram`, `DiagramLayout`, `EdgeRoute`, which bends an arrow
-  round a box in its way, and `DiagramDocument`, which edits one).
+  round a box in its way, `EdgeLabels`, which slides an arrow's label off
+  boxes and other labels, and `DiagramDocument`, which edits one).
   Unit-tested on the JVM.
 - `git/GitSync.kt` — clone, commit, merge, push and conflict handling on
   JGit. Tested against real bare repositories in temp folders.
@@ -88,7 +89,9 @@ For README screenshots, Android's demo mode gives a clean status bar:
   `src/lib/graph/canvas/layout.ts` and `EdgeRoute` its `edgeRoute.ts`;
   keep the two drawing the same file alike. One part is vademo's own for
   now: `EdgeRoute` routes an arrow that runs backwards round boxes, which
-  tyfold leaves straight; when tyfold does it too, follow tyfold's. Edits go through `DiagramDocument`, which works on the file's own
+  tyfold leaves straight; when tyfold does it too, follow tyfold's. Also
+  vademo's own: `EdgeLabels` slides a label along its arrow when it would
+  cover a box or another label; tyfold leaves labels where they fall. Edits go through `DiagramDocument`, which works on the file's own
   JSON so unknown keys survive, writes keys in tyfold's order, and never
   adds a `position` (tyfold keeps dragged places off the file).
 - **Nothing app-private goes inside a knowledge base's folder.** Sync

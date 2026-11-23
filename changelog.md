@@ -1,6 +1,19 @@
 ## Changelog - vademo
 
 
+### v0.29.8 - 23rd November 2026
+
+- Fixed diagram arrow labels that covered boxes and each other, and were
+  small. A label now slides along its own arrow to the nearest spot where
+  it covers no box and no other label, or where it covers least when no
+  spot is free; it is `labelMedium` instead of `labelSmall`, on a pill with
+  an outline.
+- Added `kb/EdgeLabels.kt`: `place` chooses where labels go, in the file's
+  order; `points` turns an arrow's route into points. `Edges` in
+  `DiagramDrawing.kt` measures each label and draws it where `place` says.
+- Tests: `EdgeLabelsTest`, 7 tests.
+
+
 ### v0.29.7 - 23rd November 2026
 
 - Updated `.claude/rules/committing.md`: "Merge Into `main` After Every
