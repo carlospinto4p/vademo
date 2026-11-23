@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,6 +43,7 @@ import com.cpinto.vademo.kb.FoldedMap
 import com.cpinto.vademo.kb.Layout
 import com.cpinto.vademo.kb.MapBox
 import com.cpinto.vademo.ui.BackForward
+import com.cpinto.vademo.ui.theme.Palette
 
 /** One layout unit (the preferred gap between linked notes) on screen. */
 internal val UNIT = 180.dp
@@ -104,13 +106,14 @@ fun GraphScreen(
             }
             Box(Modifier.fillMaxSize()) {
                 when {
-                    graph == null || map == null || layout == null -> Unit
+                    // Reading every note and laying them out can take a moment on a big knowledge base.
+                    graph == null || map == null || layout == null -> Loading()
                     graph.notes.isEmpty() -> Text(
                         if (state.focus != null) "This note is not in the knowledge base's index." else "This knowledge base has no notes yet.",
                         Modifier.padding(16.dp),
                     )
                     else -> {
-                        val colours = folderColours(state.folders)
+                        val colours = folderColours(state.folders, MaterialTheme.colorScheme.surface.luminance() < 0.5f)
                         // Opened afresh each time a topic opens or folds, at a size that fits the new picture.
                         val focused = map.boxes.indexOfFirst { it.path == state.focus && state.focus != null }
                         key(map) {
@@ -211,8 +214,11 @@ private fun GraphContent(
     }
 }
 
-/** One colour per folder, spread around the colour wheel in folder-name order. */
-private fun folderColours(folders: List<String>): Map<String, Color> =
+/**
+ * One colour per folder, spread around the colour wheel in folder-name
+ * order, each dark or light enough to stand out from the boxes ([Palette]).
+ */
+private fun folderColours(folders: List<String>, dark: Boolean): Map<String, Color> =
     folders.withIndex().associate { (i, folder) ->
-        folder to Color.hsv(hue = (i * 360f / folders.size.coerceAtLeast(1) + 200f) % 360f, saturation = 0.55f, value = 0.8f)
+        folder to Color(Palette.folder((i * 360f / folders.size.coerceAtLeast(1) + 200f) % 360f, dark))
     }

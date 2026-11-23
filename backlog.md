@@ -51,7 +51,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   (`graph/GraphScreen.kt:122`). Let group titles wrap to two lines, and
   make a tap on a box that is not a note open a bottom sheet with its
   whole name, notes and ref (today the tap does nothing). MED, effort M.
-- [ ] Check text contrast on coloured boxes with a unit test:
+- [x] Check text contrast on coloured boxes with a unit test:
   `DiagramColours` (`diagram/DiagramDrawing.kt`) tints boxes and draws the
   headline in `onSurfaceVariant` on them, and with Material You's dynamic
   colours that pair is not checked anywhere. Test 4.5:1 for text on every
@@ -79,7 +79,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   (`graph/PanZoom.kt:73`): a flick stops dead, and zooming needs two
   hands on a large phone. Add fling with decay and double-tap zoom.
   MED, effort S.
-- [ ] Blank screen while loading: the map lays out every note before
+- [x] Blank screen while loading: the map lays out every note before
   drawing (`graph/GraphScreen.kt:65`), and the diagram and Diagrams list
   show nothing until read (`diagram/DiagramScreen.kt:103`,
   `diagram/DiagramListScreen.kt:75`). Once a picture is the first screen

@@ -52,6 +52,7 @@ import com.cpinto.vademo.kb.EdgeRoute
 import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Position
 import com.cpinto.vademo.kb.Ref
+import com.cpinto.vademo.ui.theme.Palette
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -132,15 +133,18 @@ internal fun rememberPlaces(diagram: Diagram, moves: Map<String, Position> = emp
 }
 
 /**
- * Status and legend colours, readable on the light and the dark theme. A data
- * class, so a box whose colours did not change can skip recomposing.
+ * Status and legend colours, readable on the light and the dark theme: each
+ * comes from [Palette], which checks its contrast. A data class, so a box
+ * whose colours did not change can skip recomposing.
  */
 internal data class DiagramColours(val dark: Boolean, val error: Color, val outline: Color) {
-    fun stripe(hue: Float) = Color.hsl(hue, 0.55f, if (dark) 0.6f else 0.45f)
-    fun tint(hue: Float) = Color.hsl(hue, if (dark) 0.3f else 0.6f, if (dark) 0.2f else 0.94f)
+    fun stripe(hue: Float) = Color(Palette.stripe(hue, dark))
+    fun tint(hue: Float) = Color(Palette.tint(hue, dark))
+    private val added = Color(Palette.status(135f, 0.6f, if (dark) 0.55f else 0.35f, dark, Diagram.LEGEND_HUES))
+    private val changed = Color(Palette.status(40f, 0.9f, if (dark) 0.6f else 0.45f, dark, Diagram.LEGEND_HUES))
     fun status(status: DiagramNode.Status?): Color? = when (status) {
-        DiagramNode.Status.ADDED -> Color.hsl(135f, 0.6f, if (dark) 0.55f else 0.35f)
-        DiagramNode.Status.CHANGED -> Color.hsl(40f, 0.9f, if (dark) 0.6f else 0.45f)
+        DiagramNode.Status.ADDED -> added
+        DiagramNode.Status.CHANGED -> changed
         DiagramNode.Status.REMOVED -> error
         DiagramNode.Status.UNREACHABLE -> outline
         null -> null
