@@ -1,6 +1,15 @@
 package com.cpinto.vademo.ui
 
 import android.net.Uri
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -96,9 +105,36 @@ fun VademoNavHost() {
     }
 }
 
+/**
+ * Material's shared-axis X motion between screens, so a screen change says
+ * which way it went: going in (Home, a knowledge base, a note, its editor)
+ * the new screen slides in a little from the right as it fades in, and Back
+ * slides the other way. The old screen fades out first, in [FADE_OUT] ms,
+ * and the new one fades in over the rest.
+ */
+private const val MOTION = 300
+private const val FADE_OUT = 90
+
+private fun slide(fullWidth: Int) = fullWidth / 10
+
+private fun enter(forward: Boolean): EnterTransition =
+    slideInHorizontally(tween(MOTION, easing = FastOutSlowInEasing)) { if (forward) slide(it) else -slide(it) } +
+        fadeIn(tween(MOTION - FADE_OUT, delayMillis = FADE_OUT, easing = LinearOutSlowInEasing))
+
+private fun exit(forward: Boolean): ExitTransition =
+    slideOutHorizontally(tween(MOTION, easing = FastOutSlowInEasing)) { if (forward) -slide(it) else slide(it) } +
+        fadeOut(tween(FADE_OUT, easing = FastOutSlowInEasing))
+
 @Composable
 private fun AppNavHost(nav: NavHostController) {
-    NavHost(navController = nav, startDestination = Routes.HOME) {
+    NavHost(
+        navController = nav,
+        startDestination = Routes.HOME,
+        enterTransition = { enter(forward = true) },
+        exitTransition = { exit(forward = true) },
+        popEnterTransition = { enter(forward = false) },
+        popExitTransition = { exit(forward = false) },
+    ) {
         composable(Routes.HOME) {
             HomeScreen(
                 onOpenKb = { nav.navigate(Routes.kb(it.kb, it.tab.name, it.diagram)) },

@@ -1,6 +1,18 @@
 ## Changelog - vademo
 
 
+### v0.29.11 - 23rd November 2026
+
+- Added a direction to screen changes. Going in (Home to a knowledge base,
+  to a note, to its editor) the new screen slides in a little from the
+  right as the old one fades out; Back slides the other way. It is
+  Material's shared-axis X motion, 300 ms, in place of Navigation's
+  700 ms crossfade, and is set once on `AppNavHost` in `ui/Navigation.kt`
+  for every screen.
+- Updated `.claude/rules/ux-areas-android.md`: screen changes slide now;
+  only a shared-element transition from a box to its note is still to do.
+
+
 ### v0.29.10 - 23rd November 2026
 
 - Fixed `DiagramScreen` recording the whole drawing into a layer on every

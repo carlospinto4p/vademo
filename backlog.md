@@ -103,9 +103,14 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 - [x] No spinner while syncing: Home's Sync icon only greys out
   (`home/HomeScreen.kt`). Swap it for a small progress ring while any
   sync runs, and `animateContentSize` the status lines. LOW, effort S.
-- [ ] Screen changes have no direction: slide in for drill-down (Home →
-  knowledge base → note), and a shared-element transition from a map or
-  diagram box to its note. LOW, effort M.
+- [x] Screen changes have no direction: slide in for drill-down (Home →
+  knowledge base → note). LOW, effort S. Done in v0.29.11.
+- [ ] A shared-element transition from a map or diagram box to its note.
+  LOW, effort M. Held back in v0.29.11: the boxes sit inside `PanZoom`'s
+  `graphicsLayer` scale, and a shared element is measured at its unscaled
+  size, so at the starting zoom the box would jump to twice its drawn size
+  as the transition begins. It needs the box's drawn bounds passed in, and
+  checking on a phone.
 - [x] Lists jump: no `animateItem()` in Home's and Browse's
   `LazyColumn`s. LOW, effort S.
 - [x] An empty folder shows a blank screen (`browse/BrowseScreen.kt`,

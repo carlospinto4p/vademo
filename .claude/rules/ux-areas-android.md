@@ -27,10 +27,12 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
 - **The "Public knowledge bases sync without setup…" card** on Home
   still appears and disappears instantly when `state.canWrite`
   flips.
-- **Screen-to-screen navigation has no transition**: Home → a
-  knowledge base → Note → Edit are plain pushes with the default
-  abrupt swap; no shared-element or slide transition marks the
-  drill-down/back relationship between a folder and its contents.
+- **Screen changes slide, but nothing carries over**: every screen
+  change uses Material's shared-axis X motion (`AppNavHost` in
+  `ui/Navigation.kt`; in from the right going in, the other way on
+  Back), so keep new destinations on it rather than giving one its own.
+  No shared-element transition yet takes a map or diagram box into its
+  note.
 - **Settings gives no save feedback**: `SettingsScreen`'s Save
   button returns to Home with no confirmation. A malformed or
   duplicate address is refused as it is added, and "On your GitHub"
