@@ -271,6 +271,12 @@ class ReadAndEditTest {
         compose.openKnowledgeBase()
         compose.waitUntil(5_000) { compose.onAllNodes(hasText("Map")).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Map").performClick()
+        // The map starts folded: the index and one box per topic, which a tap opens in place.
+        compose.waitUntil(5_000) {
+            compose.onAllNodes(hasText("3 notes")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("Tyfold desktop app").assertDoesNotExist()
+        compose.onNodeWithText("Ideas").performClick()
         compose.waitUntil(5_000) {
             compose.onAllNodes(hasText("Tyfold desktop app")).fetchSemanticsNodes().isNotEmpty()
         }

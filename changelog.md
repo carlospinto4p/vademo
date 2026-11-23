@@ -1,6 +1,24 @@
 ## Changelog - vademo
 
 
+### v0.26.0 - 23rd November 2026
+
+- The map of notes starts as the knowledge base's shape instead of every
+  note at once: `index.md` and one large box per topic folder with its
+  note count, linked where their notes link. Tapping a topic opens it in
+  place, a note or an open topic's hub opens the note, and a long press
+  folds the topic again. The Every note chip opens or folds them all, and
+  Sources shows the source notes, hidden at first.
+- Added `kb/FoldedMap.kt`: `FoldedMap.of` and `MapBox`.
+- `GraphNote` has the note's `type` and `isSource`.
+- `GraphViewModel` keeps the open topics and lays the map out again on
+  each change; `GraphScreen` draws large boxes for the index, hubs and
+  folded topics and opens each new picture afresh.
+- Tests:
+  - `FoldedMapTest`: 4 tests.
+  - `ReadAndEditTest.openANoteFromTheMap` opens a topic first.
+
+
 ### v0.25.0 - 23rd November 2026
 
 - A knowledge base opens on a picture instead of its folders: its main

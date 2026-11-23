@@ -140,10 +140,14 @@ the phone and are not synced.
 
 ## Map of notes
 
-The Map tab of a knowledge base shows every note as a box
-and every `[[link]]` between two notes as a line, with notes of the same
-folder in the same colour. Drag to move around, pinch to zoom, and tap a
-box to open that note. A big map opens at a size its titles can be read
+The Map tab of a knowledge base starts with its shape: `index.md` and one
+large box per topic folder, saying how many notes it holds, with a line
+wherever notes of the two link with `[[...]]`. Tap a topic to open it in
+place, showing its notes; tap a note, or the topic's hub, to read it, and
+long-press any of the topic's boxes to fold it again. The Every note chip opens or
+folds all the topics at once, and the Sources chip adds the source notes, hidden at
+first since they outnumber the rest. Notes of the same folder share a
+colour. Drag to move around and pinch to zoom. A big map opens at a size its titles can be read
 at; the button at the bottom right shows all of it and zooms back in, and
 a double tap zooms in round the tap and back out. The picture is worked out from the notes each
 time, so nothing is saved and it always matches what is on the phone.
