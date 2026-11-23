@@ -33,7 +33,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditScreen(onDone: () -> Unit, viewModel: EditViewModel = hiltViewModel()) {
+fun EditScreen(
+    onDone: () -> Unit,
+    /** After a save that wrote the note; [onDone] is for leaving without one. */
+    onSaved: () -> Unit = onDone,
+    viewModel: EditViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirmDiscard by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { viewModel.load() }
@@ -52,7 +57,7 @@ fun EditScreen(onDone: () -> Unit, viewModel: EditViewModel = hiltViewModel()) {
                 },
                 actions = {
                     if (!state.blocked) {
-                        IconButton(onClick = { viewModel.save(onDone) }, enabled = state.loaded) {
+                        IconButton(onClick = { viewModel.save(onSaved) }, enabled = state.loaded) {
                             Icon(Icons.Filled.Check, contentDescription = "Save")
                         }
                     }

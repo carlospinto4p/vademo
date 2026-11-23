@@ -1,9 +1,13 @@
 package com.cpinto.vademo.ui.graph
 
+import androidx.compose.animation.core.FloatExponentialDecaySpec
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +45,9 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -69,7 +75,8 @@ private const val GLIDE_MS = 300
  * [READABLE_SCALE] showing the part [start] names. Double tap zooms to full
  * size round the tap and back out to the whole drawing, and a button
  * switches between the whole drawing and a readable size. Used by the map
- * of notes and by diagrams.
+ * of notes and by diagrams. A drag let go while still moving coasts on and
+ * slows to a stop; a touch stops it.
  */
 @Composable
 internal fun PanZoom(
@@ -123,6 +130,36 @@ internal fun PanZoom(
             }
             .pointerInput(Unit) {
                 detectTapGestures(onDoubleTap = { at -> glideTo(Viewport.doubleTap(framing, currentAll, at.x, at.y)) })
+            }
+            .pointerInput(Unit) {
+                // Watches each one-finger drag without taking it from the gestures below, and
+                // lets the drawing coast on when the finger lifts while still moving.
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    glide?.cancel()
+                    val tracker = VelocityTracker()
+                    tracker.addPosition(down.uptimeMillis, down.position)
+                    var pinched = false
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.changes.count { it.pressed } > 1) pinched = true
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        tracker.addPosition(change.uptimeMillis, change.position)
+                    }
+                    if (pinched) return@awaitEachGesture
+                    val velocity = tracker.calculateVelocity()
+                    if (Viewport.flings(velocity.x, velocity.y)) {
+                        glide = scope.launch {
+                            launch {
+                                animateDecay(framing.x, velocity.x, FloatExponentialDecaySpec()) { x, _ -> framing = framing.copy(x = x) }
+                            }
+                            launch {
+                                animateDecay(framing.y, velocity.y, FloatExponentialDecaySpec()) { y, _ -> framing = framing.copy(y = y) }
+                            }
+                        }
+                    }
+                }
             }
             .pointerInput(Unit) {
                 detectTransformGestures { centroid, pan, zoom, _ ->

@@ -147,17 +147,21 @@ The Map tab of a knowledge base starts with its shape: `index.md` and one
 large box per topic folder, saying how many notes it holds, with a line
 wherever notes of the two link with `[[...]]`. Tap a topic to open it in
 place, showing its notes; tap a note, or the topic's hub, to read it, and
-long-press any of the topic's boxes to fold it again. The Every note chip opens or
-folds all the topics at once, and the Sources chip adds the source notes, hidden at
-first since they outnumber the rest. Notes of the same folder share a
-colour. Drag to move around and pinch to zoom.
+long-press any of the topic's boxes to fold it again. The Every note chip
+opens or folds all the topics at once, and the Sources chip adds the
+source notes, hidden at first since they outnumber the rest. Notes of the
+same folder share a colour.
+
+Drag to move around, pinch to zoom, and a drag let go while still moving
+coasts on. A big map opens at a size its titles can be read at; the
+button at the bottom right shows all of it and zooms back in, and a double
+tap zooms in round the tap and back out. The picture is worked out from
+the notes each time, so nothing is saved and it always matches what is on
+the phone.
 
 From a note, the map button at the top shows it on a map of its own: the
 note, in the centre, and the notes up to two links from it, each drawn on
-its own, so related notes can be wandered to by picture. A big map opens at a size its titles can be read
-at; the button at the bottom right shows all of it and zooms back in, and
-a double tap zooms in round the tap and back out. The picture is worked out from the notes each
-time, so nothing is saved and it always matches what is on the phone.
+its own, so related notes can be wandered to by picture.
 
 ## Diagrams
 

@@ -1,11 +1,13 @@
 package com.cpinto.vademo.ui.home
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -28,6 +31,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -57,7 +62,15 @@ fun HomeScreen(
                         Icon(Icons.Filled.Search, contentDescription = "Search")
                     }
                     IconButton(onClick = viewModel::syncAll, enabled = state.canSync) {
-                        Icon(Icons.Filled.Sync, contentDescription = "Sync")
+                        // A ring while any knowledge base syncs, so a slow sync shows before the first row changes.
+                        if (state.syncing) {
+                            CircularProgressIndicator(
+                                Modifier.size(24.dp).semantics { contentDescription = "Syncing" },
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(Icons.Filled.Sync, contentDescription = "Sync")
+                        }
                     }
                     IconButton(onClick = onSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "Settings")
@@ -86,17 +99,19 @@ fun HomeScreen(
                 }
             }
             items(state.kbs, key = { it.name }) { kb ->
-                KbRow(
-                    kb = kb,
-                    sync = state.syncStates[kb.name] ?: SyncState.Idle,
-                    onClick = {
-                        when {
-                            kb.needsChoice -> onResolve(kb.name)
-                            kb.cloned -> viewModel.open(kb.name, onOpenKb)
-                        }
-                    },
-                )
-                HorizontalDivider()
+                Column(Modifier.animateItem()) {
+                    KbRow(
+                        kb = kb,
+                        sync = state.syncStates[kb.name] ?: SyncState.Idle,
+                        onClick = {
+                            when {
+                                kb.needsChoice -> onResolve(kb.name)
+                                kb.cloned -> viewModel.open(kb.name, onOpenKb)
+                            }
+                        },
+                    )
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -108,7 +123,8 @@ private fun KbRow(kb: KbInfo, sync: SyncState, onClick: () -> Unit) {
         modifier = Modifier.clickable(enabled = kb.cloned, onClick = onClick),
         headlineContent = { Text(kb.name) },
         supportingContent = {
-            Column {
+            // Grows and shrinks as the sync line comes and goes, instead of jumping.
+            Column(Modifier.animateContentSize()) {
                 Text(statusLine(kb))
                 syncLine(sync)?.let { (text, isProblem) ->
                     Text(

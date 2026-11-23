@@ -107,4 +107,12 @@ class ViewportTest {
         // A drawing that fits is centred whatever the note.
         assertEquals(Framing(1f, 300f, 900f), Viewport.openingAt(400f, 200f, 1000f, 2000f, readable, 0f, 0f))
     }
+
+    @Test
+    fun `a finger let go while moving throws the drawing, a slow one puts it down`() {
+        assertTrue(Viewport.flings(1200f, 0f))
+        assertTrue(Viewport.flings(-300f, -300f))
+        assertFalse(Viewport.flings(100f, 50f))
+        assertFalse(Viewport.flings(0f, 0f))
+    }
 }

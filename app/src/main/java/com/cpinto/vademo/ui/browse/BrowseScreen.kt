@@ -231,28 +231,41 @@ private fun FolderList(
     onOpenFolder: (kb: String, path: String) -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
 ) {
+    if (state.loaded && state.notes.isEmpty() && state.folders.isEmpty()) {
+        Text(
+            if (state.templates.isNotEmpty()) "This folder is empty. Start a note with New note." else "This folder is empty.",
+            modifier = Modifier.padding(16.dp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
     // Room under the last row for the New note button.
     val bottom = if (state.templates.isNotEmpty()) 88.dp else 0.dp
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = bottom)) {
         items(state.notes, key = { "note:" + it.file.path }) { note ->
-            ListItem(
-                modifier = Modifier.clickable { onOpenNote(viewModel.kbName, viewModel.pathOf(note)) },
-                leadingContent = { Icon(Icons.Outlined.Description, contentDescription = null) },
-                headlineContent = { Text(note.title) },
-                supportingContent = listOfNotNull(note.type, note.status)
-                    .takeIf { it.isNotEmpty() }
-                    ?.let { { Text(it.joinToString(" · ")) } },
-            )
-            HorizontalDivider()
+            // A note arriving with a sync slides in, rather than the rows jumping.
+            Column(Modifier.animateItem()) {
+                ListItem(
+                    modifier = Modifier.clickable { onOpenNote(viewModel.kbName, viewModel.pathOf(note)) },
+                    leadingContent = { Icon(Icons.Outlined.Description, contentDescription = null) },
+                    headlineContent = { Text(note.title) },
+                    supportingContent = listOfNotNull(note.type, note.status)
+                        .takeIf { it.isNotEmpty() }
+                        ?.let { { Text(it.joinToString(" · ")) } },
+                )
+                HorizontalDivider()
+            }
         }
         items(state.folders, key = { "folder:" + it.dir.path }) { folder ->
-            ListItem(
-                modifier = Modifier.clickable { onOpenFolder(viewModel.kbName, viewModel.pathOf(folder)) },
-                leadingContent = { Icon(Icons.Outlined.Folder, contentDescription = null) },
-                headlineContent = { Text(folder.name) },
-                supportingContent = { Text(count(folder.noteCount)) },
-            )
-            HorizontalDivider()
+            Column(Modifier.animateItem()) {
+                ListItem(
+                    modifier = Modifier.clickable { onOpenFolder(viewModel.kbName, viewModel.pathOf(folder)) },
+                    leadingContent = { Icon(Icons.Outlined.Folder, contentDescription = null) },
+                    headlineContent = { Text(folder.name) },
+                    supportingContent = { Text(count(folder.noteCount)) },
+                )
+                HorizontalDivider()
+            }
         }
     }
 }

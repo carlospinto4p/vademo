@@ -50,6 +50,13 @@ internal object Viewport {
     private fun around(size: Float, screen: Float, point: Float): Float =
         if (size <= screen) (screen - size) / 2 else (screen / 2 - point).coerceIn(screen - size, 0f)
 
+    /** Whether a finger let go at this velocity, in pixels a second, throws the drawing rather than putting it down. */
+    fun flings(velocityX: Float, velocityY: Float): Boolean =
+        kotlin.math.hypot(velocityX, velocityY) >= FLING_SPEED
+
+    /** Slower than this, a finger lifting is putting the drawing down, not throwing it. */
+    private const val FLING_SPEED = 400f
+
     /** [framing] scaled to [scale], with the drawing's point under ([focusX], [focusY]) staying there. */
     fun zoomAt(framing: Framing, scale: Float, focusX: Float, focusY: Float): Framing {
         val ratio = scale / framing.scale
