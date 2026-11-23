@@ -71,7 +71,10 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 - [ ] Map boxes say little: one size for every note, a 2 dp folder border
   as the only colour, links without direction. Size hubs larger, fill a
   coloured header band per folder, and on tap highlight the box's links
-  and neighbours before opening it. MED, effort M.
+  and neighbours before opening it. MED, effort M. Partly done in v0.26.0:
+  the index, hubs and folded topics are large boxes with a 3 dp border;
+  the coloured header band and the highlight on tap are still open (a tap
+  now opens a folded topic, so a highlight would need a second gesture).
 
 #### Gestures and loading
 
