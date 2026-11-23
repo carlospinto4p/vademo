@@ -82,6 +82,9 @@ class NoteIndex(val kbName: String, val notes: List<IndexedNote>) {
 
     fun note(name: String): IndexedNote? = byName[name.removeSuffix(".md")]
 
+    /** The note at [path], or null when the index holds none there. */
+    fun noteAt(path: String): IndexedNote? = byPath[path]
+
     /** The notes linking to the note at [path], in path order. */
     fun linkedFrom(path: String): List<IndexedNote> =
         backlinks[path.substringAfterLast('/').removeSuffix(".md")].orEmpty().mapNotNull(byName::get)

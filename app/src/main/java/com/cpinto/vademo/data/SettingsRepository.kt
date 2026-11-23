@@ -106,6 +106,15 @@ class SettingsRepository @Inject constructor(
         context.dataStore.edit { prefs -> prefs[kbTabKey(kb)] = tab }
     }
 
+    /** The paths of the notes last opened in the knowledge base [kb], newest first ([RecentNotes]). */
+    suspend fun recentNotes(kb: String): List<String> = RecentNotes.decode(context.dataStore.data.first()[recentKey(kb)])
+
+    suspend fun noteOpened(kb: String, path: String) {
+        context.dataStore.edit { prefs ->
+            prefs[recentKey(kb)] = RecentNotes.encode(RecentNotes.opened(RecentNotes.decode(prefs[recentKey(kb)]), path))
+        }
+    }
+
     /** The searches saved from the search screen, in the order saved. */
     val savedQueries: Flow<List<SavedQuery>> = context.dataStore.data.map { SavedQueries.decode(it[SAVED_QUERIES]) }
 
@@ -148,6 +157,8 @@ class SettingsRepository @Inject constructor(
         val LAST_KB = stringPreferencesKey("last_kb")
 
         fun kbTabKey(kb: String) = stringPreferencesKey("kb_tab:$kb")
+
+        fun recentKey(kb: String) = stringPreferencesKey("recent_notes:$kb")
     }
 }
 

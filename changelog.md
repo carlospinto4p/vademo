@@ -1,6 +1,20 @@
 ## Changelog - vademo
 
 
+### v0.28.0 - 23rd November 2026
+
+- A "Continue reading" strip above a knowledge base's tab bar lists the
+  last five notes opened there, newest first, each one tap from opening
+  again. The Recent tab sorts by `updated`, when a note was written, not
+  when it was read.
+- Added `data/RecentNotes.kt`, kept per knowledge base in the settings by
+  `SettingsRepository.recentNotes` and `noteOpened`, which
+  `NoteViewModel.load` calls.
+- Added `NoteIndex.noteAt`; `KbViewModel.loadRecent` drops notes that no
+  longer exist.
+- Tests: `RecentNotesTest`, 3 tests.
+
+
 ### v0.27.0 - 23rd November 2026
 
 - A note shows "Links to" above "Linked from": the notes it links to,

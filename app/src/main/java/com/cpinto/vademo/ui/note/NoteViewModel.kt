@@ -78,6 +78,7 @@ class NoteViewModel @Inject constructor(
                 _state.value = NoteState(title = path, missing = true)
                 return@launch
             }
+            settings.noteOpened(kbName, path)
             val parsed = FrontmatterParser.parse(file.readText())
             val blocks = WikiLinks.parts(parsed.body).map { part ->
                 when (part) {

@@ -66,7 +66,8 @@ A knowledge base opens on a picture of it: its main diagram, the one its
 notes when it has none. The bar at the bottom switches between Map,
 Diagrams and Notes, and the knowledge base opens on the one it was left on
 next time. On a main diagram, the list button at the top lists all the
-knowledge base's diagrams.
+knowledge base's diagrams. Above the bar, "Continue reading" lists the last
+five notes opened in that knowledge base, newest first.
 
 The app reopens the knowledge base it was left in; go back to the list of
 knowledge bases before leaving to start there next time.
