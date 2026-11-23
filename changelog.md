@@ -1,7 +1,7 @@
 ## Changelog - vademo
 
 
-### v0.29.12 - 23rd November 2026
+### v0.29.13 - 23rd November 2026
 
 - Added "Settings saved" on Home after Save in Settings, which returned to
   Home with no word that it worked. `SettingsScreen` takes `onSaved` apart
@@ -16,7 +16,7 @@
   waits for "Settings saved".
 
 
-### v0.29.11 - 23rd November 2026
+### v0.29.12 - 23rd November 2026
 
 - Added a direction to screen changes. Going in (Home to a knowledge base,
   to a note, to its editor) the new screen slides in a little from the
@@ -28,7 +28,7 @@
   only a shared-element transition from a box to its note is still to do.
 
 
-### v0.29.10 - 23rd November 2026
+### v0.29.11 - 23rd November 2026
 
 - Fixed `DiagramScreen` recording the whole drawing into a layer on every
   frame, for a Share as image that is seldom used. It now records only
@@ -39,7 +39,7 @@
   afresh for at the new size. Not yet checked on a phone.
 
 
-### v0.29.9 - 23rd November 2026
+### v0.29.10 - 23rd November 2026
 
 - Updated the map of notes' boxes, which said little:
   - Each box has a band of its folder's colour across its top, a larger
@@ -51,7 +51,7 @@
 - `GraphState.lastOpened` holds the note last opened from the map.
 
 
-### v0.29.8 - 23rd November 2026
+### v0.29.9 - 23rd November 2026
 
 - Fixed diagram arrow labels that covered boxes and each other, and were
   small. A label now slides along its own arrow to the nearest spot where
@@ -62,6 +62,15 @@
   order; `points` turns an arrow's route into points. `Edges` in
   `DiagramDrawing.kt` measures each label and draws it where `place` says.
 - Tests: `EdgeLabelsTest`, 7 tests.
+
+
+### v0.29.8 - 23rd November 2026
+
+- Updated `.github/workflows/build-apk.yml`: Build APK also runs on pushes
+  to `ccr-**` branches, the ones Claude Code cloud sessions work on. It
+  ran only on `main` and `claude/**`, so a cloud session's branch had no
+  check to wait for before merging into `main` unless one was started by
+  hand.
 
 
 ### v0.29.7 - 23rd November 2026

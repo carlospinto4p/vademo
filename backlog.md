@@ -64,9 +64,9 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   every frame into a layer for Share as image
   (`diagram/DiagramScreen.kt`), which can draw glyphs at 1× and stretch
   them. Look at 2× and 3× on the phone; if blurry, record only while
-  exporting. MED, effort S. Done in v0.29.10: it records only while
+  exporting. MED, effort S. Done in v0.29.11: it records only while
   exporting, whatever the phone shows.
-- [ ] **[manual]** With v0.29.10 installed, open a diagram and zoom to 2×
+- [ ] **[manual]** With v0.29.11 installed, open a diagram and zoom to 2×
   and 3×: box text and arrow labels should be as sharp as the app bar's.
   Then Share as image: the picture still shows the whole diagram, without
   the arrows' round handles.
@@ -80,7 +80,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   the index, hubs and folded topics are large boxes with a 3 dp border;
   the coloured header band and the highlight on tap are still open (a tap
   now opens a folded topic, so a highlight would need a second gesture).
-  Done in v0.29.9: a folder-coloured band across each box's top, and
+  Done in v0.29.10: a folder-coloured band across each box's top, and
   instead of a highlight before opening (which would cost every note an
   extra tap), the note last opened from the map is marked with its links
   when you come back to it.
@@ -104,9 +104,9 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   (`home/HomeScreen.kt`). Swap it for a small progress ring while any
   sync runs, and `animateContentSize` the status lines. LOW, effort S.
 - [x] Screen changes have no direction: slide in for drill-down (Home →
-  knowledge base → note). LOW, effort S. Done in v0.29.11.
+  knowledge base → note). LOW, effort S. Done in v0.29.12.
 - [ ] A shared-element transition from a map or diagram box to its note.
-  LOW, effort M. Held back in v0.29.11: the boxes sit inside `PanZoom`'s
+  LOW, effort M. Held back in v0.29.12: the boxes sit inside `PanZoom`'s
   `graphicsLayer` scale, and a shared element is measured at its unscaled
   size, so at the starting zoom the box would jump to twice its drawn size
   as the transition begins. It needs the box's drawn bounds passed in, and

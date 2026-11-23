@@ -10,6 +10,9 @@ on:
     branches:
       - main
       - 'claude/**'
+      # Branches of Claude Code cloud sessions, so a session's own
+      # branch is checked before it merges into main.
+      - 'ccr-**'
   workflow_dispatch:
 
 permissions:
