@@ -52,6 +52,8 @@ import com.cpinto.vademo.kb.EdgeRoute
 import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Position
 import com.cpinto.vademo.kb.Ref
+import com.cpinto.vademo.ui.graph.LocalZoom
+import com.cpinto.vademo.ui.graph.Viewport
 import com.cpinto.vademo.ui.theme.Palette
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -91,7 +93,7 @@ private fun boxStyles(): BoxStyles {
  * colours are never the only sign. An entry with the box's own name is left
  * out, as a group named after its category would otherwise say it twice.
  */
-private fun headline(node: DiagramNode, diagram: Diagram): String =
+internal fun headline(node: DiagramNode, diagram: Diagram): String =
     listOfNotNull(
         node.tag,
         node.status?.name?.lowercase(),
@@ -305,14 +307,15 @@ private fun GroupBox(
         }
         Column(Modifier.padding(horizontal = DiagramLayout.PAD_SIDE.dp, vertical = 6.dp)) {
             val title = listOfNotNull(group.text, headline(group, diagram).ifEmpty { null }).joinToString(" · ")
+            val second = group.notes?.takeIf { it.isNotBlank() } ?: group.ref?.let(::refText)
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
+                // The layout leaves a group 48 dp above its boxes: room for two lines of title, or one and a note.
+                maxLines = if (second == null) 2 else 1,
                 overflow = TextOverflow.Ellipsis,
                 textDecoration = if (group.status == DiagramNode.Status.REMOVED) TextDecoration.LineThrough else null,
             )
-            val second = group.notes?.takeIf { it.isNotBlank() } ?: group.ref?.let(::refText)
             second?.let {
                 Text(
                     it,
@@ -356,8 +359,10 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
             DrawnEdge(edge, detour?.start ?: EdgeRoute.exit(a, b), detour?.end ?: EdgeRoute.exit(b, a), detour)
         }
     }
+    val zoom = LocalZoom.current
     Canvas(Modifier.fillMaxSize()) {
         val arrow = 10.dp.toPx()
+        val width = Viewport.lineWidth(1.5.dp.toPx(), 1.dp.toPx(), zoom())
         val dashes = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx()))
         fun px(p: Position) = Offset(p.x.toFloat() * density, p.y.toFloat() * density)
         for (line in drawn) {
@@ -381,7 +386,7 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
                 path,
                 colour,
                 style = Stroke(
-                    width = 1.5.dp.toPx(),
+                    width = width,
                     pathEffect = if (line.edge.style == DiagramEdge.Style.DASHED) dashes else null,
                 ),
             )

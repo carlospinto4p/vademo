@@ -155,9 +155,11 @@ private fun GraphContent(
     onLongPress: (MapBox) -> Unit,
 ) {
     val lineColour = MaterialTheme.colorScheme.outline
+    val zoom = LocalZoom.current
     Box(Modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
             val unit = UNIT.toPx()
+            val width = Viewport.lineWidth(1.5.dp.toPx(), 1.dp.toPx(), zoom())
             for ((a, b) in map.links) {
                 val p = layout.centres[a]
                 val q = layout.centres[b]
@@ -165,7 +167,7 @@ private fun GraphContent(
                     color = lineColour,
                     start = Offset((p.x * unit).toFloat(), (p.y * unit).toFloat()),
                     end = Offset((q.x * unit).toFloat(), (q.y * unit).toFloat()),
-                    strokeWidth = 1.5.dp.toPx(),
+                    strokeWidth = width,
                 )
             }
         }

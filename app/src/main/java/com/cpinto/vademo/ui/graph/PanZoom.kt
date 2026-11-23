@@ -31,6 +31,7 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +40,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -181,7 +183,10 @@ internal fun PanZoom(
                     scaleY = framing.scale
                 }
                 .then(contentModifier),
-        ) { content() }
+        ) {
+            // Read only while drawing, so lines keep their width on screen without recomposing at each frame.
+            CompositionLocalProvider(LocalZoom provides { framing.scale }) { content() }
+        }
         // Only when the whole drawing is too small to read; otherwise it opens whole and there is nothing to switch.
         if (screen != IntSize.Zero && opening.scale > all.scale) {
             SmallFloatingActionButton(
@@ -227,6 +232,12 @@ fun Legend(entries: List<Pair<String, Color>>, modifier: Modifier, startOpen: Bo
         }
     }
 }
+
+/**
+ * The scale the drawing inside [PanZoom] is shown at, to be read only while
+ * drawing; 1 outside one, as in a note or a picture being shared.
+ */
+internal val LocalZoom = staticCompositionLocalOf<() -> Float> { { 1f } }
 
 /** A spinner in the middle of a [Box], while a picture is read or laid out. */
 @Composable

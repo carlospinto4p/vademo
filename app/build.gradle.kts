@@ -16,8 +16,8 @@ android {
         applicationId = "com.cpinto.vademo"
         minSdk = 26
         targetSdk = 36
-        versionCode = 86
-        versionName = "0.29.4"
+        versionCode = 88
+        versionName = "0.29.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

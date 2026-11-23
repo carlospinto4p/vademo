@@ -115,4 +115,13 @@ class ViewportTest {
         assertFalse(Viewport.flings(100f, 50f))
         assertFalse(Viewport.flings(0f, 0f))
     }
+
+    @Test
+    fun `a line keeps at least its on-screen width however far the drawing is shrunk`() {
+        // At full size or larger the drawing's own width stands.
+        assertEquals(3f, Viewport.lineWidth(3f, 2f, 1f), 1e-6f)
+        assertEquals(3f, Viewport.lineWidth(3f, 2f, 2.5f), 1e-6f)
+        // Shown at a third, a 2 px line must be drawn 6 px wide to stay 2 px.
+        assertEquals(6f, Viewport.lineWidth(3f, 2f, 1f / 3), 1e-4f)
+    }
 }

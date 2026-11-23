@@ -169,7 +169,7 @@ Agents working on a knowledge base can draw diagrams with tyfold's graph
 tool; each one is a file in the knowledge base's `.tyfold-graphs/` folder
 and syncs like a note. The Diagrams tab of a knowledge base shows its main
 diagram, or lists them all when it has none. A diagram opens with drag and pinch-zoom, and tapping a box
-that stands for a note opens that note. A diagram too big to read whole
+that stands for a note opens that note; tapping any other shows all of its text. A diagram too big to read whole
 opens at a readable size where it starts (its top left, or its top when
 drawn top to bottom); Show all, double tap and Zoom to read work as on
 the map. A note shows a diagram in place

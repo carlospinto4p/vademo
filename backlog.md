@@ -45,7 +45,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   each other when arrows are close. Use `labelMedium`, outline the pill,
   and slide a label along its arrow when it would cover a box or another
   label. MED, effort M.
-- [ ] Text cut short with no way to read the rest: group titles one line
+- [x] Text cut short with no way to read the rest: group titles one line
   (`diagram/DiagramDrawing.kt:307`), box headlines and ref lines one line,
   box names three, notes four, map titles two
   (`graph/GraphScreen.kt:122`). Let group titles wrap to two lines, and
@@ -65,13 +65,16 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   (`diagram/DiagramScreen.kt`), which can draw glyphs at 1× and stretch
   them. Look at 2× and 3× on the phone; if blurry, record only while
   exporting. MED, effort S.
-- [ ] Lines thin out with the zoom: arrows and map links are 1.5 dp
+- [x] Lines thin out with the zoom: arrows and map links are 1.5 dp
   before scaling, so about 0.5 dp at the starting scale. Keep them at
   least 1 dp on screen whatever the zoom. LOW, effort S.
 - [ ] Map boxes say little: one size for every note, a 2 dp folder border
   as the only colour, links without direction. Size hubs larger, fill a
   coloured header band per folder, and on tap highlight the box's links
-  and neighbours before opening it. MED, effort M.
+  and neighbours before opening it. MED, effort M. Partly done in v0.26.0:
+  the index, hubs and folded topics are large boxes with a 3 dp border;
+  the coloured header band and the highlight on tap are still open (a tap
+  now opens a folded topic, so a highlight would need a second gesture).
 
 #### Gestures and loading
 
