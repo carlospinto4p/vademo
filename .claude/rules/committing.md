@@ -70,26 +70,30 @@ uncommitted edits into its unrelated commit.
 7. **Commit** with a message in the format below, **always including
    `uv.lock`** when it changed.
 8. **Push** with `git push`.
-9. **Merge into `main`** once the task is finished (a backlog item
-   done, or whatever the prompt asked for), per "Merge Finished Work
-   Into Main" below.
+9. **Merge into `main`** at the end of every prompt, per
+   "Merge Into `main` After Every Prompt" below.
 
-## Merge Finished Work Into Main
+## Merge Into `main` After Every Prompt
 
-Work happens on a branch, never on `main`, but finished work does not
-stay there: a new session starts from `main`, so anything left on a
-branch (versions, backlog entries) is invisible to it, and the phone's
-`debug-latest` APK is built from `main` only.
+Work happens on a branch, never on `main`, but it does not stay there:
+**every prompt that changes the repository ends with its branch merged
+into `main`** (owner, 23rd November 2026). This holds in every session,
+local, on the web or in Claude Code on the phone, and in every one of
+the owner's repositories. The reason: a new session starts from `main`,
+so anything left on a branch (versions, backlog entries) is invisible to
+it, and the phone's `debug-latest` APK is built from `main` only.
 
-- **When**: after every finished task, not after each commit. A task
-  half done stays on the branch until it is finished.
+- **When**: at the end of every prompt that committed something, even
+  when the larger task it belongs to is not finished. Commit what is
+  done in a working state, push, then merge. Not after each commit
+  within a prompt: once, at its end.
 - **Only on green CI**: wait for "Build APK" to pass on the branch's
   head commit. A red run is fixed and pushed first; never merge red.
 - **How**: open a pull request from the branch into `main` (or reuse
   the one already open for it) and merge it straight away with a merge
-  commit, without asking again: this rule is the standing permission.
-  No squash and no rebase, so the branch's commits stay as they are and
-  the next task continues on the same branch.
+  commit, without asking: this rule is the standing permission. No
+  squash and no rebase, so the branch's commits stay as they are and
+  the next prompt continues on the same branch.
 - **After merging**, check that `main` now holds the head commit, and
   tell the user it was merged. If GitHub refuses the merge (a conflict,
   a protection rule), say so and why instead of working around it.
