@@ -1,6 +1,16 @@
 ## Changelog - vademo
 
 
+### v0.29.7 - 23rd November 2026
+
+- Updated `.claude/rules/committing.md`: "Merge Into `main` After Every
+  Prompt": every prompt that changes the repository ends with its branch
+  merged into `main` through a merge-commit pull request, in every session
+  (local, web or the phone) and in all of the owner's repositories, replacing
+  "Merge Finished Work Into Main", which merged only once a task was done.
+  The post-change workflow step now says the same.
+
+
 ### v0.29.6 - 23rd November 2026
 
 - Fixed diagram text cut short with no way to read the rest. Tapping a
