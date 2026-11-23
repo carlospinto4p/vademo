@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +49,7 @@ import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.ui.BackForward
 import com.cpinto.vademo.ui.graph.Legend
 import com.cpinto.vademo.ui.graph.Loading
+import com.cpinto.vademo.ui.graph.LocalZoom
 import com.cpinto.vademo.ui.graph.PanZoom
 import com.cpinto.vademo.ui.graph.StartAt
 
@@ -144,7 +146,14 @@ fun DiagramScreen(
                     // Opens where the flow starts, when it is too big to read whole.
                     val start = if (diagram.direction == Diagram.Direction.TB) StartAt.Top else StartAt.TopLeft
                     PanZoom(places.width.dp, places.height.dp, start = start, contentModifier = recording) {
-                        DiagramContent(diagram, places, colours, state.notes, actions)
+                        // The picture shared is drawn at its own size, so its lines are too.
+                        if (exporting) {
+                            CompositionLocalProvider(LocalZoom provides { 1f }) {
+                                DiagramContent(diagram, places, colours, state.notes, actions)
+                            }
+                        } else {
+                            DiagramContent(diagram, places, colours, state.notes, actions)
+                        }
                     }
                     if (diagram.legend.isNotEmpty()) {
                         Legend(

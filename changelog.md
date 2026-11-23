@@ -1,6 +1,17 @@
 ## Changelog - vademo
 
 
+### v0.29.5 - 23rd November 2026
+
+- Fixed lines on the map of notes and diagram arrows breaking up when
+  zoomed out: drawn 1.5 dp wide before scaling, they came out near half a
+  pixel on a whole map. They now stay at least 1 dp on screen whatever the
+  zoom; a picture shared as an image keeps its own widths.
+- Added `Viewport.lineWidth`, and `LocalZoom`, which `PanZoom` provides
+  for drawing code to read.
+- Tests: `ViewportTest`, `lineWidth`.
+
+
 ### v0.29.4 - 23rd November 2026
 
 - A drag on the map of notes or a diagram that is let go while still

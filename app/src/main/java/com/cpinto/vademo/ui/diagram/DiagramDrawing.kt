@@ -52,6 +52,8 @@ import com.cpinto.vademo.kb.EdgeRoute
 import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Position
 import com.cpinto.vademo.kb.Ref
+import com.cpinto.vademo.ui.graph.LocalZoom
+import com.cpinto.vademo.ui.graph.Viewport
 import com.cpinto.vademo.ui.theme.Palette
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -356,8 +358,10 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
             DrawnEdge(edge, detour?.start ?: EdgeRoute.exit(a, b), detour?.end ?: EdgeRoute.exit(b, a), detour)
         }
     }
+    val zoom = LocalZoom.current
     Canvas(Modifier.fillMaxSize()) {
         val arrow = 10.dp.toPx()
+        val width = Viewport.lineWidth(1.5.dp.toPx(), 1.dp.toPx(), zoom())
         val dashes = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx()))
         fun px(p: Position) = Offset(p.x.toFloat() * density, p.y.toFloat() * density)
         for (line in drawn) {
@@ -381,7 +385,7 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
                 path,
                 colour,
                 style = Stroke(
-                    width = 1.5.dp.toPx(),
+                    width = width,
                     pathEffect = if (line.edge.style == DiagramEdge.Style.DASHED) dashes else null,
                 ),
             )

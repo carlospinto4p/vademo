@@ -65,7 +65,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   (`diagram/DiagramScreen.kt`), which can draw glyphs at 1× and stretch
   them. Look at 2× and 3× on the phone; if blurry, record only while
   exporting. MED, effort S.
-- [ ] Lines thin out with the zoom: arrows and map links are 1.5 dp
+- [x] Lines thin out with the zoom: arrows and map links are 1.5 dp
   before scaling, so about 0.5 dp at the starting scale. Keep them at
   least 1 dp on screen whatever the zoom. LOW, effort S.
 - [ ] Map boxes say little: one size for every note, a 2 dp folder border
