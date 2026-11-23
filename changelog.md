@@ -1,7 +1,7 @@
 ## Changelog - vademo
 
 
-### v0.29.1 - 23rd November 2026
+### v0.29.7 - 23rd November 2026
 
 - Updated `.claude/rules/committing.md`: "Merge Into `main` After Every
   Prompt": every prompt that changes the repository ends with its branch
@@ -9,6 +9,88 @@
   (local, web or the phone) and in all of the owner's repositories, replacing
   "Merge Finished Work Into Main", which merged only once a task was done.
   The post-change workflow step now says the same.
+
+
+### v0.29.6 - 23rd November 2026
+
+- Fixed diagram text cut short with no way to read the rest. Tapping a
+  box or group that is not a note, which did nothing, now opens a sheet
+  with its whole name, what its legend calls it, its status, its notes and
+  what it refers to, and Edit when it can be edited. A group title wraps
+  to two lines when the group has no note under it, which fits the room
+  the layout leaves above its boxes.
+- Added `DiagramDialog.Details` and `DetailsSheet`; `DiagramViewModel`
+  tells with `tapOpens` whether a tap opens a box or is part of drawing an
+  arrow or selecting.
+- Tests: `DiagramEditTest.tapABoxThatIsNotANoteToReadAllOfIt`.
+
+
+### v0.29.5 - 23rd November 2026
+
+- Fixed lines on the map of notes and diagram arrows breaking up when
+  zoomed out: drawn 1.5 dp wide before scaling, they came out near half a
+  pixel on a whole map. They now stay at least 1 dp on screen whatever the
+  zoom; a picture shared as an image keeps its own widths.
+- Added `Viewport.lineWidth`, and `LocalZoom`, which `PanZoom` provides
+  for drawing code to read.
+- Tests: `ViewportTest`, `lineWidth`.
+
+
+### v0.29.4 - 23rd November 2026
+
+- A drag on the map of notes or a diagram that is let go while still
+  moving now coasts on and slows to a stop, instead of stopping dead; a
+  touch stops it. Double tap to zoom was already there.
+- `PanZoom` follows each one-finger drag with a `VelocityTracker`, beside
+  the pinch and tap gestures, and coasts with `animateDecay`; a pinch
+  never flings. Added `Viewport.flings`.
+- Tests: `ViewportTest`, `flings`.
+
+
+### v0.29.3 - 23rd November 2026
+
+- Motion and feedback, from the 2026-11-22 UX review:
+  - Home's Sync icon becomes a progress ring while any knowledge base
+    syncs (`HomeState.syncing`), and a row's status lines grow and shrink
+    with `animateContentSize` instead of jumping.
+  - Home's rows and a folder's rows slide with `animateItem()` when one
+    comes, goes or moves.
+  - An empty folder says "This folder is empty." (`BrowseState.loaded`
+    tells it apart from one still being read).
+  - Saving a note shows "Saved" on it: `EditScreen`'s new `onSaved` sets
+    a flag in the note's saved state, which `NoteScreen` shows once.
+  - A link to a missing note buzzes (`HapticFeedbackType.Reject`) as well
+    as showing its snackbar, and a missing note has an "Open its folder"
+    button.
+  - A long version on the conflict screen fades out at the bottom while
+    there is more of it below.
+- Updated `.claude/rules/ux-areas-android.md`: the fixed items became one
+  "keep it" bullet.
+
+
+### v0.29.2 - 23rd November 2026
+
+- Fixed colours that faded into what they sit on, on the light theme:
+  legend stripes in yellow, cyan and green (2.3:1 against their box), the
+  "changed" status border (2.1:1), and most of the map's folder colours
+  (down to 1.4:1). Each colour is now darkened on a light theme, or
+  lightened on a dark one, until it reaches 3:1 against everything behind
+  it.
+- Added `ui/theme/Palette.kt`: those colours as ARGB, apart from Compose,
+  checked against the Material tones the theme uses whatever the
+  wallpaper. `DiagramColours` and the map's `folderColours` take theirs
+  from it.
+- Tests: `PaletteTest`, 6 tests: text 4.5:1 on every tint, stripes,
+  status borders and folder colours 3:1, every 5° of hue, light and dark.
+
+
+### v0.29.1 - 23rd November 2026
+
+- The map of notes, a diagram and the list of diagrams show a spinner
+  while they are read and laid out, instead of a blank screen. Now that a
+  picture is a knowledge base's first screen, that blank was the first
+  thing seen.
+- Added `Loading` in `ui/graph/PanZoom.kt`.
 
 
 ### v0.29.0 - 23rd November 2026

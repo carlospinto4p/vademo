@@ -52,6 +52,9 @@ import com.cpinto.vademo.kb.EdgeRoute
 import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Position
 import com.cpinto.vademo.kb.Ref
+import com.cpinto.vademo.ui.graph.LocalZoom
+import com.cpinto.vademo.ui.graph.Viewport
+import com.cpinto.vademo.ui.theme.Palette
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
@@ -90,7 +93,7 @@ private fun boxStyles(): BoxStyles {
  * colours are never the only sign. An entry with the box's own name is left
  * out, as a group named after its category would otherwise say it twice.
  */
-private fun headline(node: DiagramNode, diagram: Diagram): String =
+internal fun headline(node: DiagramNode, diagram: Diagram): String =
     listOfNotNull(
         node.tag,
         node.status?.name?.lowercase(),
@@ -132,15 +135,18 @@ internal fun rememberPlaces(diagram: Diagram, moves: Map<String, Position> = emp
 }
 
 /**
- * Status and legend colours, readable on the light and the dark theme. A data
- * class, so a box whose colours did not change can skip recomposing.
+ * Status and legend colours, readable on the light and the dark theme: each
+ * comes from [Palette], which checks its contrast. A data class, so a box
+ * whose colours did not change can skip recomposing.
  */
 internal data class DiagramColours(val dark: Boolean, val error: Color, val outline: Color) {
-    fun stripe(hue: Float) = Color.hsl(hue, 0.55f, if (dark) 0.6f else 0.45f)
-    fun tint(hue: Float) = Color.hsl(hue, if (dark) 0.3f else 0.6f, if (dark) 0.2f else 0.94f)
+    fun stripe(hue: Float) = Color(Palette.stripe(hue, dark))
+    fun tint(hue: Float) = Color(Palette.tint(hue, dark))
+    private val added = Color(Palette.status(135f, 0.6f, if (dark) 0.55f else 0.35f, dark, Diagram.LEGEND_HUES))
+    private val changed = Color(Palette.status(40f, 0.9f, if (dark) 0.6f else 0.45f, dark, Diagram.LEGEND_HUES))
     fun status(status: DiagramNode.Status?): Color? = when (status) {
-        DiagramNode.Status.ADDED -> Color.hsl(135f, 0.6f, if (dark) 0.55f else 0.35f)
-        DiagramNode.Status.CHANGED -> Color.hsl(40f, 0.9f, if (dark) 0.6f else 0.45f)
+        DiagramNode.Status.ADDED -> added
+        DiagramNode.Status.CHANGED -> changed
         DiagramNode.Status.REMOVED -> error
         DiagramNode.Status.UNREACHABLE -> outline
         null -> null
@@ -301,14 +307,15 @@ private fun GroupBox(
         }
         Column(Modifier.padding(horizontal = DiagramLayout.PAD_SIDE.dp, vertical = 6.dp)) {
             val title = listOfNotNull(group.text, headline(group, diagram).ifEmpty { null }).joinToString(" · ")
+            val second = group.notes?.takeIf { it.isNotBlank() } ?: group.ref?.let(::refText)
             Text(
                 title,
                 style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
+                // The layout leaves a group 48 dp above its boxes: room for two lines of title, or one and a note.
+                maxLines = if (second == null) 2 else 1,
                 overflow = TextOverflow.Ellipsis,
                 textDecoration = if (group.status == DiagramNode.Status.REMOVED) TextDecoration.LineThrough else null,
             )
-            val second = group.notes?.takeIf { it.isNotBlank() } ?: group.ref?.let(::refText)
             second?.let {
                 Text(
                     it,
@@ -352,8 +359,10 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
             DrawnEdge(edge, detour?.start ?: EdgeRoute.exit(a, b), detour?.end ?: EdgeRoute.exit(b, a), detour)
         }
     }
+    val zoom = LocalZoom.current
     Canvas(Modifier.fillMaxSize()) {
         val arrow = 10.dp.toPx()
+        val width = Viewport.lineWidth(1.5.dp.toPx(), 1.dp.toPx(), zoom())
         val dashes = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx()))
         fun px(p: Position) = Offset(p.x.toFloat() * density, p.y.toFloat() * density)
         for (line in drawn) {
@@ -377,7 +386,7 @@ private fun Edges(diagram: Diagram, places: DiagramPlaces, onEdge: ((String) -> 
                 path,
                 colour,
                 style = Stroke(
-                    width = 1.5.dp.toPx(),
+                    width = width,
                     pathEffect = if (line.edge.style == DiagramEdge.Style.DASHED) dashes else null,
                 ),
             )

@@ -45,13 +45,13 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   each other when arrows are close. Use `labelMedium`, outline the pill,
   and slide a label along its arrow when it would cover a box or another
   label. MED, effort M.
-- [ ] Text cut short with no way to read the rest: group titles one line
+- [x] Text cut short with no way to read the rest: group titles one line
   (`diagram/DiagramDrawing.kt:307`), box headlines and ref lines one line,
   box names three, notes four, map titles two
   (`graph/GraphScreen.kt:122`). Let group titles wrap to two lines, and
   make a tap on a box that is not a note open a bottom sheet with its
   whole name, notes and ref (today the tap does nothing). MED, effort M.
-- [ ] Check text contrast on coloured boxes with a unit test:
+- [x] Check text contrast on coloured boxes with a unit test:
   `DiagramColours` (`diagram/DiagramDrawing.kt`) tints boxes and draws the
   headline in `onSurfaceVariant` on them, and with Material You's dynamic
   colours that pair is not checked anywhere. Test 4.5:1 for text on every
@@ -65,21 +65,24 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
   (`diagram/DiagramScreen.kt`), which can draw glyphs at 1× and stretch
   them. Look at 2× and 3× on the phone; if blurry, record only while
   exporting. MED, effort S.
-- [ ] Lines thin out with the zoom: arrows and map links are 1.5 dp
+- [x] Lines thin out with the zoom: arrows and map links are 1.5 dp
   before scaling, so about 0.5 dp at the starting scale. Keep them at
   least 1 dp on screen whatever the zoom. LOW, effort S.
 - [ ] Map boxes say little: one size for every note, a 2 dp folder border
   as the only colour, links without direction. Size hubs larger, fill a
   coloured header band per folder, and on tap highlight the box's links
-  and neighbours before opening it. MED, effort M.
+  and neighbours before opening it. MED, effort M. Partly done in v0.26.0:
+  the index, hubs and folded topics are large boxes with a 3 dp border;
+  the coloured header band and the highlight on tap are still open (a tap
+  now opens a folded topic, so a highlight would need a second gesture).
 
 #### Gestures and loading
 
-- [ ] Pan and zoom have no fling and no double tap
+- [x] Pan and zoom have no fling and no double tap
   (`graph/PanZoom.kt:73`): a flick stops dead, and zooming needs two
   hands on a large phone. Add fling with decay and double-tap zoom.
   MED, effort S.
-- [ ] Blank screen while loading: the map lays out every note before
+- [x] Blank screen while loading: the map lays out every note before
   drawing (`graph/GraphScreen.kt:65`), and the diagram and Diagrams list
   show nothing until read (`diagram/DiagramScreen.kt:103`,
   `diagram/DiagramListScreen.kt:75`). Once a picture is the first screen
@@ -88,23 +91,23 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 
 #### Motion and feedback (from `ux-areas-android.md`, still open)
 
-- [ ] No spinner while syncing: Home's Sync icon only greys out
+- [x] No spinner while syncing: Home's Sync icon only greys out
   (`home/HomeScreen.kt`). Swap it for a small progress ring while any
   sync runs, and `animateContentSize` the status lines. LOW, effort S.
 - [ ] Screen changes have no direction: slide in for drill-down (Home →
   knowledge base → note), and a shared-element transition from a map or
   diagram box to its note. LOW, effort M.
-- [ ] Lists jump: no `animateItem()` in Home's and Browse's
+- [x] Lists jump: no `animateItem()` in Home's and Browse's
   `LazyColumn`s. LOW, effort S.
-- [ ] An empty folder shows a blank screen (`browse/BrowseScreen.kt`,
+- [x] An empty folder shows a blank screen (`browse/BrowseScreen.kt`,
   `FolderList`): say "This folder is empty". LOW, effort S.
-- [ ] Saving an edit closes the editor with no word that it worked
+- [x] Saving an edit closes the editor with no word that it worked
   (`edit/EditScreen.kt:55`): a "Saved" snackbar on the note. LOW,
   effort S.
-- [ ] Tapping a link to a missing note gives only a snackbar: add a
+- [x] Tapping a link to a missing note gives only a snackbar: add a
   haptic tick, and on the missing-note screen a button back to the
   folder. LOW, effort S.
-- [ ] Long conflict sides give no sign there is more below
+- [x] Long conflict sides give no sign there is more below
   (`conflict/ConflictScreen.kt`, 240 dp cap): fade the bottom edge. LOW,
   effort S.
 

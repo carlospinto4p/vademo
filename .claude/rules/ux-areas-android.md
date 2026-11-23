@@ -15,46 +15,22 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
 
 ## What to Look For
 
-- **Sync status changes with no transition**: `HomeScreen`'s
-  `KbRow` supporting text swaps abruptly between "Not downloaded
-  yet", "Synced", "N edits not synced", and the conflict prompt —
-  no `Crossfade`/`animateContentSize` softens the change. Same for
-  the "Public knowledge bases sync without setup…" card, which
-  appears/disappears instantly when `state.canWrite` flips.
-- **No in-progress indicator during sync**: the app-bar sync
-  `IconButton` only disables (`enabled = state.canSync`) while
-  syncing — nothing shows *that* a sync is running except each
-  row's "Syncing…" text. A small spinner on the icon itself would
-  make a slow sync visible before the first row updates.
-- **List reordering with no animation**: `LazyColumn`s in
-  `HomeScreen` and `BrowseScreen` have no `animateItemPlacement` —
-  a note appearing after a pull, or a knowledge base moving as its
-  status changes, swaps in place instead of animating.
-- **Screen-to-screen navigation has no transition**: Home → Browse
-  → Note → Edit are plain pushes with the default abrupt swap; no
-  shared-element or slide transition marks the drill-down/back
-  relationship between a folder and its contents.
-- **Broken-link feedback is text-only**: tapping a `[[wiki-link]]`
-  to a missing note shows a Snackbar ("No note named X") with no
-  haptic — easy to miss on a fast tap-and-move-on. A missing-note
-  screen itself (`state.missing`) is a bare sentence with no retry
-  or "back to folder" affordance beyond the app bar.
-- **No empty state for an empty folder**: `BrowseScreen` renders
-  nothing when a folder has no notes and no subfolders — no "This
-  folder is empty" message, so it looks like a loading failure
-  rather than a genuinely empty folder.
-- **Edit has no save confirmation**: `EditScreen`'s check-mark
-  save pops back to the previous screen with no snackbar or
-  transient confirmation that the write succeeded. A failed write
-  or a conflict found at save time keeps the editor open with an
-  error line, so only success lacks feedback. The discard-changes
-  `AlertDialog` on back is a good pattern already in place; saving
-  deserves the same closure.
-- **Conflict screen's long diffs have no scroll affordance**: each
-  side of a conflicting file is a monospace block capped at
-  `heightIn(max = 240.dp)` inside `verticalScroll` — a long file
-  gives no visual cue (fade, scrollbar) that there's more below the
-  fold.
+- **Feedback already in place, keep it**: Home's Sync icon turns
+  into a progress ring while any sync runs and each row's status
+  lines grow and shrink with `animateContentSize`; Home's and
+  Browse's rows use `animateItem()`; an empty folder says so; a save
+  shows "Saved" on the note; a link to a missing note buzzes
+  (`HapticFeedbackType.Reject`) as well as showing a snackbar, and a
+  missing note offers "Open its folder"; a long conflict version fades
+  out at the bottom while more is below. New screens and lists should
+  match.
+- **The "Public knowledge bases sync without setup…" card** on Home
+  still appears and disappears instantly when `state.canWrite`
+  flips.
+- **Screen-to-screen navigation has no transition**: Home → a
+  knowledge base → Note → Edit are plain pushes with the default
+  abrupt swap; no shared-element or slide transition marks the
+  drill-down/back relationship between a folder and its contents.
 - **Settings gives no save feedback**: `SettingsScreen`'s Save
   button returns to Home with no confirmation. A malformed or
   duplicate address is refused as it is added, and "On your GitHub"

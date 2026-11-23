@@ -26,6 +26,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +48,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.ui.BackForward
 import com.cpinto.vademo.ui.graph.Legend
+import com.cpinto.vademo.ui.graph.Loading
+import com.cpinto.vademo.ui.graph.LocalZoom
 import com.cpinto.vademo.ui.graph.PanZoom
 import com.cpinto.vademo.ui.graph.StartAt
 
@@ -109,7 +112,7 @@ fun DiagramScreen(
             val diagram = state.diagram
             when {
                 state.error != null -> Text("This diagram could not be read: ${state.error}", Modifier.padding(16.dp))
-                diagram == null -> Unit
+                diagram == null -> Loading()
                 diagram.nodes.isEmpty() -> Text(
                     if (state.editable) "This diagram has no boxes yet. Add one from the menu at the top right."
                     else "This diagram has no boxes yet.",
@@ -121,7 +124,15 @@ fun DiagramScreen(
                     // Kept across drag frames, so the boxes that did not move skip recomposing.
                     val actions = remember(viewModel, onOpenNote, state.editable, exporting, state.connectingFrom, state.selected) {
                         DiagramActions(
-                            onTap = { id -> viewModel.tap(id)?.let { onOpenNote(viewModel.kbName, it) } },
+                            onTap = { id ->
+                                val opens = viewModel.tapOpens
+                                val note = viewModel.tap(id)
+                                when {
+                                    note != null -> onOpenNote(viewModel.kbName, note)
+                                    // A box that is not a note shows all its text, which the drawing may cut short.
+                                    opens -> open = DiagramDialog.Details(id)
+                                }
+                            },
                             onLongPress = if (state.editable) { id -> open = DiagramDialog.Actions(id) } else null,
                             onEdge = if (state.editable && !exporting) { id -> open = DiagramDialog.Edge(id) } else null,
                             highlighted = state.connectingFrom,
@@ -143,7 +154,14 @@ fun DiagramScreen(
                     // Opens where the flow starts, when it is too big to read whole.
                     val start = if (diagram.direction == Diagram.Direction.TB) StartAt.Top else StartAt.TopLeft
                     PanZoom(places.width.dp, places.height.dp, start = start, contentModifier = recording) {
-                        DiagramContent(diagram, places, colours, state.notes, actions)
+                        // The picture shared is drawn at its own size, so its lines are too.
+                        if (exporting) {
+                            CompositionLocalProvider(LocalZoom provides { 1f }) {
+                                DiagramContent(diagram, places, colours, state.notes, actions)
+                            }
+                        } else {
+                            DiagramContent(diagram, places, colours, state.notes, actions)
+                        }
                     }
                     if (diagram.legend.isNotEmpty()) {
                         Legend(

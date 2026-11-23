@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.kb.DiagramDocument
 import com.cpinto.vademo.kb.DiagramEdge
@@ -50,6 +51,8 @@ import com.cpinto.vademo.kb.Ref
 /** Which editor is open over the diagram. */
 sealed interface DiagramDialog {
     data class Actions(val id: String) : DiagramDialog
+    /** All of a box's text, which the drawing cuts short, from a tap on a box that is not a note. */
+    data class Details(val id: String) : DiagramDialog
     data class EditNode(val id: String) : DiagramDialog
     data class Status(val ids: Set<String>) : DiagramDialog
     data class Category(val ids: Set<String>) : DiagramDialog
@@ -68,6 +71,7 @@ internal fun DiagramDialogs(dialog: DiagramDialog, viewModel: DiagramViewModel, 
     val doc = viewModel.document ?: return CloseNow(close)
     when (dialog) {
         is DiagramDialog.Actions -> ActionsSheet(dialog.id, doc, viewModel, onChange)
+        is DiagramDialog.Details -> DetailsSheet(dialog.id, doc, viewModel, onChange)
         is DiagramDialog.EditNode -> {
             val fields = doc.fieldsOf(dialog.id) ?: return CloseNow(close)
             NodeEditor(fields, isGroup = doc.diagram.nodes.any { it.id == dialog.id && it.isGroup }, onDismiss = close) {
@@ -129,6 +133,33 @@ internal fun DiagramDialogs(dialog: DiagramDialog, viewModel: DiagramViewModel, 
 @Composable
 private fun CloseNow(close: () -> Unit) {
     LaunchedEffect(Unit) { close() }
+}
+
+/** A box's or group's whole text: its name, what its legend entry calls it, its notes and what it refers to. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DetailsSheet(id: String, doc: DiagramDocument, viewModel: DiagramViewModel, onChange: (DiagramDialog?) -> Unit) {
+    val node = doc.diagram.nodes.firstOrNull { it.id == id } ?: return CloseNow { onChange(null) }
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    ModalBottomSheet(onDismissRequest = { onChange(null) }) {
+        Column(
+            Modifier.padding(horizontal = 24.dp).padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            headline(node, doc.diagram).takeIf { it.isNotEmpty() }?.let {
+                Text(it, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Text(node.text.ifBlank { "(no name)" }, style = MaterialTheme.typography.titleLarge)
+            node.status?.let { Text("Status: ${it.name.lowercase()}", style = MaterialTheme.typography.bodyMedium) }
+            node.notes?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
+            node.ref?.let {
+                Text("Refers to ${refText(it)}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (state.editable) {
+                TextButton(onClick = { onChange(DiagramDialog.EditNode(id)) }) { Text("Edit") }
+            }
+        }
+    }
 }
 
 /** What can be done to one box or group, from a long press on it. */

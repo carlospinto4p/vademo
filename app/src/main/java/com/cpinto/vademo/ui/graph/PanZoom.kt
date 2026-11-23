@@ -1,13 +1,18 @@
 package com.cpinto.vademo.ui.graph
 
+import androidx.compose.animation.core.FloatExponentialDecaySpec
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,12 +24,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitScreen
 import androidx.compose.material.icons.filled.ZoomIn
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,13 +40,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
@@ -67,7 +77,8 @@ private const val GLIDE_MS = 300
  * [READABLE_SCALE] showing the part [start] names. Double tap zooms to full
  * size round the tap and back out to the whole drawing, and a button
  * switches between the whole drawing and a readable size. Used by the map
- * of notes and by diagrams.
+ * of notes and by diagrams. A drag let go while still moving coasts on and
+ * slows to a stop; a touch stops it.
  */
 @Composable
 internal fun PanZoom(
@@ -123,6 +134,36 @@ internal fun PanZoom(
                 detectTapGestures(onDoubleTap = { at -> glideTo(Viewport.doubleTap(framing, currentAll, at.x, at.y)) })
             }
             .pointerInput(Unit) {
+                // Watches each one-finger drag without taking it from the gestures below, and
+                // lets the drawing coast on when the finger lifts while still moving.
+                awaitEachGesture {
+                    val down = awaitFirstDown(requireUnconsumed = false)
+                    glide?.cancel()
+                    val tracker = VelocityTracker()
+                    tracker.addPosition(down.uptimeMillis, down.position)
+                    var pinched = false
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.changes.count { it.pressed } > 1) pinched = true
+                        val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                        if (!change.pressed) break
+                        tracker.addPosition(change.uptimeMillis, change.position)
+                    }
+                    if (pinched) return@awaitEachGesture
+                    val velocity = tracker.calculateVelocity()
+                    if (Viewport.flings(velocity.x, velocity.y)) {
+                        glide = scope.launch {
+                            launch {
+                                animateDecay(framing.x, velocity.x, FloatExponentialDecaySpec()) { x, _ -> framing = framing.copy(x = x) }
+                            }
+                            launch {
+                                animateDecay(framing.y, velocity.y, FloatExponentialDecaySpec()) { y, _ -> framing = framing.copy(y = y) }
+                            }
+                        }
+                    }
+                }
+            }
+            .pointerInput(Unit) {
                 detectTransformGestures { centroid, pan, zoom, _ ->
                     glide?.cancel()
                     val zoomed = Viewport.zoomAt(framing, (framing.scale * zoom).coerceIn(MIN_SCALE, MAX_SCALE), centroid.x, centroid.y)
@@ -142,7 +183,10 @@ internal fun PanZoom(
                     scaleY = framing.scale
                 }
                 .then(contentModifier),
-        ) { content() }
+        ) {
+            // Read only while drawing, so lines keep their width on screen without recomposing at each frame.
+            CompositionLocalProvider(LocalZoom provides { framing.scale }) { content() }
+        }
         // Only when the whole drawing is too small to read; otherwise it opens whole and there is nothing to switch.
         if (screen != IntSize.Zero && opening.scale > all.scale) {
             SmallFloatingActionButton(
@@ -187,4 +231,16 @@ fun Legend(entries: List<Pair<String, Color>>, modifier: Modifier, startOpen: Bo
             }
         }
     }
+}
+
+/**
+ * The scale the drawing inside [PanZoom] is shown at, to be read only while
+ * drawing; 1 outside one, as in a note or a picture being shared.
+ */
+internal val LocalZoom = staticCompositionLocalOf<() -> Float> { { 1f } }
+
+/** A spinner in the middle of a [Box], while a picture is read or laid out. */
+@Composable
+internal fun BoxScope.Loading() {
+    CircularProgressIndicator(Modifier.align(Alignment.Center))
 }

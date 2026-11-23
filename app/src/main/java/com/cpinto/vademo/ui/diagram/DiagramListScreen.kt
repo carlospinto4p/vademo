@@ -2,6 +2,7 @@ package com.cpinto.vademo.ui.diagram
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -36,6 +37,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.ui.BackForward
+import com.cpinto.vademo.ui.graph.Loading
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,7 +85,11 @@ fun DiagramListScreen(
             )
         },
     ) { padding ->
-        val list = diagrams ?: return@Scaffold
+        val list = diagrams
+        if (list == null) {
+            Box(Modifier.fillMaxSize().padding(padding)) { Loading() }
+            return@Scaffold
+        }
         if (list.isEmpty()) {
             Text(
                 "No diagrams yet. They are the files in this knowledge base's .tyfold-graphs folder: " +

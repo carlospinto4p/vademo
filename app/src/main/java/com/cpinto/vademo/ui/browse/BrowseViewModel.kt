@@ -27,6 +27,8 @@ data class BrowseState(
     val index: NoteIndex? = null,
     /** Names of the knowledge base's note templates, offered by New note inside a folder. */
     val templates: List<String> = emptyList(),
+    /** Whether the folder has been read, so an empty one can say so rather than look like it is still loading. */
+    val loaded: Boolean = false,
 )
 
 @HiltViewModel
@@ -54,6 +56,7 @@ class BrowseViewModel @Inject constructor(
                 folders = kb.foldersIn(dir),
                 notes = notes,
                 templates = if (path.isEmpty()) emptyList() else kb.templates().map { it.nameWithoutExtension },
+                loaded = true,
             )
             // Read after the folders are on screen, since it may open every note.
             if (isTop) _state.value = _state.value.copy(index = repository.index(kbName))

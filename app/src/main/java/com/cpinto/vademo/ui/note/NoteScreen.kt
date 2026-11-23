@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -37,7 +38,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.Density
@@ -63,6 +66,10 @@ fun NoteScreen(
     onShowOnMap: (kb: String, path: String) -> Unit,
     onOpenDiagram: (kb: String, name: String) -> Unit,
     onSearch: (kb: String, filters: String) -> Unit,
+    onOpenFolder: (kb: String, path: String) -> Unit,
+    /** True once when coming back from the editor after a save, until [onSavedShown]. */
+    saved: Boolean = false,
+    onSavedShown: () -> Unit = {},
     viewModel: NoteViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -70,6 +77,13 @@ fun NoteScreen(
     LaunchedEffect(Unit) { viewModel.load() }
 
     val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(saved) {
+        if (saved) {
+            snackbar.showSnackbar("Saved")
+            onSavedShown()
+        }
+    }
+    val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val external = LocalUriHandler.current
     val linkHandler = remember(external) {
@@ -86,8 +100,13 @@ fun NoteScreen(
                     }
                     else -> scope.launch {
                         val found = viewModel.resolve(target)
-                        if (found != null) onOpenNote(viewModel.kbName, found)
-                        else snackbar.showSnackbar("No note named $target")
+                        if (found != null) {
+                            onOpenNote(viewModel.kbName, found)
+                        } else {
+                            // Felt as well as shown, since a snackbar is easy to miss on a quick tap.
+                            haptics.performHapticFeedback(HapticFeedbackType.Reject)
+                            snackbar.showSnackbar("No note named $target")
+                        }
                     }
                 }
             }
@@ -132,6 +151,9 @@ fun NoteScreen(
             ) {
                 if (state.missing) {
                     Text("This note no longer exists. It may have been renamed or deleted on GitHub.")
+                    Button(onClick = { onOpenFolder(viewModel.kbName, viewModel.path.substringBeforeLast('/', "")) }) {
+                        Text("Open its folder")
+                    }
                     return@Column
                 }
                 state.hub?.let { hub ->
