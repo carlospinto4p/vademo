@@ -31,8 +31,11 @@ data class HomeState(
     val canWrite: Boolean = true,
     val tokenUnreadable: Boolean = false,
 ) {
+    val syncing: Boolean
+        get() = syncStates.values.any { it == SyncState.Running }
+
     val canSync: Boolean
-        get() = hasRepos && syncStates.values.none { it == SyncState.Running }
+        get() = hasRepos && !syncing
 }
 
 /**

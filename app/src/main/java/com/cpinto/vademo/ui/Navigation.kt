@@ -4,6 +4,8 @@ import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -66,6 +68,9 @@ private val kbArgs = listOf(
     navArgument("kb") { type = NavType.StringType },
     navArgument("path") { type = NavType.StringType; defaultValue = "" },
 )
+
+/** The key, in the note's saved state, of the editor's word that a save just happened. */
+private const val SAVED = "saved"
 
 /** Screens Forward may reopen. The editor, settings and conflicts are steps, not places. */
 private val PLACES = setOf(Routes.KB, Routes.BROWSE, Routes.NOTE, Routes.MAP_AROUND, Routes.DIAGRAMS, Routes.DIAGRAM, Routes.SEARCH)
@@ -171,8 +176,13 @@ private fun AppNavHost(nav: NavHostController) {
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
             )
         }
-        composable(Routes.NOTE, arguments = kbArgs) {
+        composable(Routes.NOTE, arguments = kbArgs) { entry ->
+            // Set by the editor on its way back after a save, so the note can say it was saved.
+            val saved by entry.savedStateHandle.getStateFlow(SAVED, false).collectAsState()
             NoteScreen(
+                saved = saved,
+                onSavedShown = { entry.savedStateHandle[SAVED] = false },
+                onOpenFolder = { kb, path -> nav.navigate(Routes.browse(kb, path)) },
                 onBack = { nav.popBackStack() },
                 onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
                 onEdit = { kb, path -> nav.navigate(Routes.edit(kb, path)) },
@@ -188,7 +198,13 @@ private fun AppNavHost(nav: NavHostController) {
                 navArgument("title") { type = NavType.StringType; defaultValue = "" },
             ),
         ) {
-            EditScreen(onDone = { nav.popBackStack() })
+            EditScreen(
+                onDone = { nav.popBackStack() },
+                onSaved = {
+                    nav.previousBackStackEntry?.savedStateHandle?.set(SAVED, true)
+                    nav.popBackStack()
+                },
+            )
         }
         composable(Routes.CONFLICT, arguments = listOf(navArgument("kb") { type = NavType.StringType })) {
             ConflictScreen(onDone = { nav.popBackStack() })

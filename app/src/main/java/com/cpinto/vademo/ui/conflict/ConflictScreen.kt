@@ -1,10 +1,13 @@
 package com.cpinto.vademo.ui.conflict
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +32,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -106,11 +112,25 @@ private fun FileChoice(
 @Composable
 private fun Version(label: String, text: String?) {
     Text(label, style = MaterialTheme.typography.labelLarge)
-    Text(
-        text ?: "(deleted)",
-        style = TextStyle(fontFamily = FontFamily.Monospace),
-        modifier = Modifier.heightIn(max = 240.dp).verticalScroll(rememberScrollState()),
-    )
+    val scroll = rememberScrollState()
+    val card = CardDefaults.cardColors().containerColor
+    Box(Modifier.fillMaxWidth()) {
+        Text(
+            text ?: "(deleted)",
+            style = TextStyle(fontFamily = FontFamily.Monospace),
+            modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp).verticalScroll(scroll),
+        )
+        // A long version fades out at the bottom while there is more of it below.
+        if (scroll.canScrollForward) {
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, card))),
+            )
+        }
+    }
 }
 
 @Composable

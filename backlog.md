@@ -88,23 +88,23 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 
 #### Motion and feedback (from `ux-areas-android.md`, still open)
 
-- [ ] No spinner while syncing: Home's Sync icon only greys out
+- [x] No spinner while syncing: Home's Sync icon only greys out
   (`home/HomeScreen.kt`). Swap it for a small progress ring while any
   sync runs, and `animateContentSize` the status lines. LOW, effort S.
 - [ ] Screen changes have no direction: slide in for drill-down (Home →
   knowledge base → note), and a shared-element transition from a map or
   diagram box to its note. LOW, effort M.
-- [ ] Lists jump: no `animateItem()` in Home's and Browse's
+- [x] Lists jump: no `animateItem()` in Home's and Browse's
   `LazyColumn`s. LOW, effort S.
-- [ ] An empty folder shows a blank screen (`browse/BrowseScreen.kt`,
+- [x] An empty folder shows a blank screen (`browse/BrowseScreen.kt`,
   `FolderList`): say "This folder is empty". LOW, effort S.
-- [ ] Saving an edit closes the editor with no word that it worked
+- [x] Saving an edit closes the editor with no word that it worked
   (`edit/EditScreen.kt:55`): a "Saved" snackbar on the note. LOW,
   effort S.
-- [ ] Tapping a link to a missing note gives only a snackbar: add a
+- [x] Tapping a link to a missing note gives only a snackbar: add a
   haptic tick, and on the missing-note screen a button back to the
   folder. LOW, effort S.
-- [ ] Long conflict sides give no sign there is more below
+- [x] Long conflict sides give no sign there is more below
   (`conflict/ConflictScreen.kt`, 240 dp cap): fade the bottom edge. LOW,
   effort S.
 

@@ -1,6 +1,27 @@
 ## Changelog - vademo
 
 
+### v0.29.3 - 23rd November 2026
+
+- Motion and feedback, from the 2026-11-22 UX review:
+  - Home's Sync icon becomes a progress ring while any knowledge base
+    syncs (`HomeState.syncing`), and a row's status lines grow and shrink
+    with `animateContentSize` instead of jumping.
+  - Home's rows and a folder's rows slide with `animateItem()` when one
+    comes, goes or moves.
+  - An empty folder says "This folder is empty." (`BrowseState.loaded`
+    tells it apart from one still being read).
+  - Saving a note shows "Saved" on it: `EditScreen`'s new `onSaved` sets
+    a flag in the note's saved state, which `NoteScreen` shows once.
+  - A link to a missing note buzzes (`HapticFeedbackType.Reject`) as well
+    as showing its snackbar, and a missing note has an "Open its folder"
+    button.
+  - A long version on the conflict screen fades out at the bottom while
+    there is more of it below.
+- Updated `.claude/rules/ux-areas-android.md`: the fixed items became one
+  "keep it" bullet.
+
+
 ### v0.29.2 - 23rd November 2026
 
 - Fixed colours that faded into what they sit on, on the light theme:
