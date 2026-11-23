@@ -1,6 +1,21 @@
 ## Changelog - vademo
 
 
+### v0.29.12 - 23rd November 2026
+
+- Added "Settings saved" on Home after Save in Settings, which returned to
+  Home with no word that it worked. `SettingsScreen` takes `onSaved` apart
+  from `onDone` (Back), and Settings tells Home through its saved state, as
+  the editor tells the note.
+- Fixed Home's setup card ("Public knowledge bases sync without setup…")
+  appearing and disappearing at once when a token is saved or removed: it
+  is a keyed list item with `animateItem()`, like the rows below it.
+- Updated `.claude/rules/ux-areas-android.md`: both are now listed as
+  feedback in place.
+- Tests: `ReadAndEditTest.settingsAddsAndRemovesKnowledgeBasesAsRows`
+  waits for "Settings saved".
+
+
 ### v0.29.11 - 23rd November 2026
 
 - Added a direction to screen changes. Going in (Home to a knowledge base,

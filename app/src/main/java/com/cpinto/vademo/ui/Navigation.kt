@@ -78,7 +78,7 @@ private val kbArgs = listOf(
     navArgument("path") { type = NavType.StringType; defaultValue = "" },
 )
 
-/** The key, in the note's saved state, of the editor's word that a save just happened. */
+/** The key, in the saved state of the screen below, of a word that a save just happened: the editor's to the note, Settings' to Home. */
 private const val SAVED = "saved"
 
 /** Screens Forward may reopen. The editor, settings and conflicts are steps, not places. */
@@ -135,8 +135,12 @@ private fun AppNavHost(nav: NavHostController) {
         popEnterTransition = { enter(forward = false) },
         popExitTransition = { exit(forward = false) },
     ) {
-        composable(Routes.HOME) {
+        composable(Routes.HOME) { entry ->
+            // Set by Settings on its way back after a save, so Home can say it was saved.
+            val settingsSaved by entry.savedStateHandle.getStateFlow(SAVED, false).collectAsState()
             HomeScreen(
+                settingsSaved = settingsSaved,
+                onSettingsSavedShown = { entry.savedStateHandle[SAVED] = false },
                 onOpenKb = { nav.navigate(Routes.kb(it.kb, it.tab.name, it.diagram)) },
                 onResolve = { nav.navigate(Routes.conflict(it)) },
                 onSettings = { nav.navigate(Routes.SETTINGS) },
@@ -153,7 +157,13 @@ private fun AppNavHost(nav: NavHostController) {
             )
         }
         composable(Routes.SETTINGS) {
-            SettingsScreen(onDone = { nav.popBackStack() })
+            SettingsScreen(
+                onDone = { nav.popBackStack() },
+                onSaved = {
+                    nav.previousBackStackEntry?.savedStateHandle?.set(SAVED, true)
+                    nav.popBackStack()
+                },
+            )
         }
         composable(
             Routes.KB,
