@@ -64,6 +64,16 @@ object WikiLinks {
         return found
     }
 
+    /** Diagram names that [text] embeds with `![[name]]`, in order; code is skipped like in [toMarkdown]. */
+    fun embeds(text: String): List<String> {
+        val found = mutableListOf<String>()
+        mapProse(text) { prose ->
+            EMBED.findAll(prose).forEach { found += it.groupValues[1].trim() }
+            prose
+        }
+        return found
+    }
+
     /** Applies [transform] to every part of [text] outside fenced and inline code. */
     private fun mapProse(text: String, transform: (String) -> String): String {
         val out = StringBuilder()

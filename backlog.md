@@ -9,7 +9,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 
 #### Opening on a picture, finding notes without search
 
-- [ ] Open a knowledge base on a picture, not on lists. Today Home's row
+- [x] Open a knowledge base on a picture, not on lists. Today Home's row
   opens `BrowseScreen` on its Folders tab (`browse/BrowseScreen.kt:81`);
   the map and the diagrams are two unlabelled icons in its app bar. Make
   the knowledge base's first screen its main diagram when it has one

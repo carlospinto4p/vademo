@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -56,6 +57,10 @@ private val EXPORT_MARGIN = 48.dp
 fun DiagramScreen(
     onBack: () -> Unit,
     onOpenNote: (kb: String, path: String) -> Unit,
+    /** On a knowledge base's Diagrams tab: a Search item in the menu. */
+    onSearch: (() -> Unit)? = null,
+    /** On a knowledge base's Diagrams tab: an action that lists every diagram. */
+    onAllDiagrams: (() -> Unit)? = null,
     viewModel: DiagramViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -95,6 +100,8 @@ fun DiagramScreen(
                 onOpen = { open = it },
                 onShareImage = { exporting = true },
                 onShareMermaid = { state.diagram?.let { DiagramShare.mermaid(context, it) } },
+                onSearch = onSearch,
+                onAllDiagrams = onAllDiagrams,
             )
         },
     ) { padding ->
@@ -178,12 +185,19 @@ private fun MainBar(
     onOpen: (DiagramDialog) -> Unit,
     onShareImage: () -> Unit,
     onShareMermaid: () -> Unit,
+    onSearch: (() -> Unit)?,
+    onAllDiagrams: (() -> Unit)?,
 ) {
     var menu by remember { mutableStateOf(false) }
     TopAppBar(
         title = { Text(state.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = { BackForward(onBack) },
         actions = {
+            if (onAllDiagrams != null) {
+                IconButton(onClick = onAllDiagrams) {
+                    Icon(Icons.AutoMirrored.Outlined.List, contentDescription = "All diagrams")
+                }
+            }
             val diagram = state.diagram ?: return@TopAppBar
             val editable = state.editable
             if (editable) {
@@ -220,6 +234,7 @@ private fun MainBar(
                     item("Share as image", diagram.nodes.isNotEmpty(), onShareImage)
                     item("Share as Mermaid", true, onShareMermaid)
                     if (editable) item("Delete diagram", true) { onOpen(DiagramDialog.DeleteDiagram) }
+                    if (onSearch != null) item("Search notes", true, onSearch)
                 }
             }
         },

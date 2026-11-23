@@ -7,13 +7,21 @@ import com.cpinto.vademo.data.KbInfo
 import com.cpinto.vademo.data.KbRepository
 import com.cpinto.vademo.data.SettingsRepository
 import com.cpinto.vademo.data.SyncState
+import com.cpinto.vademo.kb.diagramsIn
+import com.cpinto.vademo.kb.mainDiagram
+import com.cpinto.vademo.ui.kb.KbStart
+import com.cpinto.vademo.ui.kb.KbTab
+import com.cpinto.vademo.ui.kb.firstTab
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
 import javax.inject.Inject
 
 data class HomeState(
@@ -56,7 +64,7 @@ class HomeViewModel @Inject constructor(
      * with [onOpen], the one the app was left in; any later time the home
      * screen shows, it was come back to, so the next launch starts here.
      */
-    fun start(onOpen: (String) -> Unit) {
+    fun start(onOpen: (KbStart) -> Unit) {
         viewModelScope.launch {
             val list = repository.list()
             kbs.value = list
@@ -66,8 +74,27 @@ class HomeViewModel @Inject constructor(
                 return@launch
             }
             savedState[LAUNCHED] = true
-            kbToReopen(settings.lastKb(), list)?.let(onOpen)
+            kbToReopen(settings.lastKb(), list)?.let { onOpen(startOf(it)) }
         }
+    }
+
+    /** Opens the knowledge base [name] with [onOpen], once it is known which tab and diagram it starts on. */
+    fun open(name: String, onOpen: (KbStart) -> Unit) {
+        viewModelScope.launch { onOpen(startOf(name)) }
+    }
+
+    /** Reads the index and the diagrams, so a knowledge base with a main diagram opens on it. */
+    private suspend fun startOf(name: String): KbStart {
+        val diagram = withContext(Dispatchers.IO) {
+            val kb = repository.knowledgeBase(name)
+            val index = try {
+                kb.index?.readText()
+            } catch (e: IOException) {
+                null
+            }
+            mainDiagram(index, diagramsIn(kb.root).filter { it.diagram != null }.map { it.name })
+        }
+        return KbStart(name, firstTab(KbTab.parse(settings.kbTab(name)), diagram), diagram)
     }
 
     fun syncAll() {

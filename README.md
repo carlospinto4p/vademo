@@ -59,12 +59,21 @@ one of those needs the app uninstalled once first.
    you, or in your organisations). Tap **Add** on one to sync it. A
    fine-grained token lists only the repositories it was given.
 
-## Folders, Recent, Types, Tags and Health
+## Opening a knowledge base
+
+A knowledge base opens on a picture of it: its main diagram, the one its
+`index.md` shows with `![[name]]` (or its only diagram), and the map of
+notes when it has none. The bar at the bottom switches between Map,
+Diagrams and Notes, and the knowledge base opens on the one it was left on
+next time. On a main diagram, the list button at the top lists all the
+knowledge base's diagrams.
 
 The app reopens the knowledge base it was left in; go back to the list of
 knowledge bases before leaving to start there next time.
 
-A knowledge base opens on its folders. The tabs above them list the same
+## Folders, Recent, Types, Tags and Health
+
+The Notes tab shows the knowledge base's folders. The tabs above them list the same
 notes other ways: Recent by the date each was last updated, Types grouped
 by type (all sources in one row), and Tags with every tag and how many
 notes carry it. Tap a tag, or the sources row, to see those notes in
@@ -131,7 +140,7 @@ the phone and are not synced.
 
 ## Map of notes
 
-The map button at the top of a knowledge base shows every note as a box
+The Map tab of a knowledge base shows every note as a box
 and every `[[link]]` between two notes as a line, with notes of the same
 folder in the same colour. Drag to move around, pinch to zoom, and tap a
 box to open that note. A big map opens at a size its titles can be read
@@ -143,8 +152,8 @@ time, so nothing is saved and it always matches what is on the phone.
 
 Agents working on a knowledge base can draw diagrams with tyfold's graph
 tool; each one is a file in the knowledge base's `.tyfold-graphs/` folder
-and syncs like a note. The Diagrams button at the top of a knowledge base
-lists them. A diagram opens with drag and pinch-zoom, and tapping a box
+and syncs like a note. The Diagrams tab of a knowledge base shows its main
+diagram, or lists them all when it has none. A diagram opens with drag and pinch-zoom, and tapping a box
 that stands for a note opens that note. A diagram too big to read whole
 opens at a readable size where it starts (its top left, or its top when
 drawn top to bottom); Show all, double tap and Zoom to read work as on

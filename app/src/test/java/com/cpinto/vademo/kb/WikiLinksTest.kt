@@ -118,4 +118,10 @@ class WikiLinksTest {
             assertFalse(WikiLinks.opensOutside(uri), uri)
         }
     }
+
+    @Test
+    fun `embeds lists the diagrams shown, in order, wherever they are and not in code`() {
+        val text = "Intro ![[flow]] inline.\n\n![[overview|The big picture]]\n\n`![[quoted]]`\n```\n![[fenced]]\n```\nSee [[a-note]]."
+        assertEquals(listOf("flow", "overview"), WikiLinks.embeds(text))
+    }
 }
