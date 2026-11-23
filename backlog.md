@@ -75,7 +75,7 @@ effort. Paths are under `app/src/main/java/com/cpinto/vademo/ui/`.
 
 #### Gestures and loading
 
-- [ ] Pan and zoom have no fling and no double tap
+- [x] Pan and zoom have no fling and no double tap
   (`graph/PanZoom.kt:73`): a flick stops dead, and zooming needs two
   hands on a large phone. Add fling with decay and double-tap zoom.
   MED, effort S.
