@@ -102,6 +102,34 @@ class GrowFromBoxTest {
     }
 
     @Test
+    fun `a note shrinks into its box going Back`() {
+        val openings = NoteOpenings()
+        openings.from(box)
+        openings.bind("note", isNote = true)
+        assertEquals(box, openings.drawn("note", leaving = false))
+        openings.back("note")
+        assertEquals(box, openings.drawn("note", leaving = true))
+    }
+
+    @Test
+    fun `a note opening a link slides away instead of shrinking`() {
+        val openings = NoteOpenings()
+        openings.from(box)
+        openings.bind("note", isNote = true)
+        assertNull(openings.drawn("note", leaving = true))
+        // A Back gesture let go of, then a link opened: it slides.
+        openings.back("note")
+        openings.onward("note")
+        assertNull(openings.drawn("note", leaving = true))
+        // Coming back to it from the link, it slides in rather than growing again...
+        openings.returnTo("note")
+        assertNull(openings.drawn("note", leaving = false))
+        // ...but it still grew from its box, so Back still shrinks it into it.
+        openings.back("note")
+        assertEquals(box, openings.drawn("note", leaving = true))
+    }
+
+    @Test
     fun `a note gone for good forgets its box`() {
         val openings = NoteOpenings()
         openings.from(box)

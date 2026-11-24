@@ -104,6 +104,12 @@ class NoteOpenings {
     private var pending: Bounds? = null
     private val byEntry = HashMap<String, Bounds>()
 
+    /** Screens going Back to the one they grew over, which shrink into their box rather than slide. */
+    private val goingBack = HashSet<String>()
+
+    /** Screens come back to from one above them, which grew once and slide in now. */
+    private val returnedTo = HashSet<String>()
+
     /** The box the note about to open is tapped from. */
     fun from(bounds: Bounds?) {
         pending = bounds
@@ -124,9 +130,35 @@ class NoteOpenings {
     /** The box the screen [entryId] grew from, or null. */
     fun of(entryId: String): Bounds? = byEntry[entryId]
 
+    /** The screen [entryId] is going Back, to the screen it grew over. */
+    fun back(entryId: String) {
+        goingBack += entryId
+    }
+
+    /** The screen [entryId] is leaving forwards, to another screen over it: it slides as any other. */
+    fun onward(entryId: String) {
+        goingBack -= entryId
+    }
+
+    /** Back has come to the screen [entryId] from one above it: it slides in, having grown once already. */
+    fun returnTo(entryId: String) {
+        returnedTo += entryId
+    }
+
+    /**
+     * The box the screen [entryId] is drawn growing from or shrinking into:
+     * coming in the first time, the one it grew from; [leaving], the same
+     * only when it goes Back, since opening a link from it slides it away as
+     * usual, and coming back to it from that link slides it in.
+     */
+    fun drawn(entryId: String, leaving: Boolean): Bounds? =
+        byEntry[entryId]?.takeIf { if (leaving) entryId in goingBack else entryId !in returnedTo }
+
     /** Once [entryId] is gone for good. */
     fun forget(entryId: String) {
         byEntry.remove(entryId)
+        goingBack -= entryId
+        returnedTo -= entryId
     }
 }
 
@@ -136,14 +168,15 @@ val LocalNoteOpenings = staticCompositionLocalOf { NoteOpenings() }
 /**
  * Grows this screen out of the box [box] gives as it comes in, and shrinks it
  * back into that box on its way out, following the screen's own enter and
- * exit; does nothing while [box] gives null. Read only while drawing, so a
- * box bound once the screen is already composed still counts. [duration] is
- * the navigation host's.
+ * exit; does nothing while [box] gives null. [box] is told whether the screen
+ * is leaving, and read only while drawing, so a box bound once the screen is
+ * already composed still counts. [duration] is the navigation host's.
  */
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-internal fun Modifier.growFrom(box: () -> Bounds?, scope: AnimatedVisibilityScope, duration: Int): Modifier {
-    val progress by scope.transition.animateFloat(
+internal fun Modifier.growFrom(box: (leaving: Boolean) -> Bounds?, scope: AnimatedVisibilityScope, duration: Int): Modifier {
+    val transition = scope.transition
+    val progress by transition.animateFloat(
         transitionSpec = { tween(duration, easing = FastOutSlowInEasing) },
         label = "grow from box",
     ) { if (it == EnterExitState.Visible) 1f else 0f }
@@ -157,7 +190,7 @@ internal fun Modifier.growFrom(box: () -> Bounds?, scope: AnimatedVisibilityScop
         .graphicsLayer {
             val t = progress
             if (t >= 1f) return@graphicsLayer
-            val from = box() ?: return@graphicsLayer
+            val from = box(transition.targetState == EnterExitState.PostExit) ?: return@graphicsLayer
             val whole = screen[0] ?: return@graphicsLayer
             if (whole.width <= 0f || whole.height <= 0f) return@graphicsLayer
             val frame = GrowFrom.frame(from, whole, t, corner)

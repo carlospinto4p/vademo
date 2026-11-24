@@ -143,13 +143,22 @@ private fun AppNavHost(nav: NavHostController, openings: NoteOpenings) {
     // A note opened from a box on the map or a diagram grows out of that box and, on Back, shrinks into it.
     fun AnimatedContentTransitionScope<NavBackStackEntry>.grows() =
         openings.bind(targetState.id, targetState.destination.route == Routes.NOTE) != null
-    fun AnimatedContentTransitionScope<NavBackStackEntry>.shrinks() = openings.of(initialState.id) != null
+    fun AnimatedContentTransitionScope<NavBackStackEntry>.shrinks() =
+        (openings.of(initialState.id) != null).also { if (it) openings.back(initialState.id) }
     NavHost(
         navController = nav,
         startDestination = Routes.HOME,
         enterTransition = { if (grows()) EnterTransition.None else enter(forward = true) },
-        exitTransition = { if (grows()) HOLD else exit(forward = true) },
-        popEnterTransition = { if (shrinks()) EnterTransition.None else enter(forward = false) },
+        exitTransition = {
+            // A note that grew from a box and now opens a link slides away like any other screen.
+            openings.onward(initialState.id)
+            if (grows()) HOLD else exit(forward = true)
+        },
+        popEnterTransition = {
+            // A note that grew from a box, come back to from a link, slides in rather than growing again.
+            openings.returnTo(targetState.id)
+            if (shrinks()) EnterTransition.None else enter(forward = false)
+        },
         popExitTransition = { if (shrinks()) HOLD else exit(forward = false) },
     ) {
         composable(Routes.HOME) { entry ->
@@ -247,7 +256,7 @@ private fun AppNavHost(nav: NavHostController, openings: NoteOpenings) {
                     LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_DESTROY) openings.forget(entry.id) },
                 )
             }
-            Box(Modifier.growFrom({ openings.of(entry.id) }, this, MOTION)) {
+            Box(Modifier.growFrom({ leaving -> openings.drawn(entry.id, leaving) }, this, MOTION)) {
                 NoteScreen(
                     saved = saved,
                     onSavedShown = { entry.savedStateHandle[SAVED] = false },
