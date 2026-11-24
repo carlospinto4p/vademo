@@ -1,6 +1,32 @@
 ## Changelog - vademo
 
 
+### v0.29.14 - 24th November 2026
+
+- Added a container transform from a box to its note: a note opened from
+  a box on the map or a diagram grows out of that box, from the place and
+  size it is drawn at, to fill the screen, and on Back shrinks into it
+  again. Other screen changes still slide, among them a link opened from
+  such a note and Back to it from that link.
+  - `ui/GrowFromBox.kt`: `BoxBounds` follows where each box is drawn,
+    read at the tap so it includes the pan and zoom; `NoteOpenings` ties
+    the box tapped to the note screen that opens next, and tells going
+    Back from opening a link; `Modifier.growFrom`
+    draws the note shrunk to the box's width and cut to its height,
+    following the screen's own enter and exit, so predictive Back plays
+    it too; `GrowFrom` is its geometry.
+  - `AppNavHost` (`ui/Navigation.kt`) holds the map or diagram in place
+    under a note that grows or shrinks, instead of sliding either.
+  - `GraphScreen` and `DiagramScreen` record the tapped box's bounds.
+- Updated `PanZoom`: the framing is saved with the screen, so Back from a
+  note finds the map or diagram as it was left, and the note shrinks into
+  its box where it still is. It opens afresh on a screen of another size.
+- Added `GrowFromBoxTest`: 13 tests of the geometry and of which note a
+  tapped box goes with.
+- Updated `.claude/rules/ux-areas-android.md`: the box-to-note transition
+  is in place.
+
+
 ### v0.29.13 - 23rd November 2026
 
 - Added "Settings saved" on Home after Save in Settings, which returned to

@@ -47,11 +47,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.cpinto.vademo.kb.Diagram
 import com.cpinto.vademo.ui.BackForward
+import com.cpinto.vademo.ui.LocalNoteOpenings
 import com.cpinto.vademo.ui.graph.Legend
 import com.cpinto.vademo.ui.graph.Loading
 import com.cpinto.vademo.ui.graph.LocalZoom
 import com.cpinto.vademo.ui.graph.PanZoom
 import com.cpinto.vademo.ui.graph.StartAt
+import com.cpinto.vademo.ui.rememberBoxBounds
 
 private val EXPORT_MARGIN = 48.dp
 
@@ -123,6 +125,8 @@ fun DiagramScreen(
                 else -> {
                     val places = rememberPlaces(diagram, state.moves)
                     val colours = diagramColours()
+                    val openings = LocalNoteOpenings.current
+                    val bounds = rememberBoxBounds()
                     // Kept across drag frames, so the boxes that did not move skip recomposing.
                     val actions = remember(viewModel, onOpenNote, state.editable, exporting, state.connectingFrom, state.selected) {
                         DiagramActions(
@@ -130,7 +134,11 @@ fun DiagramScreen(
                                 val opens = viewModel.tapOpens
                                 val note = viewModel.tap(id)
                                 when {
-                                    note != null -> onOpenNote(viewModel.kbName, note)
+                                    note != null -> {
+                                        // The note grows out of the box tapped.
+                                        openings.from(bounds.of(id))
+                                        onOpenNote(viewModel.kbName, note)
+                                    }
                                     // A box that is not a note shows all its text, which the drawing may cut short.
                                     opens -> open = DiagramDialog.Details(id)
                                 }
@@ -141,6 +149,7 @@ fun DiagramScreen(
                             selected = state.selected,
                             onDrag = viewModel::drag,
                             onDragEnd = viewModel::dragEnded,
+                            bounds = bounds,
                         )
                     }
                     // Recorded with tyfold's export margin round it (`PADDING` in its graphExport.ts);

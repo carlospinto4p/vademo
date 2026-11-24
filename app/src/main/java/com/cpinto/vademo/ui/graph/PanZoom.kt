@@ -38,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -71,6 +72,15 @@ internal const val READABLE_SCALE = 0.85f
 
 private const val GLIDE_MS = 300
 
+private val FramingSaver = listSaver<Framing, Float>(
+    save = { listOf(it.scale, it.x, it.y) },
+    restore = { Framing(it[0], it[1], it[2]) },
+)
+private val SizeSaver = listSaver<IntSize, Int>(
+    save = { listOf(it.width, it.height) },
+    restore = { IntSize(it[0], it[1]) },
+)
+
 /**
  * Lets [content], [contentWidth] by [contentHeight], be dragged and pinched.
  * It opens whole when that leaves it readable, and otherwise at
@@ -94,7 +104,11 @@ internal fun PanZoom(
     val density = LocalDensity.current
     val width = with(density) { contentWidth.toPx() }
     val height = with(density) { contentHeight.toPx() }
-    var framing by remember { mutableStateOf(Framing(1f, 0f, 0f)) }
+    // Saved, so coming back to a drawing (Back from a note opened on it) finds it as it was left, and a
+    // note that grew out of one of its boxes shrinks back into that box where it still is.
+    var framing by rememberSaveable(stateSaver = FramingSaver) { mutableStateOf(Framing(1f, 0f, 0f)) }
+    /** The size of the screen [framing] is for; zero until first laid out. Opened afresh on any other. */
+    var framedFor by rememberSaveable(stateSaver = SizeSaver) { mutableStateOf(IntSize.Zero) }
     var screen by remember { mutableStateOf(IntSize.Zero) }
     val scope = rememberCoroutineScope()
     var glide by remember { mutableStateOf<Job?>(null) }
@@ -125,10 +139,14 @@ internal fun PanZoom(
             .onSizeChanged { size ->
                 if (screen != IntSize.Zero || size.width == 0) {
                     screen = size
+                    if (size.width != 0) framedFor = size
                     return@onSizeChanged
                 }
                 screen = size
-                framing = openingOn(size.width.toFloat(), size.height.toFloat())
+                if (framedFor != size) {
+                    framing = openingOn(size.width.toFloat(), size.height.toFloat())
+                    framedFor = size
+                }
             }
             .pointerInput(Unit) {
                 detectTapGestures(onDoubleTap = { at -> glideTo(Viewport.doubleTap(framing, currentAll, at.x, at.y)) })
