@@ -55,6 +55,7 @@ import com.cpinto.vademo.kb.Placed
 import com.cpinto.vademo.kb.Position
 import com.cpinto.vademo.kb.Ref
 import com.cpinto.vademo.kb.Size
+import com.cpinto.vademo.ui.BoxBounds
 import com.cpinto.vademo.ui.graph.LocalZoom
 import com.cpinto.vademo.ui.graph.Viewport
 import com.cpinto.vademo.ui.theme.Palette
@@ -80,6 +81,8 @@ internal class DiagramActions(
     /** A drag of a selected box, in dp; null when nothing can be dragged. */
     val onDrag: ((dx: Float, dy: Float) -> Unit)? = null,
     val onDragEnd: () -> Unit = {},
+    /** Where each box is drawn, for a note opened from one to grow out of it. */
+    val bounds: BoxBounds? = null,
 )
 
 /** The text styles of a box, shared by the measuring and the drawing so the two agree. */
@@ -201,7 +204,7 @@ private fun Modifier.at(place: Placed) =
 private fun Modifier.touch(id: String, actions: DiagramActions?): Modifier {
     if (actions == null) return this
     val drag = actions.onDrag?.takeIf { id in actions.selected }
-    return combinedClickable(
+    return (actions.bounds?.let { then(it.track(id)) } ?: this).combinedClickable(
         onLongClickLabel = if (actions.onLongPress != null) "Edit" else null,
         onLongClick = actions.onLongPress?.let { { it(id) } },
         onClick = { actions.onTap(id) },

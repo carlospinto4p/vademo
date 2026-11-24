@@ -26,12 +26,14 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
   knowledge bases sync without setup…") fades in and out with
   `animateItem()`; and Settings' Save shows "Settings saved" on Home. New
   screens and lists should match.
-- **Screen changes slide, but nothing carries over**: every screen
+- **Screen changes slide, except a note from a box**: every screen
   change uses Material's shared-axis X motion (`AppNavHost` in
   `ui/Navigation.kt`; in from the right going in, the other way on
   Back), so keep new destinations on it rather than giving one its own.
-  No shared-element transition yet takes a map or diagram box into its
-  note.
+  The one exception: a note opened from a box on the map or a diagram
+  grows out of that box and shrinks back into it on Back
+  (`ui/GrowFromBox.kt`). A new picture whose boxes open notes should
+  record their bounds with `BoxBounds` the same way.
 - **A token that cannot push is found late**: a malformed or duplicate
   address is refused as it is added, and "On your GitHub" says when
   GitHub refuses the token, but a token that lists fine yet cannot push

@@ -46,6 +46,9 @@ import com.cpinto.vademo.kb.FoldedMap
 import com.cpinto.vademo.kb.Layout
 import com.cpinto.vademo.kb.MapBox
 import com.cpinto.vademo.ui.BackForward
+import com.cpinto.vademo.ui.BoxBounds
+import com.cpinto.vademo.ui.LocalNoteOpenings
+import com.cpinto.vademo.ui.rememberBoxBounds
 import com.cpinto.vademo.ui.theme.Palette
 
 /** One layout unit (the preferred gap between linked notes) on screen. */
@@ -71,6 +74,8 @@ fun GraphScreen(
     viewModel: GraphViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val openings = LocalNoteOpenings.current
+    val bounds = rememberBoxBounds()
     val window = LocalWindowInfo.current.containerSize
     LaunchedEffect(Unit) { viewModel.load(window.height.toDouble() / window.width.coerceAtLeast(1)) }
 
@@ -136,7 +141,14 @@ fun GraphScreen(
                                     layout,
                                     colours,
                                     marked = marked,
-                                    onTap = { box -> viewModel.tap(box)?.let { onOpenNote(viewModel.kbName, it) } },
+                                    bounds = bounds,
+                                    onTap = { box ->
+                                        viewModel.tap(box)?.let {
+                                            // The note grows out of the box tapped.
+                                            openings.from(bounds.of(box))
+                                            onOpenNote(viewModel.kbName, it)
+                                        }
+                                    },
                                     onLongPress = viewModel::fold,
                                 )
                             }
@@ -163,6 +175,8 @@ private fun GraphContent(
      * last opened from the map, or the one the map is centred on; -1 for none.
      */
     marked: Int,
+    /** Where each box is drawn, for its note to grow out of. */
+    bounds: BoxBounds,
     onTap: (MapBox) -> Unit,
     onLongPress: (MapBox) -> Unit,
 ) {
@@ -199,6 +213,7 @@ private fun GraphContent(
                 modifier = Modifier
                     .offset(x = UNIT * centre.x.toFloat() - width / 2, y = UNIT * centre.y.toFloat() - height / 2)
                     .size(width, height)
+                    .then(bounds.track(box))
                     .border(if (box.large || i == marked) 3.dp else 2.dp, colour, shape)
                     .combinedClickable(
                         onClickLabel = if (box.folded) "Show its notes" else "Open",

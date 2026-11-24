@@ -1,10 +1,12 @@
 package com.cpinto.vademo.ui
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -12,10 +14,14 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -100,8 +106,9 @@ fun VademoNavHost() {
             history.onTop(entry.id, routeOf(entry), entry.destination.route in PLACES)
         }
     }
-    CompositionLocalProvider(LocalNavHistory provides history) {
-        AppNavHost(nav)
+    val openings = remember { NoteOpenings() }
+    CompositionLocalProvider(LocalNavHistory provides history, LocalNoteOpenings provides openings) {
+        AppNavHost(nav, openings)
     }
 }
 
@@ -125,15 +132,25 @@ private fun exit(forward: Boolean): ExitTransition =
     slideOutHorizontally(tween(MOTION, easing = FastOutSlowInEasing)) { if (forward) -slide(it) else slide(it) } +
         fadeOut(tween(FADE_OUT, easing = FastOutSlowInEasing))
 
+/**
+ * Keeps a screen as it is until the change is over, for the screen a note
+ * grows over or shrinks back onto: [growFrom] does the moving.
+ */
+private val HOLD: ExitTransition = fadeOut(snap(MOTION))
+
 @Composable
-private fun AppNavHost(nav: NavHostController) {
+private fun AppNavHost(nav: NavHostController, openings: NoteOpenings) {
+    // A note opened from a box on the map or a diagram grows out of that box and, on Back, shrinks into it.
+    fun AnimatedContentTransitionScope<NavBackStackEntry>.grows() =
+        openings.bind(targetState.id, targetState.destination.route == Routes.NOTE) != null
+    fun AnimatedContentTransitionScope<NavBackStackEntry>.shrinks() = openings.of(initialState.id) != null
     NavHost(
         navController = nav,
         startDestination = Routes.HOME,
-        enterTransition = { enter(forward = true) },
-        exitTransition = { exit(forward = true) },
-        popEnterTransition = { enter(forward = false) },
-        popExitTransition = { exit(forward = false) },
+        enterTransition = { if (grows()) EnterTransition.None else enter(forward = true) },
+        exitTransition = { if (grows()) HOLD else exit(forward = true) },
+        popEnterTransition = { if (shrinks()) EnterTransition.None else enter(forward = false) },
+        popExitTransition = { if (shrinks()) HOLD else exit(forward = false) },
     ) {
         composable(Routes.HOME) { entry ->
             // Set by Settings on its way back after a save, so Home can say it was saved.
@@ -225,17 +242,24 @@ private fun AppNavHost(nav: NavHostController) {
         composable(Routes.NOTE, arguments = kbArgs) { entry ->
             // Set by the editor on its way back after a save, so the note can say it was saved.
             val saved by entry.savedStateHandle.getStateFlow(SAVED, false).collectAsState()
-            NoteScreen(
-                saved = saved,
-                onSavedShown = { entry.savedStateHandle[SAVED] = false },
-                onOpenFolder = { kb, path -> nav.navigate(Routes.browse(kb, path)) },
-                onBack = { nav.popBackStack() },
-                onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
-                onEdit = { kb, path -> nav.navigate(Routes.edit(kb, path)) },
-                onShowOnMap = { kb, path -> nav.navigate(Routes.mapAround(kb, path)) },
-                onOpenDiagram = { kb, name -> nav.navigate(Routes.diagram(kb, name)) },
-                onSearch = { kb, filters -> nav.navigate(Routes.searchIn(kb, filters)) },
-            )
+            remember(entry) {
+                entry.lifecycle.addObserver(
+                    LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_DESTROY) openings.forget(entry.id) },
+                )
+            }
+            Box(Modifier.growFrom({ openings.of(entry.id) }, this, MOTION)) {
+                NoteScreen(
+                    saved = saved,
+                    onSavedShown = { entry.savedStateHandle[SAVED] = false },
+                    onOpenFolder = { kb, path -> nav.navigate(Routes.browse(kb, path)) },
+                    onBack = { nav.popBackStack() },
+                    onOpenNote = { kb, path -> nav.navigate(Routes.note(kb, path)) },
+                    onEdit = { kb, path -> nav.navigate(Routes.edit(kb, path)) },
+                    onShowOnMap = { kb, path -> nav.navigate(Routes.mapAround(kb, path)) },
+                    onOpenDiagram = { kb, name -> nav.navigate(Routes.diagram(kb, name)) },
+                    onSearch = { kb, filters -> nav.navigate(Routes.searchIn(kb, filters)) },
+                )
+            }
         }
         composable(
             Routes.EDIT,
