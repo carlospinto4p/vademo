@@ -24,7 +24,9 @@ with filters, from Home or a knowledge base), `DiagramListScreen` and
   missing note offers "Open its folder"; a long conflict version fades
   out at the bottom while more is below; Home's setup card ("Public
   knowledge bases sync without setup…") fades in and out with
-  `animateItem()`; and Settings' Save shows "Settings saved" on Home. New
+  `animateItem()`; Settings' Save shows "Settings saved" on Home; and the
+  map draws only its shape until a note is tapped, then that note's links
+  with the rest faded and an Open bar. New
   screens and lists should match.
 - **Screen changes slide, except a note from a box**: every screen
   change uses Material's shared-axis X motion (`AppNavHost` in

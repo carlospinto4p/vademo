@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
@@ -26,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -63,6 +66,8 @@ private val BAND = 6.dp
 private val BAND_LARGE = 8.dp
 /** Space kept clear around each box, so neighbours never touch. Also used by [GraphViewModel]'s layout. */
 internal val BOX_MARGIN = 12.dp
+/** How visible a box is that the selected one does not link to. */
+private const val FADED = 0.3f
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,14 +132,19 @@ fun GraphScreen(
                         val colours = folderColours(state.folders, MaterialTheme.colorScheme.surface.luminance() < 0.5f)
                         // Opened afresh each time a topic opens or folds, at a size that fits the new picture.
                         val focused = map.boxes.indexOfFirst { it.path == state.focus && state.focus != null }
-                        // The note just read, back from it, or else the note the map is round.
-                        val marked = map.boxes.indexOfFirst { !it.folded && it.path == state.lastOpened && state.lastOpened != null }
-                            .takeIf { it >= 0 } ?: focused
+                        // The note selected, which is also the one just read, back from it.
+                        val marked = map.boxes.indexOfFirst { !it.folded && !it.rest && it.path == state.selected && state.selected != null }
+                        val open = { box: MapBox, path: String ->
+                            // The note grows out of the box tapped.
+                            openings.from(bounds.of(box))
+                            onOpenNote(viewModel.kbName, path)
+                        }
                         key(map) {
                             PanZoom(
                                 contentWidth = UNIT * layout.width.toFloat(),
                                 contentHeight = UNIT * layout.height.toFloat(),
                                 focus = layout.centres.getOrNull(focused)?.let { UNIT * it.x.toFloat() to UNIT * it.y.toFloat() },
+                                onTap = viewModel::unselect,
                             ) {
                                 GraphContent(
                                     map,
@@ -142,13 +152,7 @@ fun GraphScreen(
                                     colours,
                                     marked = marked,
                                     bounds = bounds,
-                                    onTap = { box ->
-                                        viewModel.tap(box)?.let {
-                                            // The note grows out of the box tapped.
-                                            openings.from(bounds.of(box))
-                                            onOpenNote(viewModel.kbName, it)
-                                        }
-                                    },
+                                    onTap = { box -> viewModel.tap(box)?.let { open(box, it) } },
                                     onLongPress = viewModel::fold,
                                 )
                             }
@@ -157,9 +161,42 @@ fun GraphScreen(
                             map.boxes.map { it.folder }.distinct().sorted().map { it.ifEmpty { "index" } to colours.getValue(it) },
                             Modifier.align(Alignment.BottomStart).padding(12.dp),
                         )
+                        map.boxes.getOrNull(marked)?.let { box ->
+                            Selected(
+                                box,
+                                links = map.neighbours(marked).size,
+                                onOpen = { box.path?.let { open(box, it) } },
+                                onClose = viewModel::unselect,
+                                modifier = Modifier.align(Alignment.TopCenter).padding(horizontal = 16.dp, vertical = 8.dp),
+                            )
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+/** The note selected on the map, how many boxes it links to, and a button to open it. */
+@Composable
+private fun Selected(box: MapBox, links: Int, onOpen: () -> Unit, onClose: () -> Unit, modifier: Modifier) {
+    Surface(
+        modifier,
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shadowElevation = 3.dp,
+    ) {
+        Row(Modifier.padding(start = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f, fill = false)) {
+                Text(box.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    if (links == 1) "Linked to 1 box" else "Linked to $links boxes",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            TextButton(onClick = onOpen, modifier = Modifier.padding(start = 8.dp)) { Text("Open") }
+            IconButton(onClick = onClose) { Icon(Icons.Filled.Close, contentDescription = "Show every box") }
         }
     }
 }
@@ -183,6 +220,8 @@ private fun GraphContent(
     val lineColour = MaterialTheme.colorScheme.outline
     val markColour = MaterialTheme.colorScheme.primary
     val zoom = LocalZoom.current
+    // With a box marked, the ones it does not link to step back.
+    val related = if (marked >= 0) map.neighbours(marked) + marked else null
     Box(Modifier.fillMaxSize()) {
         Canvas(Modifier.fillMaxSize()) {
             val unit = UNIT.toPx()
@@ -197,8 +236,8 @@ private fun GraphContent(
                     strokeWidth = strokeWidth,
                 )
             }
-            // The marked box's links last, so they are drawn over the others.
-            val (own, others) = map.links.partition { (a, b) -> a == marked || b == marked }
+            // Only the marked box's links and those showing the shape; its own last, so they are drawn over the others.
+            val (own, others) = map.drawn(marked).partition { (a, b) -> a == marked || b == marked }
             for ((a, b) in others) line(a, b, lineColour, width)
             for ((a, b) in own) line(a, b, markColour, width * 2)
         }
@@ -213,10 +252,16 @@ private fun GraphContent(
                 modifier = Modifier
                     .offset(x = UNIT * centre.x.toFloat() - width / 2, y = UNIT * centre.y.toFloat() - height / 2)
                     .size(width, height)
+                    .alpha(if (related == null || i in related) 1f else FADED)
                     .then(bounds.track(box))
                     .border(if (box.large || i == marked) 3.dp else 2.dp, colour, shape)
                     .combinedClickable(
-                        onClickLabel = if (box.folded) "Show its notes" else "Open",
+                        onClickLabel = when {
+                            box.folded -> "Show its notes"
+                            box.rest -> "Show more notes"
+                            i == marked -> "Open"
+                            else -> "Show its links"
+                        },
                         onLongClickLabel = if (box.folder.isNotEmpty() && !box.folded) "Fold the topic" else null,
                         onLongClick = if (box.folder.isNotEmpty() && !box.folded) ({ onLongPress(box) }) else null,
                         onClick = { onTap(box) },
@@ -239,6 +284,9 @@ private fun GraphContent(
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (box.rest) {
+                            Text("Tap for more", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                         if (box.folded) {
                             Text(
                                 if (box.notes == 1) "1 note" else "${box.notes} notes",

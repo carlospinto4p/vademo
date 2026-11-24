@@ -31,8 +31,13 @@ data class GraphState(
     val sources: Boolean = false,
     /** The note a map round one note is centred on, its path; null for the whole knowledge base. */
     val focus: String? = null,
-    /** The note last opened from this map, its path: drawn marked with its links, to show where reading left off. */
-    val lastOpened: String? = null,
+    /**
+     * The note selected, its path: drawn marked with its links, the notes it does not link to faded. A tap selects a
+     * note and a second tap opens it, so it is also where reading left off. Round one note it starts as that note.
+     */
+    val selected: String? = null,
+    /** How many notes besides its hub each open folder draws, where more than [FoldedMap.LIMIT]. */
+    val limits: Map<String, Int> = emptyMap(),
 ) {
     /** The focused note's title, once read. */
     val focusTitle: String? get() = focus?.let { path -> graph?.notes?.firstOrNull { it.path == path }?.title }
@@ -46,9 +51,11 @@ data class GraphState(
 
 /**
  * The map of notes. Opened with a `focus` note, it is only that note and the
- * notes up to two links from it, every one drawn. Otherwise it starts folded, as the knowledge base's shape: the
+ * notes up to two links from it, every topic open. Otherwise it starts folded, as the knowledge base's shape: the
  * index and one box per topic, sources hidden. Tapping a folded topic opens
- * it in place, and tapping a note, or the hub of an open topic, opens it.
+ * it in place, showing its most linked notes ([FoldedMap.LIMIT]) and a box
+ * for the rest, which a tap shows more of. Tapping a note, or the hub of an
+ * open topic, selects it to show its links, and tapping it again opens it.
  */
 @HiltViewModel
 class GraphViewModel @Inject constructor(
@@ -59,7 +66,7 @@ class GraphViewModel @Inject constructor(
     val kbName: String = checkNotNull(savedState["kb"])
     private val focus: String? = savedState.get<String>("focus")?.ifEmpty { null }
 
-    private val _state = MutableStateFlow(GraphState(focus = focus))
+    private val _state = MutableStateFlow(GraphState(focus = focus, selected = focus))
     val state: StateFlow<GraphState> = _state
 
     private var aspect = 1.0
@@ -83,31 +90,47 @@ class GraphViewModel @Inject constructor(
         }
     }
 
-    /** The note to open for a tap on [box], or null when the tap opened a folded topic instead. */
+    /**
+     * The note to open for a tap on [box]: the note already selected. Otherwise null, the tap having selected a
+     * note, opened a folded topic or shown more of an open one.
+     */
     fun tap(box: MapBox): String? {
-        if (!box.folded) return box.path?.also { path -> _state.update { it.copy(lastOpened = path) } }
-        show(_state.value.open + box.folder, _state.value.sources)
+        val state = _state.value
+        when {
+            box.folded -> show(state.open + box.folder, state.sources, state.limits)
+            box.rest -> show(state.open, state.sources, state.limits + (box.folder to limitOf(box.folder) + FoldedMap.LIMIT))
+            box.path == state.selected -> return box.path
+            else -> _state.update { it.copy(selected = box.path) }
+        }
         return null
+    }
+
+    /** Selects no note, so only the links that show the knowledge base's shape are drawn. */
+    fun unselect() {
+        _state.update { it.copy(selected = null) }
     }
 
     /** Folds the topic [box] is in back into one box. */
     fun fold(box: MapBox) {
-        if (box.folder.isNotEmpty()) show(_state.value.open - box.folder, _state.value.sources)
+        val state = _state.value
+        if (box.folder.isNotEmpty()) show(state.open - box.folder, state.sources, state.limits - box.folder)
     }
 
     /** Opens every topic, or folds them all when they are all open. */
     fun toggleAll() {
         val state = _state.value
-        show(if (state.allOpen) emptySet() else state.foldable, state.sources)
+        if (state.allOpen) show(emptySet(), state.sources, emptyMap()) else show(state.foldable, state.sources, state.limits)
     }
 
     fun toggleSources() {
         val state = _state.value
-        show(state.open, !state.sources)
+        show(state.open, !state.sources, state.limits)
     }
 
-    private fun show(open: Set<String>, sources: Boolean) {
-        _state.update { it.copy(open = open, sources = sources) }
+    private fun limitOf(folder: String): Int = _state.value.limits[folder] ?: FoldedMap.LIMIT
+
+    private fun show(open: Set<String>, sources: Boolean, limits: Map<String, Int>) {
+        _state.update { it.copy(open = open, sources = sources, limits = limits) }
         placing?.cancel()
         placing = viewModelScope.launch(Dispatchers.Default) { place() }
     }
@@ -115,7 +138,7 @@ class GraphViewModel @Inject constructor(
     private fun place() {
         val state = _state.value
         val graph = state.graph ?: return
-        val map = FoldedMap.of(graph, state.open, state.sources)
+        val map = FoldedMap.of(graph, state.open, state.sources, state.limits, keep = state.focus)
         // Every box is spaced as a large one, so a topic box never overlaps its neighbours.
         val layout = GraphLayout.layout(
             count = map.boxes.size,
@@ -125,6 +148,8 @@ class GraphViewModel @Inject constructor(
             boxHeight = ((LARGE_HEIGHT + BOX_MARGIN) / UNIT).toDouble(),
             aspect = aspect,
         )
-        _state.update { if (it.open == state.open && it.sources == state.sources) it.copy(map = map, layout = layout) else it }
+        _state.update {
+            if (it.open == state.open && it.sources == state.sources && it.limits == state.limits) it.copy(map = map, layout = layout) else it
+        }
     }
 }

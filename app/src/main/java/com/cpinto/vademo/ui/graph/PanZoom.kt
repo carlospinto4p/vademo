@@ -99,6 +99,8 @@ internal fun PanZoom(
     contentModifier: Modifier = Modifier,
     /** A point of the content, in its own dp, to open centred on instead of [start]. */
     focus: Pair<Dp, Dp>? = null,
+    /** A tap on the drawing outside anything that takes taps itself. */
+    onTap: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -129,6 +131,7 @@ internal fun PanZoom(
     }
     // Read by the double tap, which is set up once and outlives the composition that made it.
     val currentAll by rememberUpdatedState(all)
+    val currentOnTap by rememberUpdatedState(onTap)
     // Derived, so a drag recomposes nothing until the answer changes: the framing itself is read only when drawing.
     val showingAll by remember { derivedStateOf { Viewport.same(framing, currentAll) } }
 
@@ -149,7 +152,10 @@ internal fun PanZoom(
                 }
             }
             .pointerInput(Unit) {
-                detectTapGestures(onDoubleTap = { at -> glideTo(Viewport.doubleTap(framing, currentAll, at.x, at.y)) })
+                detectTapGestures(
+                    onTap = { currentOnTap?.invoke() },
+                    onDoubleTap = { at -> glideTo(Viewport.doubleTap(framing, currentAll, at.x, at.y)) },
+                )
             }
             .pointerInput(Unit) {
                 // Watches each one-finger drag without taking it from the gestures below, and

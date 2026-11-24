@@ -1,6 +1,28 @@
 ## Changelog - vademo
 
 
+### v0.29.15 - 24th November 2026
+
+- Updated the map of notes to draw less at once, so an open topic of
+  sixty notes is no longer a tangle of every link between them:
+  - `FoldedMap`: an open topic draws its hub and its `LIMIT` (12) most
+    linked notes; the rest share one "N more" box (`MapBox.rest`), and
+    links to them go to it. `drawn` gives the links to draw: those of the
+    selected box and those that show the shape (between large boxes, or a
+    box and its own topic's hub). `neighbours` gives a box's linked boxes.
+    Only `index.md` and `<folder>/<folder>.md` count as hubs now, not
+    every note at the root.
+  - `GraphViewModel`: a tap on a note selects it and a second tap opens
+    it; a tap on "N more" shows 12 more of that topic. `selected` replaces
+    `lastOpened`, and a map round a note starts with it selected.
+  - `GraphScreen`: only the selected note's links and the shape's are
+    drawn, boxes it does not link to fade, and a bar at the top names it
+    with Open and a cross; a tap on an empty spot unselects (`PanZoom`
+    takes an `onTap`).
+- Added 4 `FoldedMapTest` tests: the limit, the rest box, the note kept
+  round a focus, and the links drawn.
+
+
 ### v0.29.14 - 24th November 2026
 
 - Added a container transform from a box to its note: a note opened from
