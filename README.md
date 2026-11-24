@@ -146,11 +146,20 @@ the phone and are not synced.
 The Map tab of a knowledge base starts with its shape: `index.md` and one
 large box per topic folder, saying how many notes it holds, with a line
 wherever notes of the two link with `[[...]]`. Tap a topic to open it in
-place, showing its notes; tap a note, or the topic's hub, to read it, and
-long-press any of the topic's boxes to fold it again. The Every note chip
-opens or folds all the topics at once, and the Sources chip adds the
-source notes, hidden at first since they outnumber the rest. Notes of the
-same folder share a colour.
+place, showing its hub and its twelve most linked notes; the rest share a
+"N more" box, and each tap on it shows twelve more. Long-press any of the
+topic's boxes to fold it again. The Every note chip opens or folds all the
+topics at once, and the Sources chip adds the source notes, hidden at
+first since they outnumber the rest. Notes of the same folder share a
+colour.
+
+Every link at once is a tangle, so the map draws only the ones that show
+its shape: between the index and the topics, and between each note and
+its own topic's hub. Tap a note to select it: its own links show, the
+boxes it does not link to fade, and a bar at the top names it with an
+Open button. Tap it again, or Open, to read it; tap an empty spot, or the
+bar's cross, to go back to the shape. Back from a note, it is still
+selected, so the map shows where reading left off.
 
 Drag to move around, pinch to zoom, and a drag let go while still moving
 coasts on. A big map opens at a size its titles can be read at; the
@@ -160,8 +169,8 @@ the notes each time, so nothing is saved and it always matches what is on
 the phone.
 
 From a note, the map button at the top shows it on a map of its own: the
-note, in the centre, and the notes up to two links from it, each drawn on
-its own, so related notes can be wandered to by picture.
+note, selected in the centre, and the notes up to two links from it, up
+to twelve of each topic, so related notes can be wandered to by picture.
 
 ## Diagrams
 
