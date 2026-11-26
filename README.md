@@ -29,11 +29,12 @@ Pushes to `main`, and runs started by hand from the Actions tab, also
 replace the `debug-latest` prerelease, whose asset is a plain `.apk`.
 
 On the phone, open
-<https://github.com/carlospinto4p/vademo/releases/download/debug-latest/vademo-debug.apk>
-and allow the browser to install unknown apps once. The link never
-changes and always gets the newest build from `main`. The same APK is
-also under `debug-latest` in the repository's **Releases**, named after
-its version; a link to that name stops working at the next build.
+<https://github.com/carlospinto4p/vademo/releases/tag/debug-latest>,
+tap the APK listed there, and allow the browser to install unknown apps
+once. The page's address never changes and it always lists the newest
+build from `main`, named after its version (`vademo-0.29.18-debug.apk`),
+so downloads can be told apart. Keep the page's link rather than the
+file's: the file's name changes with each version.
 Any other branch's build is under its run in the **Actions** tab, as a
 zipped artifact.
 
