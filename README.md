@@ -28,8 +28,12 @@ Every push builds the debug APK (`.github/workflows/build-apk.yml`).
 Pushes to `main`, and runs started by hand from the Actions tab, also
 replace the `debug-latest` prerelease, whose asset is a plain `.apk`.
 
-On the phone: open the repository's **Releases**, tap the APK under
-`debug-latest`, and allow the browser to install unknown apps once.
+On the phone, open
+<https://github.com/carlospinto4p/vademo/releases/download/debug-latest/vademo-debug.apk>
+and allow the browser to install unknown apps once. The link never
+changes and always gets the newest build from `main`. The same APK is
+also under `debug-latest` in the repository's **Releases**, named after
+its version; a link to that name stops working at the next build.
 Any other branch's build is under its run in the **Actions** tab, as a
 zipped artifact.
 

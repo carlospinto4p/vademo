@@ -107,17 +107,21 @@ jobs:
           path: ${{ steps.apk.outputs.name }}
           if-no-files-found: error
 
-      # One moving prerelease rather than one per commit: the phone
-      # always downloads the same link and gets the newest build.
+      # One moving prerelease rather than one per commit. It carries the APK
+      # twice: named after its version, and as vademo-debug.apk, a name that
+      # never changes, so one saved link always downloads the newest build.
+      # A link to the versioned name stops working at the next release.
       - name: Publish it as the debug-latest prerelease
         if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          cp '${{ steps.apk.outputs.name }}' vademo-debug.apk
           gh release delete debug-latest --yes --cleanup-tag || true
           gh release create debug-latest \
             --prerelease \
             --target "$GITHUB_SHA" \
             --title "Debug build ${{ steps.apk.outputs.version }}" \
             --notes "Debug APK built from ${GITHUB_SHA:0:7} on $(date -u +%Y-%m-%d). Signed with the standard debug key: it installs alongside nothing else and will not upgrade a release-signed install." \
-            "${{ steps.apk.outputs.name }}"
+            "${{ steps.apk.outputs.name }}" \
+            vademo-debug.apk
