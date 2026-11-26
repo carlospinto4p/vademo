@@ -1,6 +1,16 @@
 ## Changelog - vademo
 
 
+### v0.29.17 - 26th November 2026
+
+- Updated `.github/workflows/build-apk.yml`: the `debug-latest`
+  prerelease also carries the APK as `vademo-debug.apk`, a name that
+  never changes, so one saved link always downloads the newest build.
+  The versioned name (`vademo-0.29.15-debug.apk`) stopped working once
+  the next build replaced it.
+- Updated `README.md`: "Install without a computer" gives that link.
+
+
 ### v0.29.16 - 25th November 2026
 
 - Rotated changelog: archived 26 entries to `changelog/2026.md`.
